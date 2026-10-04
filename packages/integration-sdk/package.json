@@ -1,0 +1,16 @@
+{
+	"name": "@keystone/integration-sdk",
+	"version": "0.1.0",
+	"description": "Build integrations for Keystone property management.",
+	"license": "MIT",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		}
+	},
+	"files": [
+		"src"
+	]
+}

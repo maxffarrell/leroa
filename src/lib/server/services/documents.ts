@@ -1,0 +1,86 @@
+import { and, desc, eq } from 'drizzle-orm';
+import { error } from '@sveltejs/kit';
+import { randomUUID } from 'node:crypto';
+import { db } from '#lib/server/db/index.ts';
+import { document, user } from '#lib/server/db/schema.ts';
+import type { OrgContext } from '#lib/server/context.ts';
+import { MAX_UPLOAD_BYTES, store } from './storage.ts';
+import { emit } from './events.ts';
+
+export async function listDocuments(orgId: string, entity?: { type: string; id: string }) {
+	return db
+		.select({
+			id: document.id,
+			name: document.name,
+			contentType: document.contentType,
+			size: document.size,
+			entityType: document.entityType,
+			entityId: document.entityId,
+			createdAt: document.createdAt,
+			uploadedBy: user.name
+		})
+		.from(document)
+		.leftJoin(user, eq(user.id, document.uploadedBy))
+		.where(
+			and(
+				eq(document.organizationId, orgId),
+				entity
+					? and(eq(document.entityType, entity.type), eq(document.entityId, entity.id))
+					: undefined
+			)
+		)
+		.orderBy(desc(document.createdAt));
+}
+
+export async function uploadDocument(
+	ctx: OrgContext,
+	file: File,
+	entity?: { type: string; id: string }
+) {
+	if (file.size === 0) error(400, 'File is empty');
+	if (file.size > MAX_UPLOAD_BYTES) error(413, 'Files must be 10 MB or smaller');
+	const storageKey = `${ctx.orgId}/${randomUUID()}`;
+	await store.put(storageKey, new Uint8Array(await file.arrayBuffer()));
+	const [doc] = await db
+		.insert(document)
+		.values({
+			organizationId: ctx.orgId,
+			name: file.name.slice(0, 200),
+			contentType: file.type || 'application/octet-stream',
+			size: file.size,
+			storageKey,
+			entityType: entity?.type ?? null,
+			entityId: entity?.id ?? null,
+			uploadedBy: ctx.userId
+		})
+		.returning();
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'document',
+		entityId: doc!.id,
+		action: 'created',
+		summary: `Uploaded ${doc!.name}`
+	});
+	return doc!;
+}
+
+export async function readDocument(orgId: string, id: string) {
+	const [doc] = await db
+		.select()
+		.from(document)
+		.where(and(eq(document.organizationId, orgId), eq(document.id, id)));
+	if (!doc) error(404, 'Document not found');
+	const data = await store.get(doc.storageKey);
+	if (!data) error(404, 'File missing');
+	return { doc, data };
+}
+
+export async function deleteDocument(ctx: OrgContext, id: string) {
+	const [doc] = await db
+		.delete(document)
+		.where(and(eq(document.organizationId, ctx.orgId), eq(document.id, id)))
+		.returning();
+	if (!doc) error(404, 'Document not found');
+	await store.delete(doc.storageKey);
+}

@@ -1,0 +1,5 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"buildCommand": "node scripts/migrate.ts && pnpm build",
+	"installCommand": "pnpm install --frozen-lockfile"
+}

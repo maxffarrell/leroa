@@ -1,0 +1,28 @@
+# Self-host Keystone with Postgres: `BETTER_AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d`
+services:
+  app:
+    image: ghcr.io/keystone/keystone:latest
+    build: .
+    ports: ['3000:3000']
+    environment:
+      DATABASE_URL: postgres://keystone:keystone@db:5432/keystone
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
+      ORIGIN: ${ORIGIN:-http://localhost:3000}
+      KEYSTONE_ENTERPRISE_KEY: ${KEYSTONE_ENTERPRISE_KEY:-}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: keystone
+      POSTGRES_PASSWORD: keystone
+      POSTGRES_DB: keystone
+    volumes: ['pgdata:/var/lib/postgresql']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U keystone']
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  pgdata:
