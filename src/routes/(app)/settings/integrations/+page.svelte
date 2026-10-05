@@ -92,13 +92,11 @@
 		syncing = true;
 		try {
 			const r = await syncIntegration(i.id);
+			const sent = `Sent ${plural(r.synced, 'record')} to ${i.name}`;
 			if (r.error) toast.error(r.error);
-			else
-				toast.success(
-					r.synced || r.removed
-						? `Sent ${r.synced} record${r.synced === 1 ? '' : 's'} to ${i.name}`
-						: 'Everything is up to date'
-				);
+			else if (r.failed)
+				toast.warning(`${r.synced ? `${sent}. ` : ''}${r.failed} could not be synced.`);
+			else toast.success(r.synced || r.removed ? sent : 'Everything is up to date');
 		} catch (err) {
 			toast.error(message(err, 'Could not sync'));
 		} finally {
