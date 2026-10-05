@@ -6,6 +6,7 @@ import {
 	chargeInput,
 	idSchema,
 	leaseInput,
+	leaseRenewal,
 	leaseStatuses,
 	leaseUpdate,
 	monthSchema,
@@ -28,6 +29,12 @@ export const createLease = command(leaseInput, async (input) => {
 export const updateLease = command(leaseUpdate, async (input) => {
 	const l = await svc.updateLease(await requireOrg(), input);
 	void getLease(l.id).refresh();
+	return l;
+});
+export const renewLease = command(leaseRenewal, async (input) => {
+	const l = await svc.renewLease(await requireOrg(), input);
+	void getLeases().refresh();
+	void getLease(input.id).refresh();
 	return l;
 });
 export const addCharge = command(chargeInput, async (input) => {

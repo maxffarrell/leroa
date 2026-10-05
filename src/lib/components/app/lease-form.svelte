@@ -46,6 +46,8 @@
 	let rentAmount = $state<number | null>(null);
 	let depositAmount = $state<number | null>(null);
 	let rentDueDay = $state(1);
+	let lateFeeAmount = $state<number | null>(null);
+	let lateFeeGraceDays = $state(5);
 	let pending = $state(false);
 	let addingTenant = $state(false);
 
@@ -75,7 +77,9 @@
 				endDate: endDate || null,
 				rentAmount,
 				depositAmount: depositAmount ?? 0,
-				rentDueDay
+				rentDueDay,
+				lateFeeAmount: lateFeeAmount ?? 0,
+				lateFeeGraceDays
 			});
 			toast.success('Lease created');
 			open = false;
@@ -194,6 +198,23 @@
 							min={1}
 							max={28}
 							bind:value={rentDueDay}
+						/></Field.Field
+					>
+				</div>
+				<div class="grid grid-cols-2 gap-3">
+					<Field.Field
+						><Field.Label for="l-late">Late fee</Field.Label><MoneyInput
+							id="l-late"
+							bind:value={lateFeeAmount}
+						/><Field.Description>Optional flat fee.</Field.Description></Field.Field
+					>
+					<Field.Field
+						><Field.Label for="l-grace">Grace days</Field.Label><Input
+							id="l-grace"
+							type="number"
+							min={0}
+							max={31}
+							bind:value={lateFeeGraceDays}
 						/></Field.Field
 					>
 				</div>

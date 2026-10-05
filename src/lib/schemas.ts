@@ -81,11 +81,20 @@ export const leaseInput = v.object({
 	rentDueDay: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(28)), 1),
 	frequency: v.optional(v.picklist(rentFrequencies), 'monthly'),
 	currency: v.optional(v.pipe(v.string(), v.length(3)), 'USD'),
+	lateFeeAmount: v.optional(cents, 0),
+	lateFeeGraceDays: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(31)), 5),
 	notes: optionalText
 });
 export const leaseUpdate = v.object({
 	id: idSchema,
 	...v.partial(v.omit(leaseInput, ['unitId', 'tenantIds'])).entries
+});
+
+export const leaseRenewal = v.object({
+	id: idSchema,
+	startDate: isoDate,
+	endDate: v.optional(v.nullable(isoDate)),
+	rentAmount: v.pipe(cents, v.minValue(1, 'Rent must be positive'))
 });
 
 export const chargeInput = v.object({

@@ -8,6 +8,13 @@
       "when": 1791150298579,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791162858509,
+      "tag": "0001_rent_automation",
+      "breakpoints": true
     }
   ]
 }

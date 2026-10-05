@@ -131,12 +131,16 @@ export const lease = pgTable(
 		rentDueDay: integer('rent_due_day').notNull().default(1),
 		frequency: rentFrequency('frequency').notNull().default('monthly'),
 		currency: text('currency').notNull().default('USD'),
+		lateFeeAmount: integer('late_fee_amount').notNull().default(0),
+		lateFeeGraceDays: integer('late_fee_grace_days').notNull().default(5),
+		renewedFromId: text('renewed_from_id'),
 		notes: text('notes'),
 		...timestamps
 	},
 	(t) => [
 		index('lease_org_status_idx').on(t.organizationId, t.status),
-		index('lease_unit_idx').on(t.unitId)
+		index('lease_unit_idx').on(t.unitId),
+		index('lease_renewed_from_idx').on(t.renewedFromId)
 	]
 );
 
@@ -173,6 +177,8 @@ export const charge = pgTable(
 		periodStart: date('period_start', { mode: 'string' }),
 		dueDate: date('due_date', { mode: 'string' }).notNull(),
 		amount: integer('amount').notNull(),
+		/** The rent charge a late fee was assessed on. */
+		appliesToChargeId: text('applies_to_charge_id'),
 		...timestamps
 	},
 	(t) => [
@@ -180,7 +186,10 @@ export const charge = pgTable(
 		index('charge_lease_idx').on(t.leaseId),
 		uniqueIndex('charge_rent_period_idx')
 			.on(t.leaseId, t.periodStart)
-			.where(sql`${t.kind} = 'rent'`)
+			.where(sql`${t.kind} = 'rent'`),
+		uniqueIndex('charge_late_fee_idx')
+			.on(t.appliesToChargeId)
+			.where(sql`${t.kind} = 'fee'`)
 	]
 );
 

@@ -88,6 +88,8 @@ export async function loadDemoData(ctx: OrgContext) {
 				depositAmount: rent,
 				rentDueDay: 1,
 				frequency: 'monthly',
+				lateFeeAmount: 0,
+				lateFeeGraceDays: 5,
 				currency: 'USD'
 			})
 		);

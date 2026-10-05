@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, getTableName, gte, inArray, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableName, gt, gte, inArray, lt, lte, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
@@ -13,8 +13,14 @@ import {
 	unit
 } from '#lib/server/db/schema.ts';
 import type { OrgContext } from '#lib/server/context.ts';
-import type { chargeInput, leaseInput, leaseUpdate, paymentInput } from '#lib/schemas.ts';
-import { formatMoney, tenantName, todayISO } from '#lib/format.ts';
+import type {
+	chargeInput,
+	leaseInput,
+	leaseRenewal,
+	leaseUpdate,
+	paymentInput
+} from '#lib/schemas.ts';
+import { addDays, formatMoney, monthLabel, nextMonth, tenantName, todayISO } from '#lib/format.ts';
 import { emit } from './events.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
@@ -66,6 +72,7 @@ export async function listLeases(
 }
 
 export async function getLease(orgId: string, id: string) {
+	await runRentAutomation(orgId);
 	const [row] = await db
 		.select({
 			lease,
@@ -80,7 +87,7 @@ export async function getLease(orgId: string, id: string) {
 		.where(and(eq(lease.organizationId, orgId), eq(lease.id, id)));
 	if (!row) error(404, 'Lease not found');
 
-	const [tenants, charges, payments] = await Promise.all([
+	const [tenants, charges, payments, renewal] = await Promise.all([
 		db
 			.select({
 				id: tenant.id,
@@ -114,7 +121,12 @@ export async function getLease(orgId: string, id: string) {
 			.select()
 			.from(payment)
 			.where(eq(payment.leaseId, id))
-			.orderBy(desc(payment.receivedOn), desc(payment.createdAt))
+			.orderBy(desc(payment.receivedOn), desc(payment.createdAt)),
+		db.query.lease.findFirst({
+			columns: { id: true },
+			where: (l, { and, eq, ne }) =>
+				and(eq(l.organizationId, orgId), eq(l.renewedFromId, id), ne(l.status, 'terminated'))
+		})
 	]);
 
 	return {
@@ -123,6 +135,7 @@ export async function getLease(orgId: string, id: string) {
 		propertyId: row.propertyId,
 		propertyName: row.propertyName,
 		balance: row.balance,
+		renewedById: renewal?.id ?? null,
 		tenants,
 		charges,
 		payments
@@ -186,6 +199,9 @@ export async function updateLease(ctx: OrgContext, { id, ...data }: Out<typeof l
 		.where(and(eq(lease.organizationId, ctx.orgId), eq(lease.id, id)))
 		.returning();
 	if (!l) error(404, 'Lease not found');
+	if (data.lateFeeAmount !== undefined || data.lateFeeGraceDays !== undefined) {
+		await runRentAutomation(ctx.orgId, true);
+	}
 	if (data.status) {
 		const occupied = data.status === 'active';
 		const vacated = data.status === 'ended' || data.status === 'terminated';
@@ -206,11 +222,21 @@ export async function updateLease(ctx: OrgContext, { id, ...data }: Out<typeof l
 	return l;
 }
 
+type RentLease = { id: string; rentAmount: number; rentDueDay: number };
+
+const rentCharge = (orgId: string, l: RentLease, month: string) => ({
+	organizationId: orgId,
+	leaseId: l.id,
+	kind: 'rent' as const,
+	description: `Rent ${monthLabel(month)}`,
+	periodStart: `${month}-01`,
+	dueDate: `${month}-${String(l.rentDueDay).padStart(2, '0')}`,
+	amount: l.rentAmount
+});
+
 /** Creates the rent charge for every active monthly lease covering `month` (YYYY-MM). Idempotent. */
 export async function ensureRentCharges(orgId: string, month: string) {
 	const periodStart = `${month}-01`;
-	const [y, m] = month.split('-').map(Number) as [number, number];
-	const next = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
 	const active = await db
 		.select({ id: lease.id, rentAmount: lease.rentAmount, rentDueDay: lease.rentDueDay })
 		.from(lease)
@@ -219,31 +245,189 @@ export async function ensureRentCharges(orgId: string, month: string) {
 				eq(lease.organizationId, orgId),
 				eq(lease.status, 'active'),
 				eq(lease.frequency, 'monthly'),
-				lt(lease.startDate, next),
+				lt(lease.startDate, `${nextMonth(month)}-01`),
 				sql`(${lease.endDate} is null or ${lease.endDate} >= ${periodStart})`
 			)
 		);
 	if (!active.length) return;
 	await db
 		.insert(charge)
+		.values(active.map((l) => rentCharge(orgId, l, month)))
+		.onConflictDoNothing();
+}
+
+/**
+ * Posts rent for every month since each active lease was entered in Leroa (never back-filling
+ * earlier history), up to the current month.
+ */
+async function catchUpRentCharges(orgId: string) {
+	const today = todayISO();
+	const current = today.slice(0, 7);
+	const active = await db
+		.select({
+			id: lease.id,
+			rentAmount: lease.rentAmount,
+			rentDueDay: lease.rentDueDay,
+			startDate: lease.startDate,
+			endDate: lease.endDate,
+			createdAt: lease.createdAt
+		})
+		.from(lease)
+		.where(
+			and(
+				eq(lease.organizationId, orgId),
+				eq(lease.status, 'active'),
+				eq(lease.frequency, 'monthly'),
+				lte(lease.startDate, today)
+			)
+		);
+	const rows = active.flatMap((l) => {
+		const out = [];
+		const entered = l.createdAt.toISOString().slice(0, 7);
+		const started = l.startDate.slice(0, 7);
+		for (let m = started > entered ? started : entered; m <= current; m = nextMonth(m)) {
+			if (l.endDate && l.endDate < `${m}-01`) break;
+			out.push(rentCharge(orgId, l, m));
+		}
+		return out;
+	});
+	if (rows.length) await db.insert(charge).values(rows).onConflictDoNothing();
+}
+
+/** How far back late fees are assessed, so enabling a fee doesn't penalise old arrears. */
+const LATE_FEE_LOOKBACK_DAYS = 45;
+
+/**
+ * Adds the lease's flat late fee once per rent charge that is still unpaid after the grace
+ * period, as long as the lease as a whole is in arrears (covers unallocated payments).
+ */
+async function applyLateFees(orgId: string) {
+	const today = todayISO();
+	const late = await db
+		.select({
+			id: charge.id,
+			leaseId: charge.leaseId,
+			description: charge.description,
+			fee: lease.lateFeeAmount
+		})
+		.from(charge)
+		.innerJoin(lease, eq(lease.id, charge.leaseId))
+		.where(
+			and(
+				eq(charge.organizationId, orgId),
+				eq(charge.kind, 'rent'),
+				eq(lease.status, 'active'),
+				gt(lease.lateFeeAmount, 0),
+				gte(charge.dueDate, addDays(today, -LATE_FEE_LOOKBACK_DAYS)),
+				sql`${charge.dueDate} + ${lease.lateFeeGraceDays} < ${today}::date`,
+				sql`${charge.amount} > coalesce((select sum(p.amount) from ${payment} p where p.charge_id = ${outer(charge.id)}), 0)`,
+				sql`${balanceSql} > 0`
+			)
+		);
+	if (!late.length) return;
+	await db
+		.insert(charge)
 		.values(
-			active.map((l) => ({
+			late.map((c) => ({
 				organizationId: orgId,
-				leaseId: l.id,
-				kind: 'rent' as const,
-				description: `Rent ${new Date(Date.UTC(y, m - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}`,
-				periodStart,
-				dueDate: `${month}-${String(l.rentDueDay).padStart(2, '0')}`,
-				amount: l.rentAmount
+				leaseId: c.leaseId,
+				kind: 'fee' as const,
+				description: `Late fee · ${c.description ?? 'Rent'}`,
+				dueDate: today,
+				amount: c.fee,
+				appliesToChargeId: c.id
 			}))
 		)
 		.onConflictDoNothing();
+}
+
+/** Ends leases whose term is over once their renewal has taken over. */
+async function closeRenewedLeases(orgId: string) {
+	await db
+		.update(lease)
+		.set({ status: 'ended' })
+		.where(
+			and(
+				eq(lease.organizationId, orgId),
+				eq(lease.status, 'active'),
+				lt(lease.endDate, todayISO()),
+				sql`exists (select 1 from ${lease} r where r.renewed_from_id = ${outer(lease.id)} and r.status = 'active')`
+			)
+		);
+}
+
+const AUTOMATION_INTERVAL_MS = 5 * 60 * 1000;
+const lastAutomationRun = new Map<string, number>();
+
+/** Rent posting, late fees and renewal hand-over. Runs lazily on reads, at most every few minutes. */
+export async function runRentAutomation(orgId: string, force = false) {
+	const now = Date.now();
+	if (!force && now - (lastAutomationRun.get(orgId) ?? 0) < AUTOMATION_INTERVAL_MS) return;
+	lastAutomationRun.set(orgId, now);
+	await catchUpRentCharges(orgId);
+	await applyLateFees(orgId);
+	await closeRenewedLeases(orgId);
+}
+
+/** Starts a follow-on lease for the same unit and tenants; the current lease ends the day before. */
+export async function renewLease(ctx: OrgContext, input: Out<typeof leaseRenewal>) {
+	const current = await getLease(ctx.orgId, input.id);
+	if (current.status !== 'active') error(400, 'Only active leases can be renewed');
+	if (current.renewedById) error(409, 'This lease has already been renewed');
+	if (input.startDate <= current.startDate)
+		error(400, 'The renewal must start after the current lease');
+	if (input.endDate && input.endDate < input.startDate)
+		error(400, 'End date must be after the start date');
+
+	const previousEnd = addDays(input.startDate, -1);
+	const created = await db.transaction(async (tx) => {
+		await tx
+			.update(lease)
+			.set({ endDate: previousEnd })
+			.where(and(eq(lease.organizationId, ctx.orgId), eq(lease.id, current.id)));
+		const [l] = await tx
+			.insert(lease)
+			.values({
+				organizationId: ctx.orgId,
+				unitId: current.unitId,
+				status: 'active',
+				startDate: input.startDate,
+				endDate: input.endDate ?? null,
+				rentAmount: input.rentAmount,
+				depositAmount: 0,
+				rentDueDay: current.rentDueDay,
+				frequency: current.frequency,
+				currency: current.currency,
+				lateFeeAmount: current.lateFeeAmount,
+				lateFeeGraceDays: current.lateFeeGraceDays,
+				renewedFromId: current.id
+			})
+			.returning();
+		await tx
+			.insert(leaseTenant)
+			.values(
+				current.tenants.map((t) => ({ leaseId: l!.id, tenantId: t.id, isPrimary: t.isPrimary }))
+			);
+		return l!;
+	});
+	await runRentAutomation(ctx.orgId, true);
+	const change = input.rentAmount - current.rentAmount;
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'lease',
+		entityId: created.id,
+		action: 'renewed',
+		summary: `Lease for unit ${current.unitName} renewed at ${formatMoney(created.rentAmount, created.currency)}/mo${change ? ` (${change > 0 ? '+' : '−'}${formatMoney(Math.abs(change), created.currency)})` : ''}`
+	});
+	return created;
 }
 
 export type RentRow = Awaited<ReturnType<typeof rentRoll>>[number];
 
 /** Every charge due in `month` with what has been paid against it. */
 export async function rentRoll(orgId: string, month: string) {
+	await runRentAutomation(orgId);
 	await ensureRentCharges(orgId, month);
 	const start = `${month}-01`;
 	const [y, m] = month.split('-').map(Number) as [number, number];

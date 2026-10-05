@@ -79,3 +79,32 @@ export function initials(name: string) {
 		.map((p) => p[0]!.toUpperCase())
 		.join('');
 }
+
+const fromISO = (iso: string) => new Date(`${iso}T00:00:00Z`);
+
+export function addDays(iso: string, days: number) {
+	const d = fromISO(iso);
+	d.setUTCDate(d.getUTCDate() + days);
+	return d.toISOString().slice(0, 10);
+}
+
+/** Same calendar day `years` later; Feb 29 rolls to Mar 1 in non-leap years. */
+export function addYears(iso: string, years: number) {
+	const d = fromISO(iso);
+	d.setUTCFullYear(d.getUTCFullYear() + years);
+	return d.toISOString().slice(0, 10);
+}
+
+/** `YYYY-MM` of the month after `month`. */
+export function nextMonth(month: string) {
+	const [y, m] = month.split('-').map(Number) as [number, number];
+	return new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
+}
+
+export function monthLabel(month: string) {
+	return fromISO(`${month}-01`).toLocaleString('en-US', {
+		month: 'long',
+		year: 'numeric',
+		timeZone: 'UTC'
+	});
+}

@@ -4,6 +4,8 @@
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import PaymentDialog, { type PaymentTarget } from '#lib/components/app/payment-dialog.svelte';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
+	import LateFeeDialog from '#lib/components/app/late-fee-dialog.svelte';
+	import RenewLeaseDialog from '#lib/components/app/renew-lease-dialog.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
@@ -24,6 +26,8 @@
 	const title = $derived(`${l.propertyName} · ${l.unitName}`);
 	let payment = $state<PaymentTarget | null>(null);
 	let tab = $state('charges');
+	let renewOpen = $state(false);
+	let lateFeeOpen = $state(false);
 
 	let feeAmount = $state<number | null>(null);
 	let feeDesc = $state('Late fee');
@@ -86,6 +90,11 @@
 						>Activate lease</DropdownMenu.Item
 					>{/if}
 				{#if l.status === 'active'}
+					{#if !l.renewedById}<DropdownMenu.Item onclick={() => (renewOpen = true)}
+							>Renew lease…</DropdownMenu.Item
+						>{/if}
+					<DropdownMenu.Item onclick={() => (lateFeeOpen = true)}>Late fee…</DropdownMenu.Item>
+					<DropdownMenu.Separator />
 					<DropdownMenu.Item onclick={() => setStatus('ended')}>End lease</DropdownMenu.Item>
 					<DropdownMenu.Item variant="destructive" onclick={() => setStatus('terminated')}
 						>Terminate early</DropdownMenu.Item
@@ -102,6 +111,14 @@
 			<a href="/properties/{l.propertyId}" class="hover:underline">{title}</a>
 		</h1>
 		<StatusBadge status={l.status} />
+		{#if l.renewedFromId}<a
+				href="/leases/{l.renewedFromId}"
+				class="text-xs text-muted-foreground hover:underline">Renewal of previous lease</a
+			>{/if}
+		{#if l.renewedById}<a
+				href="/leases/{l.renewedById}"
+				class="text-xs font-medium text-primary hover:underline">Renewed · view next lease →</a
+			>{/if}
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -127,6 +144,13 @@
 									? 'rd'
 									: 'th'}</span
 					></Card.Title
+				><button
+					type="button"
+					class="text-left text-xs text-muted-foreground hover:underline"
+					onclick={() => (lateFeeOpen = true)}
+					>{l.lateFeeAmount
+						? `Late fee ${formatMoney(l.lateFeeAmount, l.currency)} after ${l.lateFeeGraceDays} day${l.lateFeeGraceDays === 1 ? '' : 's'}`
+						: 'No late fee'}</button
 				></Card.Header
 			></Card.Root
 		>
@@ -299,3 +323,5 @@
 </main>
 
 <PaymentDialog bind:target={payment} />
+<LateFeeDialog bind:open={lateFeeOpen} lease={l} />
+<RenewLeaseDialog bind:open={renewOpen} lease={l} />
