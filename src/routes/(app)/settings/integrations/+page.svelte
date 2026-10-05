@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
 	import { untrack } from 'svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
@@ -51,23 +50,26 @@
 		failed: 'Could not connect. Try again.'
 	};
 
-	// After the OAuth callback redirects back: report the result and reopen the sheet.
-	// An effect, not onMount/afterNavigate, because this component mounts after its awaits.
+	// After the OAuth callback: report the result and reopen the sheet. The callback passes the
+	// result in a short-lived cookie so the URL stays clean without a client-side navigation.
+	const RESULT_COOKIE = 'leroa_integration_result';
 	let callbackHandled = false;
 	$effect(() => {
 		if (callbackHandled) return;
 		callbackHandled = true;
 		untrack(() => {
-			const params = page.url.searchParams;
-			const id = params.get('integration');
-			const i = id ? list.find((x) => x.id === id) : undefined;
+			const raw = document.cookie
+				.split('; ')
+				.find((c) => c.startsWith(`${RESULT_COOKIE}=`))
+				?.slice(RESULT_COOKIE.length + 1);
+			if (!raw) return;
+			document.cookie = `${RESULT_COOKIE}=; Max-Age=0; Path=/settings/integrations`;
+			const [id, result] = decodeURIComponent(raw).split(':');
+			const i = list.find((x) => x.id === id);
 			if (!i) return;
-			if (params.get('connected'))
-				toast.success(`${i.name} connected. The first sync has started.`);
-			const err = params.get('error');
-			if (err) toast.error(CONNECT_ERRORS[err] ?? CONNECT_ERRORS.failed!);
+			if (result === 'connected') toast.success(`${i.name} connected. The first sync has started.`);
+			else toast.error(CONNECT_ERRORS[result ?? ''] ?? CONNECT_ERRORS.failed!);
 			open(i);
-			goto(page.url.pathname, { replace: true, shallow: true }).catch(() => {});
 		});
 	});
 
