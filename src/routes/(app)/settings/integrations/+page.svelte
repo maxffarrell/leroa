@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { afterNavigate, replaceState } from '$app/navigation';
+	import { goto } from '$app/navigation';
+	import { untrack } from 'svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
@@ -51,17 +52,23 @@
 	};
 
 	// After the OAuth callback redirects back: report the result and reopen the sheet.
-	// afterNavigate, unlike onMount, runs once the router can take replaceState.
-	afterNavigate(({ to }) => {
-		const params = to?.url.searchParams;
-		const id = params?.get('integration');
-		const i = id ? list.find((x) => x.id === id) : undefined;
-		if (!params || !i) return;
-		if (params.get('connected')) toast.success(`${i.name} connected. The first sync has started.`);
-		const err = params.get('error');
-		if (err) toast.error(CONNECT_ERRORS[err] ?? CONNECT_ERRORS.failed!);
-		replaceState(to!.url.pathname, {});
-		open(i);
+	// An effect, not onMount/afterNavigate, because this component mounts after its awaits.
+	let callbackHandled = false;
+	$effect(() => {
+		if (callbackHandled) return;
+		callbackHandled = true;
+		untrack(() => {
+			const params = page.url.searchParams;
+			const id = params.get('integration');
+			const i = id ? list.find((x) => x.id === id) : undefined;
+			if (!i) return;
+			if (params.get('connected'))
+				toast.success(`${i.name} connected. The first sync has started.`);
+			const err = params.get('error');
+			if (err) toast.error(CONNECT_ERRORS[err] ?? CONNECT_ERRORS.failed!);
+			open(i);
+			goto(page.url.pathname, { replace: true, shallow: true }).catch(() => {});
+		});
 	});
 
 	async function save(e: SubmitEvent) {
