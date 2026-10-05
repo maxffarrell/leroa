@@ -10,14 +10,14 @@ export const variables = defineEnvVars({
 			'Public origin, e.g. `https://pm.example.com`. Optional; derived from the request when unset.',
 		schema: (value) => value || undefined
 	},
-	KEYSTONE_ENTERPRISE_KEY: {
+	LEROA_ENTERPRISE_KEY: {
 		description:
 			'Enterprise license key. Unlocks SAML/OIDC SSO and passkeys on self-hosted installs.',
 		schema: (value) => value || undefined
 	},
-	KEYSTONE_CLOUD: {
+	LEROA_CLOUD: {
 		description:
-			'Set to `true` on Keystone Cloud. Enables enterprise features and cloud-only behaviour.',
+			'Set to `true` on Leroa Cloud. Enables enterprise features and cloud-only behaviour.',
 		schema: (value) => value === 'true'
 	}
 });

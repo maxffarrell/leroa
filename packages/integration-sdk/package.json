@@ -1,7 +1,7 @@
 {
-	"name": "@keystone/integration-sdk",
+	"name": "@leroa/integration-sdk",
 	"version": "0.1.0",
-	"description": "Build integrations for Keystone property management.",
+	"description": "Build integrations for Leroa property management.",
 	"license": "MIT",
 	"type": "module",
 	"exports": {

@@ -1,5 +1,5 @@
 {
-	"name": "keystone",
+	"name": "leroa",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -69,7 +69,7 @@
 		"@better-auth/api-key": "^1.7.7",
 		"@better-auth/passkey": "^1.7.7",
 		"@better-auth/sso": "^1.7.7",
-		"@keystone/integration-sdk": "workspace:*",
+		"@leroa/integration-sdk": "workspace:*",
 		"@sveltejs/adapter-vercel": "^7.0.0",
 		"better-auth": "^1.6.24",
 		"drizzle-orm": "^0.45.2",

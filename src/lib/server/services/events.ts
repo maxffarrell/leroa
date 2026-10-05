@@ -45,7 +45,7 @@ export async function emit(e: EventInput) {
 	);
 }
 
-export type KeystoneEvent = {
+export type LeroaEvent = {
 	id: string;
 	type: string;
 	organizationId: string;
@@ -59,7 +59,7 @@ export function signPayload(secret: string, body: string) {
 	return `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
 }
 
-async function deliverWebhooks(event: KeystoneEvent) {
+async function deliverWebhooks(event: LeroaEvent) {
 	const hooks = await db
 		.select()
 		.from(webhook)
@@ -76,8 +76,8 @@ async function deliverWebhooks(event: KeystoneEvent) {
 						method: 'POST',
 						headers: {
 							'content-type': 'application/json',
-							'x-keystone-event': event.type,
-							'x-keystone-signature': signPayload(h.secret, body)
+							'x-leroa-event': event.type,
+							'x-leroa-signature': signPayload(h.secret, body)
 						},
 						body,
 						signal: AbortSignal.timeout(10_000)

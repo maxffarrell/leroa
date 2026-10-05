@@ -42,8 +42,8 @@
 
 <div class="flex items-start justify-between gap-4">
 	<p class="text-sm text-muted-foreground">
-		Integrations are open source. Build one with <code>@keystone/integration-sdk</code> and open a pull
-		request to the integrations repo; once reviewed, it's available to every workspace.
+		Integrations are open source. Build one with <code>@leroa/integration-sdk</code> and open a pull request
+		to the integrations repo; once reviewed, it's available to every workspace.
 	</p>
 </div>
 

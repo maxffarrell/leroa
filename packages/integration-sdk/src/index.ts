@@ -1,9 +1,9 @@
 /**
- * Keystone integration SDK.
+ * Leroa integration SDK.
  *
  * An integration is a manifest plus event handlers. Integrations are contributed
  * to the public integrations repository, reviewed, and then bundled into every
- * Keystone install, where each workspace can enable and configure them.
+ * Leroa install, where each workspace can enable and configure them.
  */
 
 export const EVENT_TYPES = [
@@ -24,7 +24,7 @@ export const EVENT_TYPES = [
 
 export type EventType = (typeof EVENT_TYPES)[number];
 
-export type KeystoneEvent<T extends string = EventType> = {
+export type LeroaEvent<T extends string = EventType> = {
 	id: string;
 	type: T;
 	organizationId: string;
@@ -56,7 +56,7 @@ export type ConfigField =
 export type IntegrationContext<C> = {
 	config: C;
 	workspace: { id: string; name: string };
-	/** Fetch with a timeout and a Keystone user-agent. */
+	/** Fetch with a timeout and a Leroa user-agent. */
 	fetch: typeof fetch;
 	log: (...args: unknown[]) => void;
 };
@@ -80,7 +80,7 @@ export type IntegrationDefinition<C extends Record<string, unknown> = Record<str
 	icon?: string;
 	config: ConfigField[];
 	events: EventType[];
-	handle: (event: KeystoneEvent, ctx: IntegrationContext<C>) => Promise<void> | void;
+	handle: (event: LeroaEvent, ctx: IntegrationContext<C>) => Promise<void> | void;
 };
 
 export function defineIntegration<C extends Record<string, unknown>>(

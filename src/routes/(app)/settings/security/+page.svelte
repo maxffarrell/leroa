@@ -73,13 +73,13 @@
 				><Lock class="size-4" /> SAML, OIDC and passkeys</Card.Title
 			>
 			<Card.Description
-				>Single sign-on and passkeys are included in Keystone Cloud and available on self-hosted
-				installs with an Enterprise license key (<code>KEYSTONE_ENTERPRISE_KEY</code
+				>Single sign-on and passkeys are included in Leroa Cloud and available on self-hosted
+				installs with an Enterprise license key (<code>LEROA_ENTERPRISE_KEY</code
 				>).</Card.Description
 			>
 		</Card.Header>
 		<Card.Footer
-			><Button href="https://keystone.example.com/pricing" target="_blank" variant="outline"
+			><Button href="https://leroa.example.com/pricing" target="_blank" variant="outline"
 				>See plans</Button
 			></Card.Footer
 		>

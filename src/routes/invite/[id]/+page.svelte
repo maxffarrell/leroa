@@ -23,7 +23,7 @@
 	}
 </script>
 
-<svelte:head><title>Join workspace · Keystone</title></svelte:head>
+<svelte:head><title>Join workspace · Leroa</title></svelte:head>
 
 <div class="flex min-h-svh items-center justify-center p-6">
 	<div class="w-full max-w-sm space-y-6 text-center">

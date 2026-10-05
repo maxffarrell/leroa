@@ -47,7 +47,7 @@
 							<Logo />
 							<span class="grid flex-1 text-left leading-tight">
 								<span class="truncate font-semibold">{org.name}</span>
-								<span class="truncate text-xs text-muted-foreground">Keystone</span>
+								<span class="truncate text-xs text-muted-foreground">Leroa</span>
 							</span>
 						</a>
 					{/snippet}

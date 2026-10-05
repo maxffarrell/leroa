@@ -1,4 +1,4 @@
-import { defineIntegration } from '@keystone/integration-sdk';
+import { defineIntegration } from '@leroa/integration-sdk';
 
 type Config = { webhookUrl: string; notifyPayments: boolean };
 
@@ -7,7 +7,7 @@ export default defineIntegration<Config>({
 	name: 'Slack',
 	description: 'Post maintenance requests, new leases and payments to a Slack channel.',
 	category: 'communication',
-	author: { name: 'Keystone', url: 'https://github.com/keystone' },
+	author: { name: 'Leroa', url: 'https://github.com/leroa' },
 	homepage: 'https://api.slack.com/messaging/webhooks',
 	icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 15a2 2 0 1 1-2-2h2v2Zm1 0a2 2 0 1 1 4 0v5a2 2 0 1 1-4 0v-5ZM9 5a2 2 0 1 1 2-2v2H9Zm0 1a2 2 0 1 1 0 4H4a2 2 0 1 1 0-4h5Zm10 3a2 2 0 1 1 2 2h-2V9Zm-1 0a2 2 0 1 1-4 0V4a2 2 0 1 1 4 0v5Zm-3 10a2 2 0 1 1-2 2v-2h2Zm0-1a2 2 0 1 1 0-4h5a2 2 0 1 1 0 4h-5Z"/></svg>',
 	config: [

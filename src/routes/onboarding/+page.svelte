@@ -36,7 +36,7 @@
 	}
 </script>
 
-<svelte:head><title>Set up your workspace · Keystone</title></svelte:head>
+<svelte:head><title>Set up your workspace · Leroa</title></svelte:head>
 
 <div class="flex min-h-svh items-center justify-center p-6">
 	<form class="w-full max-w-sm space-y-6" onsubmit={submit}>

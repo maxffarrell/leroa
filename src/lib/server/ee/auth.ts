@@ -9,7 +9,7 @@ import { sso } from '@better-auth/sso';
  */
 export const enterprisePlugins = [
 	sso({ organizationProvisioning: { disabled: false, defaultRole: 'member' } }),
-	passkey({ rpName: 'Keystone' })
+	passkey({ rpName: 'Leroa' })
 ] as const;
 
 const GATED_PREFIXES = ['/api/auth/sso', '/api/auth/passkey'];

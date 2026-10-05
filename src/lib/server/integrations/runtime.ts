@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
-import type { IntegrationDefinition, KeystoneEvent } from '@keystone/integration-sdk';
-import { toManifest } from '@keystone/integration-sdk';
+import type { IntegrationDefinition, LeroaEvent } from '@leroa/integration-sdk';
+import { toManifest } from '@leroa/integration-sdk';
 import { integrations } from '../../../../integrations/index.ts';
 import { db } from '#lib/server/db/index.ts';
 import { integrationInstall, organization } from '#lib/server/db/schema.ts';
@@ -19,11 +19,11 @@ export function getIntegration(id: string) {
 const boundedFetch: typeof fetch = (input, init) =>
 	fetch(input, {
 		...init,
-		headers: { 'user-agent': 'Keystone-Integrations/1.0', ...(init?.headers ?? {}) },
+		headers: { 'user-agent': 'Leroa-Integrations/1.0', ...(init?.headers ?? {}) },
 		signal: init?.signal ?? AbortSignal.timeout(10_000)
 	});
 
-export async function dispatchToIntegrations(event: KeystoneEvent<string>) {
+export async function dispatchToIntegrations(event: LeroaEvent<string>) {
 	const installs = await db
 		.select({ install: integrationInstall, orgName: organization.name })
 		.from(integrationInstall)
@@ -39,7 +39,7 @@ export async function dispatchToIntegrations(event: KeystoneEvent<string>) {
 		installs.map(async ({ install, orgName }) => {
 			const def = byId.get(install.integrationId);
 			if (!def || !def.events.includes(event.type as never)) return;
-			await def.handle(event as KeystoneEvent, {
+			await def.handle(event as LeroaEvent, {
 				config: install.config,
 				workspace: { id: event.organizationId, name: orgName },
 				fetch: boundedFetch,

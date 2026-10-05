@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { resources } from '#lib/server/api/resources.ts';
-import { EVENT_TYPES } from '@keystone/integration-sdk';
+import { EVENT_TYPES } from '@leroa/integration-sdk';
 
 export const GET: RequestHandler = ({ url }) => {
 	const paths: Record<string, unknown> = {};
@@ -57,7 +57,7 @@ export const GET: RequestHandler = ({ url }) => {
 	return json({
 		openapi: '3.1.0',
 		info: {
-			title: 'Keystone API',
+			title: 'Leroa API',
 			version: '1.0.0',
 			description: `Amounts are integer cents. Webhook event types: ${EVENT_TYPES.join(', ')}.`
 		},

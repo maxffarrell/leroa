@@ -33,18 +33,13 @@
 	<Card.Header>
 		<Card.Title>Webhooks</Card.Title>
 		<Card.Description>
-			Keystone POSTs every event as JSON. Verify the <code>x-keystone-signature</code> header:
+			Leroa POSTs every event as JSON. Verify the <code>x-leroa-signature</code> header:
 			<code>sha256=HMAC(secret, body)</code>.
 		</Card.Description>
 	</Card.Header>
 	<Card.Content class="space-y-4">
 		<form class="flex gap-2" onsubmit={add}>
-			<Input
-				type="url"
-				placeholder="https://example.com/keystone-webhook"
-				required
-				bind:value={url}
-			/>
+			<Input type="url" placeholder="https://example.com/leroa-webhook" required bind:value={url} />
 			<Button type="submit">Add</Button>
 		</form>
 		{#if hooks.length}

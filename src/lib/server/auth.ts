@@ -9,7 +9,7 @@ import { db } from '#lib/server/db/index.ts';
 import { enterprisePlugins } from '#lib/server/ee/auth.ts';
 
 export const auth = betterAuth({
-	appName: 'Keystone',
+	appName: 'Leroa',
 	baseURL: ORIGIN,
 	secret: BETTER_AUTH_SECRET,
 	database: drizzleAdapter(db, { provider: 'pg' }),

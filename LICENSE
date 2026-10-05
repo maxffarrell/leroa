@@ -1,16 +1,16 @@
-Copyright (c) 2026-present Keystone
+Copyright (c) 2026-present Leroa
 
 Portions of this software are licensed as follows:
 
 * Files marked with `/* @license Enterprise */`, including all content under
-  `src/lib/server/ee/`, are licensed under the Keystone Enterprise License
+  `src/lib/server/ee/`, are licensed under the Leroa Enterprise License
   defined in `ee/LICENSE`.
 * The integration SDK (`packages/integration-sdk/`) and bundled integrations
   (`integrations/`) are licensed under the MIT license in their directories.
 * All other content is licensed under the GNU Affero General Public License v3
   (AGPLv3), reproduced in `LICENSE-AGPL.txt`.
 
-Application exception: programs that interact with Keystone only through its
+Application exception: programs that interact with Leroa only through its
 published interfaces (the REST API, webhooks and the integration SDK) without
-incorporating or modifying Keystone source code are not considered derivative
+incorporating or modifying Leroa source code are not considered derivative
 works and may use any license.

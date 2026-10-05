@@ -1,14 +1,14 @@
 <div align="center">
 
-# Keystone
+# Leroa
 
 **Open-source property management that's fast and easy to use.**
 
-Properties, units, tenants, leases, rent tracking, maintenance, documents and a resident portal, in a keyboard-friendly UI. Self-host for free, or use Keystone Cloud.
+Properties, units, tenants, leases, rent tracking, maintenance, documents and a resident portal, in a keyboard-friendly UI. Self-host for free, or use Leroa Cloud.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkeystone%2Fkeystone&env=DATABASE_URL,BETTER_AUTH_SECRET&envDescription=Postgres%20URL%20and%20a%2032%2B%20char%20random%20secret&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https%3A%2F%2Fgithub.com%2Fkeystone%2Fkeystone&plugins=postgresql&envs=BETTER_AUTH_SECRET&BETTER_AUTH_SECRETDesc=32%2B+random+characters)
-[![Deploy on Hostinger](https://img.shields.io/badge/Deploy%20on-Hostinger-673DE6?logo=hostinger&logoColor=white)](https://www.hostinger.com/vps/docker-hosting?compose=https%3A%2F%2Fraw.githubusercontent.com%2Fkeystone%2Fkeystone%2Fmain%2Fdocker-compose.yml)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmaxffarrell%2Fleroa&env=DATABASE_URL,BETTER_AUTH_SECRET&envDescription=Postgres%20URL%20and%20a%2032%2B%20char%20random%20secret&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https%3A%2F%2Fgithub.com%2Fmaxffarrell%2Fleroa&plugins=postgresql&envs=BETTER_AUTH_SECRET&BETTER_AUTH_SECRETDesc=32%2B+random+characters)
+[![Deploy on Hostinger](https://img.shields.io/badge/Deploy%20on-Hostinger-673DE6?logo=hostinger&logoColor=white)](https://www.hostinger.com/vps/docker-hosting?compose=https%3A%2F%2Fraw.githubusercontent.com%2Fmaxffarrell%2Fleroa%2Fmain%2Fdocker-compose.yml)
 
 </div>
 
@@ -59,14 +59,14 @@ curl -H "Authorization: Bearer ks_..." https://your-host/api/v1/properties
 
 OpenAPI: `/api/v1/openapi.json`. Amounts are integer cents.
 
-Webhooks are signed: `x-keystone-signature: sha256=<hex HMAC-SHA256 of the raw body with your signing secret>`.
+Webhooks are signed: `x-leroa-signature: sha256=<hex HMAC-SHA256 of the raw body with your signing secret>`.
 
 ## Integrations
 
-Integrations live in [`integrations/`](integrations) and are built with [`@keystone/integration-sdk`](packages/integration-sdk) (MIT):
+Integrations live in [`integrations/`](integrations) and are built with [`@leroa/integration-sdk`](packages/integration-sdk) (MIT):
 
 ```ts
-import { defineIntegration } from '@keystone/integration-sdk';
+import { defineIntegration } from '@leroa/integration-sdk';
 
 export default defineIntegration({
 	id: 'my-integration',
@@ -82,7 +82,7 @@ export default defineIntegration({
 });
 ```
 
-Open a pull request. Once it's reviewed and merged, it's available to every Keystone workspace. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Open a pull request. Once it's reviewed and merged, it's available to every Leroa workspace. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Stack
 
@@ -90,10 +90,10 @@ SvelteKit 3 · Svelte 5 (remote functions, async) · Tailwind 4 · shadcn-svelte
 
 ## License
 
-Keystone is open core:
+Leroa is open core:
 
 - Core: [AGPLv3](LICENSE-AGPL.txt)
-- `src/lib/server/ee/` and files marked `/* @license Enterprise */`: [Keystone Enterprise License](ee/LICENSE)
+- `src/lib/server/ee/` and files marked `/* @license Enterprise */`: [Leroa Enterprise License](ee/LICENSE)
 - Integration SDK and integrations: MIT
 
 See [LICENSE](LICENSE).

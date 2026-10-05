@@ -38,7 +38,7 @@
 	}
 </script>
 
-<svelte:head><title>Sign in · Keystone</title></svelte:head>
+<svelte:head><title>Sign in · Leroa</title></svelte:head>
 
 <form class="flex flex-col gap-6" onsubmit={submit}>
 	<div class="space-y-1">
@@ -88,7 +88,7 @@
 		</div>
 	{/if}
 	<p class="text-center text-sm text-muted-foreground">
-		New to Keystone? <a
+		New to Leroa? <a
 			href="/signup{page.url.search}"
 			class="font-medium text-foreground underline-offset-4 hover:underline">Create an account</a
 		>

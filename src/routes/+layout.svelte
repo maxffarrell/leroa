@@ -10,7 +10,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>Keystone</title>
+	<title>Leroa</title>
 </svelte:head>
 
 <ModeWatcher />

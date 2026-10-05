@@ -22,7 +22,7 @@ Before opening a PR run `pnpm check`, `pnpm lint` and `pnpm test`.
 
 ## Contributing an integration
 
-1. Create `integrations/<id>/index.ts` using `defineIntegration` from `@keystone/integration-sdk`.
+1. Create `integrations/<id>/index.ts` using `defineIntegration` from `@leroa/integration-sdk`.
 2. Register it in `integrations/index.ts`.
 3. Integrations must only use `ctx.fetch` for network access, must not store data outside their config, and must handle only the events they declare.
 4. Open a PR. A maintainer reviews the code and the permissions it needs; once merged it ships to every workspace.

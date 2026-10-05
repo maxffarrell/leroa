@@ -22,7 +22,7 @@
 	}
 </script>
 
-<svelte:head><title>Create account · Keystone</title></svelte:head>
+<svelte:head><title>Create account · Leroa</title></svelte:head>
 
 <form class="flex flex-col gap-6" onsubmit={submit}>
 	<div class="space-y-1">

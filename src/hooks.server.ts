@@ -8,7 +8,7 @@ import { isEnterpriseEnabled } from '#lib/server/ee/license.ts';
 export const handle: Handle = async ({ event, resolve }) => {
 	if (isEnterpriseAuthPath(event.url.pathname) && !isEnterpriseEnabled()) {
 		return Response.json(
-			{ error: 'This feature requires Keystone Cloud or an Enterprise license.' },
+			{ error: 'This feature requires Leroa Cloud or an Enterprise license.' },
 			{ status: 402 }
 		);
 	}
