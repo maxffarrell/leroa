@@ -4,23 +4,28 @@ import { requireOrg } from '#lib/server/context.ts';
 import { assertNotDemo } from '#lib/server/demo-mode.ts';
 import * as svc from '#lib/server/services/online-payments.ts';
 
+const providerId = v.pipe(v.string(), v.maxLength(32));
+
 export const getPaymentSettings = query(async () =>
 	svc.paymentSettingsView((await requireOrg()).orgId)
 );
 
-export const setOnlinePayments = command(v.boolean(), async (enabled) => {
+export const setProviderEnabled = command(
+	v.object({ provider: providerId, enabled: v.boolean() }),
+	async ({ provider, enabled }) => {
+		assertNotDemo();
+		await svc.setProviderEnabled(await requireOrg('admin'), provider, enabled);
+		void getPaymentSettings().refresh();
+	}
+);
+
+export const connectProvider = command(providerId, async (provider) => {
 	assertNotDemo();
-	await svc.setOnlinePayments(await requireOrg('admin'), enabled);
-	void getPaymentSettings().refresh();
+	return { url: await svc.connectProvider(await requireOrg('admin'), provider) };
 });
 
-export const connectStripe = command(async () => {
+export const disconnectProvider = command(providerId, async (provider) => {
 	assertNotDemo();
-	return { url: await svc.connectStripe(await requireOrg('admin')) };
-});
-
-export const disconnectStripe = command(async () => {
-	assertNotDemo();
-	await svc.disconnectStripe(await requireOrg('admin'));
+	await svc.disconnectProvider(await requireOrg('admin'), provider);
 	void getPaymentSettings().refresh();
 });

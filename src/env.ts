@@ -39,8 +39,26 @@ export const variables = defineEnvVars({
 	},
 	STRIPE_WEBHOOK_SECRET: {
 		description:
-			'Signing secret(s) for `/api/stripe/webhook`. Comma-separate several (e.g. account and Connect endpoints).',
+			'Signing secret(s) for `/api/payments/stripe/webhook`. Comma-separate several (e.g. account and Connect endpoints).',
 		schema: (value) => value || undefined
+	},
+	BILT_CLIENT_ID: {
+		description:
+			'Bilt Checkout partner client ID, issued by Bilt at onboarding. Lets tenants pay rent with Bilt.',
+		schema: (value) => value || undefined
+	},
+	BILT_CLIENT_SECRET: {
+		description: 'Bilt Checkout partner client secret.',
+		schema: (value) => value || undefined
+	},
+	BILT_WEBHOOK_SECRET: {
+		description:
+			'Signing secret(s) (`whsec_…`) for `/api/payments/bilt/webhook`. Comma-separate several during rotation.',
+		schema: (value) => value || undefined
+	},
+	BILT_ENVIRONMENT: {
+		description: '`production` (default) or `staging`.',
+		schema: (value) => (value === 'staging' ? 'staging' : 'production')
 	},
 	CRON_SECRET: {
 		description:

@@ -33,7 +33,10 @@ export const createPortalLink = command(v.string(), async (tenantId) => {
 	return { path: `/portal/claim/${portalToken(t.id)}` };
 });
 
-export const payOnline = command(idSchema, async (leaseId) => {
-	assertNotDemo();
-	return { url: await createCheckout(requireUser().user.id, leaseId) };
-});
+export const payOnline = command(
+	v.object({ leaseId: idSchema, provider: v.pipe(v.string(), v.maxLength(32)) }),
+	async ({ leaseId, provider }) => {
+		assertNotDemo();
+		return createCheckout(requireUser().user.id, leaseId, provider);
+	}
+);

@@ -1,5 +1,5 @@
 {
-  "id": "ee7f4a40-bf79-4ce7-83e5-c5af44555fb6",
+  "id": "088227f8-735f-45e0-8e7c-63a224e19b6f",
   "prevId": "a1e55e55-0975-4e7f-9de7-60abb41d5e6e",
   "version": "7",
   "dialect": "postgresql",
@@ -1477,31 +1477,37 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.payment_settings": {
-      "name": "payment_settings",
+    "public.payment_provider": {
+      "name": "payment_provider",
       "schema": "",
       "columns": {
         "organization_id": {
           "name": "organization_id",
           "type": "text",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
-        "online_enabled": {
-          "name": "online_enabled",
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
         },
-        "stripe_account_id": {
-          "name": "stripe_account_id",
+        "account_id": {
+          "name": "account_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "stripe_charges_enabled": {
-          "name": "stripe_charges_enabled",
+        "account_ready": {
+          "name": "account_ready",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -1515,11 +1521,33 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "payment_provider_account_idx": {
+          "name": "payment_provider_account_idx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "payment_settings_organization_id_organization_id_fk": {
-          "name": "payment_settings_organization_id_organization_id_fk",
-          "tableFrom": "payment_settings",
+        "payment_provider_organization_id_organization_id_fk": {
+          "name": "payment_provider_organization_id_organization_id_fk",
+          "tableFrom": "payment_provider",
           "tableTo": "organization",
           "columnsFrom": [
             "organization_id"
@@ -1531,7 +1559,15 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "payment_provider_organization_id_provider_pk": {
+          "name": "payment_provider_organization_id_provider_pk",
+          "columns": [
+            "organization_id",
+            "provider"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -3185,6 +3221,7 @@
         "check",
         "cash",
         "transfer",
+        "bilt",
         "other"
       ]
     },

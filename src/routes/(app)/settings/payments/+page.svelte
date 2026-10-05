@@ -6,10 +6,10 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import {
-		connectStripe,
-		disconnectStripe,
+		connectProvider,
+		disconnectProvider,
 		getPaymentSettings,
-		setOnlinePayments
+		setProviderEnabled
 	} from '#lib/remote/payments.remote.ts';
 	import { toast } from 'svelte-sonner';
 	import Copy from '@lucide/svelte/icons/copy';
@@ -17,44 +17,57 @@
 
 	const s = $derived(await getPaymentSettings());
 	const canEdit = $derived(page.data.role !== 'member' && !page.data.demo);
-	let busy = $state(false);
+	let busy = $state<string | null>(null);
 
-	const fail = (err: unknown, fallback: string) =>
-		toast.error((err as { body?: { message?: string } })?.body?.message ?? fallback);
-
-	async function run(fn: () => Promise<void>, fallback: string) {
-		busy = true;
+	async function run(id: string, fn: () => Promise<void>, fallback: string) {
+		busy = id;
 		try {
 			await fn();
 		} catch (err) {
-			fail(err, fallback);
+			toast.error((err as { body?: { message?: string } })?.body?.message ?? fallback);
 		} finally {
-			busy = false;
+			busy = null;
 		}
 	}
 
-	const connect = () =>
-		run(async () => {
-			const { url } = await connectStripe();
-			location.assign(url);
-		}, 'Could not start Stripe onboarding');
+	const connect = (id: string, name: string) =>
+		run(
+			id,
+			async () => {
+				const { url } = await connectProvider(id);
+				location.assign(url);
+			},
+			`Could not start ${name} onboarding`
+		);
 
-	const disconnect = () =>
-		run(async () => {
-			if (!confirm('Disconnect this Stripe account? Tenants will no longer be able to pay online.'))
-				return;
-			await disconnectStripe();
-			toast.success('Stripe disconnected');
-		}, 'Could not disconnect');
+	const disconnect = (id: string, name: string) =>
+		run(
+			id,
+			async () => {
+				if (
+					!confirm(
+						`Disconnect this ${name} account? Tenants will no longer be able to pay with it.`
+					)
+				)
+					return;
+				await disconnectProvider(id);
+				toast.success(`${name} disconnected`);
+			},
+			'Could not disconnect'
+		);
 
-	const toggle = (enabled: boolean) =>
-		run(async () => {
-			await setOnlinePayments(enabled);
-			toast.success(enabled ? 'Tenants can now pay online' : 'Online payments turned off');
-		}, 'Could not save');
+	const toggle = (id: string, name: string, enabled: boolean) =>
+		run(
+			id,
+			async () => {
+				await setProviderEnabled({ provider: id, enabled });
+				toast.success(enabled ? `Tenants can now pay with ${name}` : `${name} turned off`);
+			},
+			'Could not save'
+		);
 
-	async function copyWebhook() {
-		await navigator.clipboard.writeText(s.webhookUrl);
+	async function copy(url: string) {
+		await navigator.clipboard.writeText(url);
 		toast.success('Webhook URL copied');
 	}
 </script>
@@ -63,101 +76,125 @@
 	<Card.Header>
 		<Card.Title>Online rent payments</Card.Title>
 		<Card.Description>
-			Tenants pay their balance by card or bank transfer from the portal, through Stripe Checkout.
-			Money goes straight to your Stripe account, and each payment is recorded in Leroa
-			automatically.
+			Let tenants pay their balance from the portal. Money goes straight to the payment provider,
+			never through Leroa. Each payment is recorded automatically and applied to the oldest unpaid
+			charges first.
 		</Card.Description>
 	</Card.Header>
-	<Card.Content>
-		{#if !s.configured}
-			<p class="text-sm text-muted-foreground">
-				Stripe isn't set up on this server. Set <code class="font-mono text-xs"
-					>STRIPE_SECRET_KEY</code
-				>
-				and <code class="font-mono text-xs">STRIPE_WEBHOOK_SECRET</code> to turn this on.
-			</p>
-		{:else}
-			<div class="flex items-start justify-between gap-4">
-				<div class="space-y-0.5">
-					<Label for="pay-online">Let tenants pay in the portal</Label>
-					<p class="text-sm text-muted-foreground">
-						{s.ready
-							? 'A "Pay now" button appears whenever a tenant has a balance.'
-							: 'Connect a Stripe account below first.'}
-					</p>
-				</div>
-				<Switch
-					id="pay-online"
-					checked={s.enabled}
-					disabled={!canEdit || busy || (!s.ready && !s.enabled)}
-					onCheckedChange={toggle}
-				/>
-			</div>
-		{/if}
-	</Card.Content>
 </Card.Root>
 
-{#if s.configured}
+{#each s.providers as p (p.id)}
 	<Card.Root>
 		<Card.Header>
-			<Card.Title>Stripe account</Card.Title>
-			<Card.Description>
-				{#if s.account}
-					Payments go to your connected Stripe account.
-				{:else if s.requiresConnect}
-					Connect your Stripe account to receive payments.
-				{:else}
-					Payments go to this server's Stripe account. Connect a different account if this workspace
-					should be paid separately.
+			<div class="flex items-center gap-2">
+				<Card.Title>{p.name}</Card.Title>
+				{#if !p.configured}
+					<Badge variant="outline">Not set up</Badge>
+				{:else if p.enabled && p.ready}
+					<Badge variant="secondary">On</Badge>
+				{:else if !p.ready}
+					<Badge variant="outline">Needs setup</Badge>
 				{/if}
-			</Card.Description>
+			</div>
+			<Card.Description>{p.description}</Card.Description>
 		</Card.Header>
-		<Card.Content class="flex flex-wrap items-center gap-3">
-			{#if s.account}
-				<code class="rounded bg-muted px-2 py-1 font-mono text-sm">{s.account.id}</code>
-				{#if s.account.chargesEnabled}
-					<Badge variant="secondary">Ready</Badge>
-				{:else}
-					<Badge variant="outline">Setup incomplete</Badge>
+		<Card.Content class="space-y-5">
+			{#if !p.configured}
+				<p class="text-sm text-muted-foreground">
+					Set
+					{#each p.env as name, i (name)}<code class="font-mono text-xs">{name}</code>{i <
+						p.env.length - 2
+							? ', '
+							: i === p.env.length - 2
+								? ' and '
+								: ''}{/each}
+					on the server to turn this on.
+				</p>
+			{:else}
+				<div class="flex items-start justify-between gap-4">
+					<div class="space-y-0.5">
+						<Label for="pay-{p.id}">Offer {p.name} in the portal</Label>
+						<p class="text-sm text-muted-foreground">
+							{p.ready
+								? 'Tenants see a pay button whenever they have a balance.'
+								: (p.hint ?? 'Finish setup first.')}
+						</p>
+					</div>
+					<Switch
+						id="pay-{p.id}"
+						checked={p.enabled}
+						disabled={!canEdit || busy !== null || (!p.ready && !p.enabled)}
+						onCheckedChange={(v) => toggle(p.id, p.name, v)}
+					/>
+				</div>
+
+				{#if p.connectable}
+					<div class="space-y-2">
+						<p class="text-sm font-medium">Account</p>
+						<p class="text-sm text-muted-foreground">
+							{#if p.account}
+								Payments go to your connected {p.name} account.
+							{:else if s.requiresConnect}
+								Connect your {p.name} account to receive payments.
+							{:else}
+								Payments go to this server's {p.name} account. Connect a different account if this workspace
+								should be paid separately.
+							{/if}
+						</p>
+						<div class="flex flex-wrap items-center gap-3">
+							{#if p.account}
+								<code class="rounded bg-muted px-2 py-1 font-mono text-sm">{p.account.id}</code>
+								{#if p.account.ready}
+									<Badge variant="secondary">Ready</Badge>
+								{:else}
+									<Badge variant="outline">Setup incomplete</Badge>
+								{/if}
+							{/if}
+							{#if canEdit}
+								<div class="flex flex-wrap gap-2 sm:ml-auto">
+									{#if !p.account || !p.account.ready}
+										<Button size="sm" disabled={busy !== null} onclick={() => connect(p.id, p.name)}
+											><ExternalLink />
+											{p.account ? `Finish setup on ${p.name}` : `Connect ${p.name}`}</Button
+										>
+									{/if}
+									{#if p.account}
+										<Button
+											size="sm"
+											variant="outline"
+											disabled={busy !== null}
+											onclick={() => disconnect(p.id, p.name)}>Disconnect</Button
+										>
+									{/if}
+								</div>
+							{/if}
+						</div>
+					</div>
 				{/if}
-			{/if}
-			{#if canEdit}
-				<div class="flex flex-wrap gap-2 sm:ml-auto">
-					{#if !s.account || !s.account.chargesEnabled}
-						<Button size="sm" disabled={busy} onclick={connect}
-							><ExternalLink />
-							{s.account ? 'Finish setup on Stripe' : 'Connect Stripe'}</Button
+
+				<div class="space-y-2">
+					<p class="text-sm font-medium">Webhook</p>
+					<p class="text-sm text-muted-foreground">
+						Events:
+						{#each p.webhookEvents as e, i (e)}<code class="font-mono text-xs">{e}</code>{i <
+							p.webhookEvents.length - 1
+								? ', '
+								: ''}{/each}.
+						{p.webhookNote ?? ''}
+					</p>
+					<div class="flex items-center gap-2">
+						<code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-sm"
+							>{p.webhookUrl}</code
 						>
-					{/if}
-					{#if s.account}
-						<Button size="sm" variant="outline" disabled={busy} onclick={disconnect}
-							>Disconnect</Button
+						<Button
+							size="icon"
+							variant="outline"
+							aria-label="Copy {p.name} webhook URL"
+							onclick={() => copy(p.webhookUrl)}><Copy /></Button
 						>
-					{/if}
+					</div>
 				</div>
 			{/if}
 		</Card.Content>
 	</Card.Root>
-
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Webhook</Card.Title>
-			<Card.Description>
-				Add this endpoint in Stripe for <code class="font-mono text-xs"
-					>checkout.session.completed</code
-				>,
-				<code class="font-mono text-xs">checkout.session.async_payment_succeeded</code>
-				and <code class="font-mono text-xs">account.updated</code>. For connected accounts, add it
-				again with "Listen to events on Connected accounts".
-			</Card.Description>
-		</Card.Header>
-		<Card.Content class="flex items-center gap-2">
-			<code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-sm"
-				>{s.webhookUrl}</code
-			>
-			<Button size="icon" variant="outline" aria-label="Copy webhook URL" onclick={copyWebhook}
-				><Copy /></Button
-			>
-		</Card.Content>
-	</Card.Root>
-{/if}
+{/each}

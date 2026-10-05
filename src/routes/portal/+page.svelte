@@ -19,6 +19,7 @@
 		check: 'Check',
 		cash: 'Cash',
 		transfer: 'Wire / transfer',
+		bilt: 'Bilt',
 		other: 'Other'
 	};
 	const p = $derived(await getPortal());
@@ -36,12 +37,21 @@
 		}
 	});
 
-	async function pay(leaseId: string) {
-		paying = leaseId;
+	async function pay(leaseId: string, provider: string, newTab: boolean) {
+		paying = `${leaseId}:${provider}`;
+		// Open the tab synchronously so popup blockers allow it.
+		const tab = newTab ? window.open('about:blank', '_blank') : null;
 		try {
-			const { url } = await payOnline(leaseId);
-			location.assign(url);
+			const { url } = await payOnline({ leaseId, provider });
+			if (tab) {
+				tab.location.href = url;
+				paying = null;
+				toast.info('Finish paying in the new tab. Your balance updates once the payment clears.');
+			} else {
+				location.assign(url);
+			}
 		} catch (err) {
+			tab?.close();
 			paying = null;
 			toast.error(
 				(err as { body?: { message?: string } })?.body?.message ?? 'Could not start payment'
@@ -65,6 +75,8 @@
 		}
 	}
 </script>
+
+<svelte:window onfocus={() => void getPortal().refresh()} />
 
 <svelte:head><title>Resident portal</title></svelte:head>
 
@@ -98,10 +110,23 @@
 					>
 						{formatMoney(Math.max(0, l.balance), l.currency)}
 					</p>
-					{#if l.canPayOnline && l.balance > 0}
-						<Button class="mt-2" size="sm" disabled={paying !== null} onclick={() => pay(l.id)}
-							><CreditCard /> {paying === l.id ? 'Opening…' : 'Pay now'}</Button
-						>
+					{#if l.payWith.length && l.balance > 0}
+						<div class="mt-2 flex flex-wrap gap-2">
+							{#each l.payWith as option, i (option.id)}
+								<Button
+									size="sm"
+									variant={i === 0 ? 'default' : 'outline'}
+									disabled={paying !== null}
+									onclick={() => pay(l.id, option.id, option.newTab)}
+									><CreditCard />
+									{paying === `${l.id}:${option.id}`
+										? 'Opening…'
+										: l.payWith.length === 1
+											? 'Pay now'
+											: option.label}</Button
+								>
+							{/each}
+						</div>
 					{/if}
 				</div>
 				<div>

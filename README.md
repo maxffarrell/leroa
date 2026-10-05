@@ -61,13 +61,27 @@ curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://pm.example.com/api/cro
 
 ## Online rent payments
 
-Tenants can pay their balance by card or bank transfer from the portal through Stripe Checkout. Leroa never holds the money: it goes straight to Stripe, and a webhook records each payment.
+Tenants can pay their balance from the portal. Leroa never holds the money: the payment provider takes it, and a signed webhook records each payment, applied to the lease's oldest unpaid charges first. Turn providers on in **Settings → Payments**.
+
+Each provider is a module in [`src/lib/server/payments`](src/lib/server/payments) implementing `PaymentProvider` (checkout, webhook verification, optional connected accounts). Webhooks arrive at `/api/payments/<provider>/webhook`.
+
+### Stripe
+
+Card and bank payments through Stripe Checkout.
 
 1. Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
-2. In Stripe, add a webhook to `https://<your-domain>/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded` and `account.updated`.
-3. Turn it on in **Settings → Payments**.
+2. In Stripe, add a webhook to `https://<your-domain>/api/payments/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded` and `account.updated`.
 
 Self-hosted installs take payments into the Stripe account of `STRIPE_SECRET_KEY`. A workspace can instead connect its own account through Stripe Connect. That is required on Leroa Cloud (`LEROA_CLOUD=true`). Connected-account events need a second webhook endpoint with "Listen to events on Connected accounts". Put both signing secrets in `STRIPE_WEBHOOK_SECRET`, separated by a comma.
+
+### Bilt
+
+Tenants pay with their Bilt account and earn points on rent, through [Bilt Checkout](https://developers.bilt.com/docs/). Bilt's partner API is invite-only and still a draft, so this needs Bilt partner onboarding (email checkout@bilt.com).
+
+1. Get a client ID and secret from Bilt, and have them register `https://<your-domain>/api/payments/bilt/webhook`.
+2. Set `BILT_CLIENT_ID`, `BILT_CLIENT_SECRET` and `BILT_WEBHOOK_SECRET` (and `BILT_ENVIRONMENT=staging` while testing).
+
+Bilt is only offered on self-hosted installs and for leases in USD. Tenants must link their Bilt account first. Checkout opens in a new tab.
 
 ## Public demo
 

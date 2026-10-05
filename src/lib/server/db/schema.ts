@@ -199,6 +199,7 @@ export const paymentMethod = pgEnum('payment_method', [
 	'check',
 	'cash',
 	'transfer',
+	'bilt',
 	'other'
 ]);
 
@@ -217,7 +218,7 @@ export const payment = pgTable(
 		reference: text('reference'),
 		notes: text('notes'),
 		recordedBy: text('recorded_by').references(() => user.id, { onDelete: 'set null' }),
-		/** Payment-processor ID (e.g. Stripe PaymentIntent) for payments made online. */
+		/** Provider payment ID (e.g. a Stripe PaymentIntent) for payments made online. */
 		externalId: text('external_id'),
 		...timestamps
 	},
@@ -321,18 +322,28 @@ export const notificationSettings = pgTable('notification_settings', {
 		.$onUpdate(() => new Date())
 });
 
-export const paymentSettings = pgTable('payment_settings', {
-	organizationId: text('organization_id')
-		.primaryKey()
-		.references(() => organization.id, { onDelete: 'cascade' }),
-	onlineEnabled: boolean('online_enabled').notNull().default(false),
-	stripeAccountId: text('stripe_account_id'),
-	stripeChargesEnabled: boolean('stripe_charges_enabled').notNull().default(false),
-	updatedAt: timestamp('updated_at', { withTimezone: true })
-		.notNull()
-		.defaultNow()
-		.$onUpdate(() => new Date())
-});
+/** A workspace's settings for one online payment provider (`stripe`, `bilt`, …). */
+export const paymentProvider = pgTable(
+	'payment_provider',
+	{
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		provider: text('provider').notNull(),
+		enabled: boolean('enabled').notNull().default(false),
+		/** The workspace's own account with the provider, e.g. a Stripe Connect account. */
+		accountId: text('account_id'),
+		accountReady: boolean('account_ready').notNull().default(false),
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date())
+	},
+	(t) => [
+		primaryKey({ columns: [t.organizationId, t.provider] }),
+		index('payment_provider_account_idx').on(t.provider, t.accountId)
+	]
+);
 
 /** One row per email sent, so each notice goes out once per recipient. */
 export const notificationLog = pgTable(
