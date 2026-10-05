@@ -299,3 +299,33 @@ export const applicationApprove = v.object({
 	rentAmount: v.pipe(cents, v.minValue(1, 'Rent must be positive')),
 	depositAmount: v.optional(cents, 0)
 });
+
+export const inspectionKinds = ['move_in', 'move_out', 'routine'] as const;
+export const itemConditions = ['good', 'fair', 'poor', 'damaged', 'na'] as const;
+
+export const inspectionCreate = v.object({
+	unitId: idSchema,
+	kind: v.picklist(inspectionKinds),
+	leaseId: v.optional(v.nullable(idSchema)),
+	scheduledFor: v.optional(v.nullable(isoDate))
+});
+export const inspectionUpdate = v.object({
+	id: idSchema,
+	scheduledFor: v.optional(v.nullable(isoDate)),
+	summary: optionalText
+});
+export const inspectionItemAdd = v.object({
+	inspectionId: idSchema,
+	area: requiredText('Area'),
+	label: requiredText('Item')
+});
+export const inspectionItemUpdate = v.object({
+	id: idSchema,
+	label: v.optional(requiredText('Item')),
+	condition: v.optional(v.nullable(v.picklist(itemConditions))),
+	notes: optionalText
+});
+export const inspectionAcknowledge = v.object({
+	id: idSchema,
+	comment: v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(2000))))
+});

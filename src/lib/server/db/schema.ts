@@ -586,3 +586,55 @@ export const rentalApplication = pgTable(
 		index('application_email_idx').on(t.listingId, t.email)
 	]
 );
+
+export const inspectionKind = pgEnum('inspection_kind', ['move_in', 'move_out', 'routine']);
+export const inspectionStatus = pgEnum('inspection_status', ['in_progress', 'completed']);
+export const itemCondition = pgEnum('item_condition', ['good', 'fair', 'poor', 'damaged', 'na']);
+
+/** A walkthrough of one unit. Completed inspections are frozen and stored as a PDF. */
+export const inspection = pgTable(
+	'inspection',
+	{
+		id: id(),
+		organizationId: orgId(),
+		unitId: text('unit_id')
+			.notNull()
+			.references(() => unit.id, { onDelete: 'cascade' }),
+		leaseId: text('lease_id').references(() => lease.id, { onDelete: 'set null' }),
+		kind: inspectionKind('kind').notNull(),
+		status: inspectionStatus('status').notNull().default('in_progress'),
+		scheduledFor: date('scheduled_for', { mode: 'string' }),
+		summary: text('summary'),
+		completedAt: timestamp('completed_at', { withTimezone: true }),
+		completedBy: text('completed_by').references(() => user.id, { onDelete: 'set null' }),
+		documentId: text('document_id').references(() => document.id, { onDelete: 'set null' }),
+		/** Set when a tenant on the lease reviews the completed report in the portal. */
+		acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+		acknowledgedBy: text('acknowledged_by').references(() => user.id, { onDelete: 'set null' }),
+		tenantComment: text('tenant_comment'),
+		createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+		...timestamps
+	},
+	(t) => [
+		index('inspection_org_idx').on(t.organizationId, t.status),
+		index('inspection_lease_idx').on(t.leaseId),
+		index('inspection_unit_idx').on(t.unitId)
+	]
+);
+
+export const inspectionItem = pgTable(
+	'inspection_item',
+	{
+		id: id(),
+		organizationId: orgId(),
+		inspectionId: text('inspection_id')
+			.notNull()
+			.references(() => inspection.id, { onDelete: 'cascade' }),
+		area: text('area').notNull(),
+		label: text('label').notNull(),
+		condition: itemCondition('condition'),
+		notes: text('notes'),
+		position: integer('position').notNull().default(0)
+	},
+	(t) => [index('inspection_item_inspection_idx').on(t.inspectionId, t.position)]
+);

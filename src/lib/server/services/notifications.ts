@@ -438,3 +438,53 @@ export async function notifyVendorUpdate(
 		});
 	}
 }
+
+/** Asks residents to review a completed move-in or move-out report in the portal. */
+export async function notifyInspectionReady(
+	orgId: string,
+	i: { id: string; kind: 'move_in' | 'move_out' | 'routine' },
+	residents: { name: string; email: string | null }[]
+) {
+	const org = await orgName(orgId);
+	const what = i.kind === 'move_in' ? 'move-in' : 'move-out';
+	for (const r of residents) {
+		if (!r.email) continue;
+		await notifyOnce(orgId, 'inspection.ready', i.id, {
+			to: r.email,
+			subject: `Your ${what} inspection report is ready`,
+			...renderEmail({
+				orgName: org,
+				heading: `Review your ${what} inspection`,
+				lines: [
+					`Hi ${r.name.split(' ')[0] || 'there'},`,
+					`${org} finished the ${what} inspection of your home. Please review the report and let them know if anything looks wrong.`
+				],
+				action: { label: 'Review report', url: `${appOrigin()}/portal` }
+			})
+		});
+	}
+}
+
+/** Tells owners and admins that a resident reviewed an inspection report. */
+export async function notifyInspectionAcknowledged(
+	orgId: string,
+	i: { id: string; tenantComment: string | null }
+) {
+	const org = await orgName(orgId);
+	for (const to of await managerEmails(orgId)) {
+		await notifyOnce(orgId, 'inspection.acknowledged', i.id, {
+			to,
+			subject: i.tenantComment
+				? 'A resident commented on an inspection report'
+				: 'A resident reviewed an inspection report',
+			...renderEmail({
+				orgName: org,
+				heading: 'Inspection report reviewed',
+				lines: i.tenantComment
+					? ['The resident reviewed the report and left comments:', `“${i.tenantComment}”`]
+					: ['The resident reviewed the report with no comments.'],
+				action: { label: 'Open inspection', url: `${appOrigin()}/inspections/${i.id}` }
+			})
+		});
+	}
+}

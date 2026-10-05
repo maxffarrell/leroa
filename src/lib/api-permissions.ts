@@ -9,6 +9,7 @@ export const API_RESOURCES = [
 	'payments',
 	'tickets',
 	'vendors',
+	'inspections',
 	'listings',
 	'applications'
 ] as const;
@@ -30,6 +31,7 @@ export const API_RESOURCE_LABELS: Record<ApiResource, string> = {
 	payments: 'Payments',
 	tickets: 'Maintenance tickets',
 	vendors: 'Vendors',
+	inspections: 'Inspections',
 	listings: 'Listings',
 	applications: 'Rental applications'
 };

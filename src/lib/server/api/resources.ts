@@ -6,6 +6,7 @@ import * as leasing from '#lib/server/services/leasing.ts';
 import * as maintenance from '#lib/server/services/maintenance.ts';
 import * as listings from '#lib/server/services/listings.ts';
 import * as vendors from '#lib/server/services/vendors.ts';
+import * as inspections from '#lib/server/services/inspections.ts';
 import * as s from '#lib/schemas.ts';
 
 type Resource = {
@@ -86,6 +87,14 @@ export const resources: Record<string, Resource> = {
 		get: (ctx, id) => vendors.getVendor(ctx.orgId, id),
 		create: { schema: s.vendorInput, run: vendors.createVendor as never },
 		update: { schema: s.vendorUpdate, run: vendors.updateVendor as never }
+	},
+	inspections: {
+		description: 'Move-in, move-out and routine unit inspections (`?leaseId=` to filter)',
+		list: (ctx, url) =>
+			inspections.listInspections(ctx.orgId, {
+				leaseId: url.searchParams.get('leaseId') ?? undefined
+			}),
+		get: (ctx, id) => inspections.getInspection(ctx.orgId, id)
 	},
 	listings: {
 		description: 'Vacancy listings, published or not',

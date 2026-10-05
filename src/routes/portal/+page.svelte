@@ -1,6 +1,7 @@
 <script lang="ts">
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import PortalAgreements from '#lib/components/app/portal-agreements.svelte';
+	import PortalInspections from '#lib/components/app/portal-inspections.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -162,6 +163,11 @@
 			{#if l.agreements.length}
 				<Card.Content class="space-y-4">
 					<PortalAgreements agreements={l.agreements} />
+				</Card.Content>
+			{/if}
+			{#if l.inspections.length}
+				<Card.Content class="space-y-4">
+					<PortalInspections inspections={l.inspections} />
 				</Card.Content>
 			{/if}
 			<Card.Content>

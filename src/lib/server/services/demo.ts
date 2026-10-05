@@ -1,7 +1,9 @@
 import type { OrgContext } from '#lib/server/context.ts';
 import { createVendor } from './vendors.ts';
 import { db } from '#lib/server/db/index.ts';
-import { rentalApplication, ticketNote } from '#lib/server/db/schema.ts';
+import { and, eq, inArray } from 'drizzle-orm';
+import { inspectionItem, rentalApplication, ticketNote } from '#lib/server/db/schema.ts';
+import { completeInspection, createInspection } from './inspections.ts';
 import { addDays, monthKey, todayISO } from '#lib/format.ts';
 import { createProperty, createTenant, getProperty, updateUnit } from './portfolio.ts';
 import { createListing, setListingStatus, updateListing } from './listings.ts';
@@ -198,8 +200,75 @@ export async function loadDemoData(ctx: OrgContext) {
 				body: 'Drain hose is cracked. Replacement part arrives Thursday; I will be back then.'
 			});
 	}
+	await loadDemoInspections(ctx, leases[0]!, leases[1]!, start);
 	await loadDemoListings(ctx, units.slice(people.length));
 	return { properties: 3, leases: leases.length };
+}
+
+async function rate(
+	inspectionId: string,
+	area: string,
+	label: string,
+	condition: 'fair' | 'poor' | 'damaged',
+	notes: string
+) {
+	await db
+		.update(inspectionItem)
+		.set({ condition, notes })
+		.where(
+			and(
+				eq(inspectionItem.inspectionId, inspectionId),
+				eq(inspectionItem.area, area),
+				eq(inspectionItem.label, label)
+			)
+		);
+}
+
+/** A completed move-in report on one lease and a routine walkthrough half done on another. */
+async function loadDemoInspections(
+	ctx: OrgContext,
+	moveIn: { id: string; unitId: string },
+	routine: { id: string; unitId: string },
+	start: string
+) {
+	const mi = await createInspection(ctx, {
+		unitId: moveIn.unitId,
+		kind: 'move_in',
+		leaseId: moveIn.id,
+		scheduledFor: start
+	});
+	await db
+		.update(inspectionItem)
+		.set({ condition: 'good' })
+		.where(eq(inspectionItem.inspectionId, mi.id));
+	await rate(mi.id, 'Living room', 'Floor', 'fair', 'Light scratches by the balcony door.');
+	await rate(mi.id, 'Kitchen', 'Stove & oven', 'fair', 'Front-left burner is slow to light.');
+	await completeInspection(ctx, mi.id, 'Clean and ready for move-in. Two minor items noted.', {
+		notify: false
+	});
+
+	const ri = await createInspection(ctx, {
+		unitId: routine.unitId,
+		kind: 'routine',
+		leaseId: routine.id,
+		scheduledFor: todayISO()
+	});
+	const first = await db
+		.select({ id: inspectionItem.id })
+		.from(inspectionItem)
+		.where(eq(inspectionItem.inspectionId, ri.id))
+		.orderBy(inspectionItem.position)
+		.limit(9);
+	await db
+		.update(inspectionItem)
+		.set({ condition: 'good' })
+		.where(
+			inArray(
+				inspectionItem.id,
+				first.map((r) => r.id)
+			)
+		);
+	await rate(ri.id, 'Bathroom', 'Exhaust fan', 'damaged', 'Fan rattles and barely pulls air.');
 }
 
 const vacancies = [

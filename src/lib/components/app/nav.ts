@@ -9,6 +9,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import Puzzle from '@lucide/svelte/icons/puzzle';
 import Megaphone from '@lucide/svelte/icons/megaphone';
 import HardHat from '@lucide/svelte/icons/hard-hat';
+import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 
 /** `key` is the second key of the `g <key>` keyboard shortcut. */
 export const mainNav = [
@@ -20,6 +21,7 @@ export const mainNav = [
 	{ href: '/rent', label: 'Rent', icon: Wallet, key: 'r' },
 	{ href: '/maintenance', label: 'Maintenance', icon: Wrench, key: 'm' },
 	{ href: '/vendors', label: 'Vendors', icon: HardHat, key: 'v' },
+	{ href: '/inspections', label: 'Inspections', icon: ClipboardCheck, key: 'n' },
 	{ href: '/documents', label: 'Documents', icon: FolderOpen, key: 'o' }
 ] as const;
 

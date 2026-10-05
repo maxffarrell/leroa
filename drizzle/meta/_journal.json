@@ -64,6 +64,13 @@
       "when": 1791178463382,
       "tag": "0008_drop_ticket_vendor_text",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791180904114,
+      "tag": "0009_inspections",
+      "breakpoints": true
     }
   ]
 }

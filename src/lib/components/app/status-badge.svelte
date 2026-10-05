@@ -6,6 +6,7 @@
 		active: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
 		occupied: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
 		done: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+		completed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
 		partial: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
 		notice: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
 		on_hold: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',

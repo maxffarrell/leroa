@@ -179,3 +179,187 @@ export async function agreementPdf(input: AgreementPdfInput) {
 	);
 	return pdf.save();
 }
+
+export type InspectionPdfInput = {
+	title: string;
+	orgName: string;
+	address: string;
+	tenants: string[];
+	inspectedAt: Date | null;
+	inspector: string | null;
+	summary: string | null;
+	watermark: string | null;
+	areas: {
+		area: string;
+		items: {
+			label: string;
+			condition: string;
+			before: string | null;
+			notes: string | null;
+			photos: { type: string; data: Uint8Array }[];
+		}[];
+	}[];
+	acknowledgement: { at: Date; name: string; comment: string | null } | null;
+};
+
+const PHOTO = { w: 112, h: 84, gap: 8 };
+
+/** Inspection report with ratings, notes and embedded JPEG/PNG photos. */
+export async function inspectionPdf(input: InspectionPdfInput) {
+	const pdf = await PDFDocument.create();
+	pdf.setTitle(toWinAnsi(input.title));
+	pdf.setAuthor(toWinAnsi(input.orgName));
+	pdf.setProducer('Leroa');
+	pdf.setCreator('Leroa');
+	const regular = await pdf.embedFont(StandardFonts.Helvetica);
+	const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+	const width = PAGE.w - PAGE.margin * 2;
+
+	let page!: PDFPage;
+	let y = 0;
+	const newPage = () => {
+		page = pdf.addPage([PAGE.w, PAGE.h]);
+		y = PAGE.h - PAGE.margin;
+		if (input.watermark)
+			page.drawText(toWinAnsi(input.watermark), {
+				x: PAGE.margin,
+				y: PAGE.h - 36,
+				size: SIZE.small,
+				font: bold,
+				color: rgb(0.75, 0.2, 0.2)
+			});
+	};
+	const ensure = (h: number) => {
+		if (y - h < PAGE.margin + 16) newPage();
+	};
+	const write = (
+		text: string,
+		font: PDFFont,
+		size: number,
+		color = ink,
+		gapAfter = 0,
+		w = width,
+		x = PAGE.margin
+	) => {
+		for (const line of wrap(toWinAnsi(text), font, size, w)) {
+			ensure(size * LEAD);
+			y -= size * LEAD;
+			page.drawText(line, { x, y, size, font, color });
+		}
+		y -= gapAfter;
+	};
+	const bad = new Set(['Poor', 'Damaged']);
+
+	newPage();
+	write(input.orgName, regular, SIZE.body, muted, 6);
+	write(input.title, bold, SIZE.title, ink, 8);
+	write(input.address, regular, SIZE.body, ink, 2);
+	if (input.tenants.length) write(`Residents: ${input.tenants.join(', ')}`, regular, SIZE.body);
+	write(
+		`Inspected ${fmt(input.inspectedAt)}${input.inspector ? ` by ${input.inspector}` : ''}`,
+		regular,
+		SIZE.body,
+		muted,
+		8
+	);
+	if (input.summary) {
+		write('Summary', bold, SIZE.heading, ink, 2);
+		for (const para of input.summary.replace(/\r\n?/g, '\n').split('\n')) {
+			if (para.trim()) write(para, regular, SIZE.body);
+			else y -= SIZE.body * 0.6;
+		}
+		y -= 6;
+	}
+
+	const rateW = 150;
+	for (const group of input.areas) {
+		y -= 8;
+		ensure(SIZE.heading * LEAD * 3);
+		write(group.area, bold, SIZE.heading, ink, 2);
+		for (const item of group.items) {
+			ensure(SIZE.body * LEAD * 2);
+			y -= 4;
+			page.drawLine({
+				start: { x: PAGE.margin, y },
+				end: { x: PAGE.w - PAGE.margin, y },
+				thickness: 0.25,
+				color: rgb(0.85, 0.85, 0.87)
+			});
+			const top = y;
+			write(item.label, regular, SIZE.body, ink, 0, width - rateW - 8);
+			const afterLabel = y;
+			y = top;
+			const rating = item.before ? `${item.condition}  (move-in: ${item.before})` : item.condition;
+			write(
+				rating,
+				bold,
+				SIZE.body,
+				bad.has(item.condition) ? rgb(0.75, 0.2, 0.2) : ink,
+				0,
+				rateW,
+				PAGE.w - PAGE.margin - rateW
+			);
+			y = Math.min(y, afterLabel);
+			if (item.notes) write(item.notes, regular, SIZE.small + 1, muted, 0, width - rateW - 8);
+			const photos = [];
+			for (const p of item.photos) {
+				try {
+					photos.push(
+						p.type === 'image/png' ? await pdf.embedPng(p.data) : await pdf.embedJpg(p.data)
+					);
+				} catch {
+					// Skip photos pdf-lib cannot decode.
+				}
+			}
+			const perRow = Math.floor((width + PHOTO.gap) / (PHOTO.w + PHOTO.gap));
+			for (let i = 0; i < photos.length; i += perRow) {
+				ensure(PHOTO.h + PHOTO.gap);
+				y -= PHOTO.h + 4;
+				photos.slice(i, i + perRow).forEach((img, j) => {
+					const s = Math.min(PHOTO.w / img.width, PHOTO.h / img.height);
+					page.drawImage(img, {
+						x: PAGE.margin + j * (PHOTO.w + PHOTO.gap),
+						y,
+						width: img.width * s,
+						height: img.height * s
+					});
+				});
+			}
+			const skipped = item.photos.length - photos.length;
+			if (skipped > 0)
+				write(
+					`${skipped} more photo${skipped === 1 ? '' : 's'} in Leroa`,
+					regular,
+					SIZE.small,
+					muted
+				);
+			y -= 2;
+		}
+	}
+
+	if (input.acknowledgement) {
+		y -= 12;
+		ensure(80);
+		write('Resident review', bold, SIZE.heading, ink, 2);
+		write(
+			`Reviewed by ${input.acknowledgement.name} in the Leroa resident portal on ${fmt(input.acknowledgement.at)}.`,
+			regular,
+			SIZE.body
+		);
+		if (input.acknowledgement.comment)
+			write(`Resident comments: ${input.acknowledgement.comment}`, regular, SIZE.body);
+	}
+
+	const pages = pdf.getPages();
+	const foot = toWinAnsi(input.title);
+	pages.forEach((p, i) =>
+		p.drawText(`${foot} · Page ${i + 1} of ${pages.length}`, {
+			x: PAGE.margin,
+			y: 32,
+			size: SIZE.small,
+			font: regular,
+			color: muted
+		})
+	);
+	return pdf.save();
+}
