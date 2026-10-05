@@ -5,6 +5,7 @@ import { db } from '#lib/server/db/index.ts';
 import { organization } from '#lib/server/db/schema.ts';
 import { runRentAutomation } from '#lib/server/services/leasing.ts';
 import { sendRentNotifications } from '#lib/server/services/notifications.ts';
+import { syncAllConnections } from '#lib/server/integrations/sync.ts';
 import type { RequestHandler } from './$types';
 
 const authorized = (header: string | null) => {
@@ -14,7 +15,7 @@ const authorized = (header: string | null) => {
 	return a.length === b.length && timingSafeEqual(a, b);
 };
 
-/** Daily job: posts rent and late fees and sends reminders for every workspace. */
+/** Daily job: posts rent and late fees, sends reminders and runs integration syncs. */
 export const GET: RequestHandler = async ({ request }) => {
 	if (!authorized(request.headers.get('authorization'))) error(401, 'Unauthorized');
 	const orgs = await db.select({ id: organization.id }).from(organization);
@@ -29,7 +30,8 @@ export const GET: RequestHandler = async ({ request }) => {
 			console.error(`cron failed for ${o.id}`, err);
 		}
 	}
-	return json({ workspaces: orgs.length, failed, emails });
+	const integrations = await syncAllConnections();
+	return json({ workspaces: orgs.length, failed, emails, integrations });
 };
 
 export const POST = GET;

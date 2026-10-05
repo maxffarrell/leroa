@@ -85,6 +85,13 @@
       "when": 1791213065083,
       "tag": "0011_owners",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791220327126,
+      "tag": "0012_integration_sync",
+      "breakpoints": true
     }
   ]
 }

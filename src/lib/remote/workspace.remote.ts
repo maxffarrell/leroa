@@ -11,6 +11,11 @@ import { search } from '#lib/server/services/search.ts';
 import { loadDemoData } from '#lib/server/services/demo.ts';
 import { property } from '#lib/server/db/schema.ts';
 import { getIntegration, listIntegrations } from '#lib/server/integrations/runtime.ts';
+import { oauthApp, oauthEnv } from '#lib/server/integrations/credentials.ts';
+import { disconnect, redirectUri } from '#lib/server/integrations/oauth.ts';
+import { connectionStatus, syncIssues } from '#lib/server/integrations/status.ts';
+import { runSync } from '#lib/server/integrations/sync.ts';
+import { appOrigin } from '#lib/server/email.ts';
 import { idSchema, webhookInput } from '#lib/schemas.ts';
 import { assertNotDemo } from '#lib/server/demo-mode.ts';
 
@@ -84,25 +89,36 @@ export const getIntegrations = query(async () => {
 		.select()
 		.from(integrationInstall)
 		.where(eq(integrationInstall.organizationId, orgId));
-	return listIntegrations().map((m) => {
-		const install = installs.find((i) => i.integrationId === m.id);
-		return {
-			...m,
-			installed: !!install,
-			enabled: install?.enabled ?? false,
-			// Never send secret values back to the browser.
-			values: Object.fromEntries(
-				m.config.map((f) => [
-					f.key,
-					f.type === 'secret'
-						? install?.config[f.key]
-							? '••••••••'
-							: ''
-						: ((install?.config[f.key] as string | boolean | undefined) ?? '')
-				])
-			)
-		};
-	});
+	const origin = appOrigin();
+	return Promise.all(
+		listIntegrations().map(async (m) => {
+			const install = installs.find((i) => i.integrationId === m.id);
+			return {
+				...m,
+				installed: !!install,
+				enabled: install?.enabled ?? false,
+				app: m.connects
+					? {
+							configured: !!oauthApp(m.id),
+							env: oauthEnv(m.id),
+							redirectUri: redirectUri(origin, m.id)
+						}
+					: null,
+				connection: m.connects ? await connectionStatus(orgId, m.id) : null,
+				// Never send secret values back to the browser.
+				values: Object.fromEntries(
+					m.config.map((f) => [
+						f.key,
+						f.type === 'secret'
+							? install?.config[f.key]
+								? '••••••••'
+								: ''
+							: ((install?.config[f.key] as string | boolean | undefined) ?? '')
+					])
+				)
+			};
+		})
+	);
 });
 export const saveIntegration = command(
 	v.object({
@@ -129,6 +145,8 @@ export const saveIntegration = command(
 		}
 		const missing = def.config.find((f) => 'required' in f && f.required && !merged[f.key]);
 		if (enabled && missing) error(400, `${missing.label} is required`);
+		const invalid = def.validate?.(merged);
+		if (invalid) error(400, invalid);
 		await db
 			.insert(integrationInstall)
 			.values({ organizationId: orgId, integrationId: id, config: merged, enabled })
@@ -139,6 +157,35 @@ export const saveIntegration = command(
 		void getIntegrations().refresh();
 	}
 );
+
+const oauthIntegration = (id: string) => {
+	const def = getIntegration(id);
+	if (!def?.oauth) error(404, 'Unknown integration');
+	return { ...def, oauth: def.oauth };
+};
+
+export const syncIntegration = command(v.string(), async (id) => {
+	assertNotDemo();
+	const { orgId } = await requireOrg('admin');
+	oauthIntegration(id);
+	const result = await runSync(orgId, id);
+	if (!result) error(409, 'A sync is already running, or the integration is off or disconnected');
+	void getIntegrations().refresh();
+	void getSyncIssues(id).refresh();
+	return result;
+});
+
+export const disconnectIntegration = command(v.string(), async (id) => {
+	assertNotDemo();
+	const { orgId } = await requireOrg('admin');
+	await disconnect(oauthIntegration(id), orgId);
+	void getIntegrations().refresh();
+});
+
+export const getSyncIssues = query(v.string(), async (id) => {
+	const { orgId } = await requireOrg();
+	return syncIssues(orgId, id);
+});
 
 export const seedDemo = command(async () => {
 	const ctx = await requireOrg('admin');

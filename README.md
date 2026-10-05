@@ -162,6 +162,17 @@ export default defineIntegration({
 
 Open a pull request. Once it's reviewed and merged, it's available to every Leroa workspace. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+Integrations can also declare `oauth` (a "Connect with…" sign-in; tokens are stored encrypted and refreshed automatically) and `sync` (a one-way push of tenants, charges and payments, run daily by `/api/cron`, after related events, and on demand with **Sync now**). Leroa records which external record each item became, so retries never create duplicates.
+
+### QuickBooks Online
+
+Sends tenants to QuickBooks as customers, charges as invoices (using Rent, Fees, Utilities… items) and payments as payments applied to those invoices. It's one-way: nothing is read back, and records you entered in QuickBooks yourself are never changed or deleted. Security deposits are left out unless you turn them on, and only records dated on or after **Sync records from** (the first of the month you connected, by default) are sent.
+
+1. Create an app at [developer.intuit.com](https://developer.intuit.com) with the **Accounting** scope.
+2. Add `<ORIGIN>/api/integrations/quickbooks/callback` as a redirect URI.
+3. Set `QBO_CLIENT_ID` and `QBO_CLIENT_SECRET`. With development keys, also set `QBO_ENVIRONMENT=sandbox`.
+4. In **Settings → Integrations → QuickBooks Online**, click **Connect to QuickBooks Online** and choose the company.
+
 ## Stack
 
 SvelteKit 3 · Svelte 5 (remote functions, async) · Tailwind 4 · shadcn-svelte · PostgreSQL · Drizzle · Better Auth

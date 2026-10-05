@@ -113,6 +113,25 @@ export const variables = defineEnvVars({
 			'Mollie API key (`live_…` or `test_…`). Lets tenants pay rent with iDEAL, cards, SEPA and more.',
 		schema: (value) => value || undefined
 	},
+	QBO_CLIENT_ID: {
+		description:
+			'Client ID of your Intuit developer app. Lets workspaces connect QuickBooks Online and sync tenants, charges and payments to it.',
+		schema: (value) => value || undefined
+	},
+	QBO_CLIENT_SECRET: {
+		description: 'Client secret of your Intuit developer app.',
+		schema: (value) => value || undefined
+	},
+	QBO_ENVIRONMENT: {
+		description:
+			'`production` (default) or `sandbox`. Must match the keys: development keys only work with sandbox companies.',
+		schema: (value) => (value === 'sandbox' ? 'sandbox' : 'production')
+	},
+	QBO_BASE_URL: {
+		description:
+			'Development only: send QuickBooks sign-in and API requests to this mock server instead of Intuit.',
+		schema: (value) => value || undefined
+	},
 	CRON_SECRET: {
 		description:
 			'Bearer token for `/api/cron`, which posts rent, late fees and reminders for every workspace. Vercel Cron sends it automatically.',

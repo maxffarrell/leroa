@@ -16,7 +16,7 @@ export function getIntegration(id: string) {
 	return byId.get(id);
 }
 
-const boundedFetch: typeof fetch = (input, init) =>
+export const boundedFetch: typeof fetch = (input, init) =>
 	fetch(input, {
 		...init,
 		headers: { 'user-agent': 'Leroa-Integrations/1.0', ...(init?.headers ?? {}) },
@@ -38,7 +38,13 @@ export async function dispatchToIntegrations(event: LeroaEvent<string>) {
 	await Promise.allSettled(
 		installs.map(async ({ install, orgName }) => {
 			const def = byId.get(install.integrationId);
-			if (!def || !def.events.includes(event.type as never)) return;
+			if (def?.sync?.triggers?.includes(event.type as never)) {
+				const { runSync } = await import('./sync.ts');
+				void runSync(event.organizationId, def.id).catch((err) =>
+					console.error(`[integration:${def.id}] background sync failed`, err)
+				);
+			}
+			if (!def?.handle || !def.events.includes(event.type as never)) return;
 			await def.handle(event as LeroaEvent, {
 				config: install.config,
 				workspace: { id: event.organizationId, name: orgName },

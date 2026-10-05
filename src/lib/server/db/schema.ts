@@ -441,6 +441,65 @@ export const integrationInstall = pgTable(
 	(t) => [uniqueIndex('integration_install_org_idx').on(t.organizationId, t.integrationId)]
 );
 
+/** An OAuth connection to an integration. Tokens are encrypted (see integrations/seal.ts). */
+export const integrationConnection = pgTable(
+	'integration_connection',
+	{
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		integrationId: text('integration_id').notNull(),
+		accessToken: text('access_token').notNull(),
+		refreshToken: text('refresh_token'),
+		expiresAt: timestamp('expires_at', { withTimezone: true }),
+		params: jsonb('params').$type<Record<string, string>>().notNull().default({}),
+		/** The connected account, e.g. a QuickBooks company ID. Sync links are kept per account. */
+		account: text('account').notNull().default(''),
+		accountName: text('account_name'),
+		status: text('status').$type<'connected' | 'reconnect'>().notNull().default('connected'),
+		connectedBy: text('connected_by').references(() => user.id, { onDelete: 'set null' }),
+		syncStartedAt: timestamp('sync_started_at', { withTimezone: true }),
+		lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+		lastSyncResult: jsonb('last_sync_result').$type<{
+			synced: number;
+			skipped: number;
+			failed: number;
+			removed: number;
+			remaining: number;
+		}>(),
+		lastError: text('last_error'),
+		...timestamps
+	},
+	(t) => [primaryKey({ columns: [t.organizationId, t.integrationId] })]
+);
+
+/** Which external record a Leroa record was synced to, or why it wasn't. */
+export const integrationLink = pgTable(
+	'integration_link',
+	{
+		id: id(),
+		organizationId: orgId(),
+		integrationId: text('integration_id').notNull(),
+		account: text('account').notNull().default(''),
+		entityType: text('entity_type').$type<'tenant' | 'charge' | 'payment'>().notNull(),
+		entityId: text('entity_id').notNull(),
+		externalId: text('external_id'),
+		status: text('status').$type<'synced' | 'skipped' | 'failed'>().notNull(),
+		error: text('error'),
+		...timestamps
+	},
+	(t) => [
+		uniqueIndex('integration_link_entity_idx').on(
+			t.organizationId,
+			t.integrationId,
+			t.account,
+			t.entityType,
+			t.entityId
+		),
+		index('integration_link_status_idx').on(t.organizationId, t.integrationId, t.status)
+	]
+);
+
 export const leaseTemplate = pgTable(
 	'lease_template',
 	{
