@@ -1,3 +1,7 @@
+<script lang="ts" module>
+	const seenUntil: Record<string, number> = {};
+</script>
+
 <script lang="ts">
 	import { page } from '$app/state';
 	import MessageThread from '#lib/components/app/message-thread.svelte';
@@ -15,11 +19,21 @@
 	const id = $derived(page.params.tenantId!);
 	const th = $derived(await getThread(id));
 
-	// Keep the "New" divider where it was when the conversation was opened.
+	// Keep the "New" divider where it was when the conversation was opened. The cached thread
+	// can be stale on revisit, so also count what this tab already showed.
 	let opened: { id: string; readAt: Date | null } | null = null;
 	const readAt = $derived.by(() => {
-		if (opened?.id !== id) opened = { id, readAt: th.lastReadAt };
+		if (opened?.id !== id) {
+			const shown = seenUntil[id];
+			const server = th.lastReadAt ? new Date(th.lastReadAt).getTime() : 0;
+			const at = Math.max(server, shown ?? 0);
+			opened = { id, readAt: at ? new Date(at) : null };
+		}
 		return opened.readAt;
+	});
+	$effect(() => {
+		const last = th.messages.at(-1);
+		if (last) seenUntil[id] = new Date(last.createdAt).getTime();
 	});
 
 	const latest = $derived(`${id}:${th.messages.at(-1)?.id ?? ''}`);
