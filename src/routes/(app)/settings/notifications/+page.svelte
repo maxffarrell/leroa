@@ -116,7 +116,10 @@
 						disabled={!canEdit}
 						aria-label="Days before the due date"
 						onchange={(e) => {
-							const n = Math.min(14, Math.max(1, Math.round(Number(e.currentTarget.value) || 3)));
+							const raw = Number.parseFloat(e.currentTarget.value);
+							const n = Number.isFinite(raw)
+								? Math.min(14, Math.max(1, Math.round(raw)))
+								: prefs.reminderDaysBefore;
 							e.currentTarget.value = String(n);
 							void save({ reminderDaysBefore: n });
 						}}
