@@ -40,6 +40,12 @@
 		if (last) seenUntil[th.tenant.id] = new Date(last.createdAt).getTime();
 	});
 
+	// <svelte:head> covers SSR; after an async thread switch it can keep the old title.
+	const title = $derived(`${th.tenant.name} · Messages · Leroa`);
+	$effect(() => {
+		document.title = title;
+	});
+
 	const latest = $derived(`${tid}:${th.messages.at(-1)?.id ?? ''}`);
 	$effect(() => {
 		void latest;
@@ -57,7 +63,7 @@
 	});
 </script>
 
-<svelte:head><title>{th.tenant.name} · Messages · Leroa</title></svelte:head>
+<svelte:head><title>{title}</title></svelte:head>
 
 {#key tid}
 	<header class="flex items-center gap-2 border-b px-3 py-2">
