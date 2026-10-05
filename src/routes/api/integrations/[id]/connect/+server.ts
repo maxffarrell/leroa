@@ -21,5 +21,5 @@ export const GET: RequestHandler = async ({ params, cookies }) => {
 		secure: origin.startsWith('https:'),
 		maxAge: 600
 	});
-	redirect(303, url);
+	redirect(303, url, { external: true });
 };
