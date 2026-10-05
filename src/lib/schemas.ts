@@ -1,4 +1,6 @@
 import * as v from 'valibot';
+import { REPORT_KEYS } from './reports.ts';
+import { IMPORT_KINDS } from './import.ts';
 
 const optionalText = v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(5000))));
 const requiredText = (label: string) =>
@@ -356,4 +358,20 @@ export const announcementCreate = v.object({
 	subject: requiredText('Subject'),
 	body: v.pipe(v.string(), v.trim(), v.nonEmpty('Write the announcement'), v.maxLength(10000)),
 	email: v.optional(v.boolean(), true)
+});
+
+export const reportParams = v.object({
+	key: v.picklist(REPORT_KEYS),
+	propertyId: v.optional(v.nullable(idSchema)),
+	days: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(730))),
+	months: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(36))),
+	from: v.optional(isoDate),
+	to: v.optional(isoDate)
+});
+
+export const importInput = v.object({
+	kind: v.picklist(IMPORT_KINDS),
+	csv: v.pipe(v.string(), v.maxLength(2_000_000, 'File is over 2 MB')),
+	mapping: v.record(v.string(), v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0)))),
+	dryRun: v.boolean()
 });

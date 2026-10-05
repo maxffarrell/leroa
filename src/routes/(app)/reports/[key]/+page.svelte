@@ -1,0 +1,261 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import PageHeader from '#lib/components/app/page-header.svelte';
+	import { openHref } from '#lib/components/app/row-nav.svelte.ts';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
+	import * as Table from '#lib/components/ui/table/index.js';
+	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import { getReport } from '#lib/remote/reports.remote.ts';
+	import { getProperties } from '#lib/remote/portfolio.remote.ts';
+	import {
+		REPORTS,
+		reportQuery,
+		type ReportColumn,
+		type ReportParams,
+		type ReportValue
+	} from '#lib/reports.ts';
+	import { formatDate, formatMoney, todayISO } from '#lib/format.ts';
+	import Download from '@lucide/svelte/icons/download';
+	import ArrowUp from '@lucide/svelte/icons/arrow-up';
+	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+
+	let { data } = $props();
+	const key = $derived(data.key);
+	const meta = $derived(REPORTS[key]);
+
+	const sp = $derived(page.url.searchParams);
+	const int = (s: string | null) => (s && /^\d+$/.test(s) ? Number(s) : undefined);
+	const params = $derived<ReportParams>({
+		propertyId: sp.get('propertyId') || undefined,
+		days: meta.param === 'days' ? (int(sp.get('days')) ?? 90) : undefined,
+		months: meta.param === 'months' ? (int(sp.get('months')) ?? 12) : undefined,
+		from: meta.param === 'range' ? sp.get('from') || `${todayISO().slice(0, 4)}-01-01` : undefined,
+		to: meta.param === 'range' ? sp.get('to') || todayISO() : undefined
+	});
+	const query = $derived(reportQuery(params));
+
+	const properties = $derived(await getProperties());
+	const report = $derived(await getReport({ key, ...params }));
+
+	function set(patch: Partial<ReportParams>) {
+		const q = reportQuery({ ...params, ...patch });
+		void goto(`?${q}`, { replace: true, reset: false });
+	}
+
+	let search = $state('');
+	let sort = $state<{ key: string; dir: 1 | -1 } | null>(null);
+	$effect(() => {
+		void key;
+		sort = null;
+		search = '';
+	});
+
+	const indexed = $derived(
+		report.rows.map((row, i) => ({ row, link: report.links[i] ?? null, i }))
+	);
+	const rows = $derived.by(() => {
+		const q = search.trim().toLowerCase();
+		const list = q
+			? indexed.filter(({ row }) =>
+					Object.values(row).some((v) => typeof v === 'string' && v.toLowerCase().includes(q))
+				)
+			: indexed;
+		if (!sort) return list;
+		const { key: k, dir } = sort;
+		return [...list].sort((a, b) => {
+			const x = a.row[k] ?? null;
+			const y = b.row[k] ?? null;
+			if (x === y) return a.i - b.i;
+			if (x === null) return 1;
+			if (y === null) return -1;
+			return (
+				(typeof x === 'number' && typeof y === 'number'
+					? x - y
+					: String(x).localeCompare(String(y), undefined, { numeric: true })) * dir
+			);
+		});
+	});
+
+	/** First click sorts text A→Z and numbers high→low, second click reverses, third clears. */
+	function toggleSort(c: ReportColumn) {
+		const first: 1 | -1 = numeric(c) || c.type === 'date' ? -1 : 1;
+		if (sort?.key !== c.key) sort = { key: c.key, dir: first };
+		else if (sort.dir === first) sort = { key: c.key, dir: first === 1 ? -1 : 1 };
+		else sort = null;
+	}
+
+	const numeric = (c: ReportColumn) =>
+		c.type === 'money' || c.type === 'number' || c.type === 'percent';
+
+	function show(c: ReportColumn, v: ReportValue | undefined) {
+		if (v == null || v === '') return '—';
+		if (typeof v === 'number') {
+			if (c.type === 'money')
+				return report.currency ? formatMoney(v, report.currency) : (v / 100).toFixed(2);
+			if (c.type === 'percent') return `${v}%`;
+			return v.toLocaleString('en-US');
+		}
+		return c.type === 'date' ? formatDate(v) : v;
+	}
+	const cls = (c: ReportColumn) =>
+		[numeric(c) ? 'text-right tabular-nums' : '', c.secondary ? 'hidden sm:table-cell' : '']
+			.filter(Boolean)
+			.join(' ');
+</script>
+
+<PageHeader title={meta.title} crumbs={[{ label: 'Reports', href: '/reports' }]}>
+	{#snippet actions()}
+		<Button size="sm" variant="outline" href="/api/reports/{key}/csv?{query}" download
+			><Download /> <span class="hidden sm:inline">Export CSV</span><span class="sm:hidden"
+				>CSV</span
+			></Button
+		>
+	{/snippet}
+</PageHeader>
+
+<main class="space-y-4 p-4 md:p-6">
+	<div>
+		<p class="text-sm text-muted-foreground">{meta.description}</p>
+		<p class="mt-1 text-xs text-muted-foreground">{report.subtitle}</p>
+	</div>
+
+	<div class="flex flex-wrap items-center gap-3">
+		<NativeSelect.Root
+			aria-label="Property"
+			class="h-8 max-w-56"
+			value={params.propertyId ?? ''}
+			onchange={(e) => set({ propertyId: e.currentTarget.value || undefined })}
+		>
+			<NativeSelect.Option value="">All properties</NativeSelect.Option>
+			{#each properties as p (p.id)}
+				<NativeSelect.Option value={p.id}>{p.name}</NativeSelect.Option>
+			{/each}
+		</NativeSelect.Root>
+
+		{#if meta.param === 'days'}
+			<ToggleGroup.Root
+				type="single"
+				variant="outline"
+				size="sm"
+				aria-label="Ending within"
+				value={String(params.days)}
+				onValueChange={(v) => v && set({ days: Number(v) })}
+			>
+				{#each [30, 60, 90, 180] as d (d)}
+					<ToggleGroup.Item value={String(d)}>{d} days</ToggleGroup.Item>
+				{/each}
+			</ToggleGroup.Root>
+		{:else if meta.param === 'months'}
+			<ToggleGroup.Root
+				type="single"
+				variant="outline"
+				size="sm"
+				aria-label="Months"
+				value={String(params.months)}
+				onValueChange={(v) => v && set({ months: Number(v) })}
+			>
+				{#each [6, 12, 24] as m (m)}
+					<ToggleGroup.Item value={String(m)}>{m} months</ToggleGroup.Item>
+				{/each}
+			</ToggleGroup.Root>
+		{:else if meta.param === 'range'}
+			<div class="flex items-center gap-2 text-sm">
+				<Input
+					type="date"
+					aria-label="From"
+					class="h-8 w-38"
+					value={params.from}
+					onchange={(e) => e.currentTarget.value && set({ from: e.currentTarget.value })}
+				/>
+				<span class="text-muted-foreground">to</span>
+				<Input
+					type="date"
+					aria-label="To"
+					class="h-8 w-38"
+					value={params.to}
+					onchange={(e) => e.currentTarget.value && set({ to: e.currentTarget.value })}
+				/>
+			</div>
+		{/if}
+
+		<Input placeholder="Filter rows…" class="h-8 max-w-48" bind:value={search} />
+	</div>
+
+	<div class="overflow-x-auto rounded-lg border">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					{#each report.columns as c (c.key)}
+						<Table.Head
+							class={cls(c)}
+							aria-sort={sort?.key === c.key
+								? sort.dir === 1
+									? 'ascending'
+									: 'descending'
+								: undefined}
+						>
+							<button
+								type="button"
+								class="inline-flex items-center gap-1 whitespace-nowrap hover:text-foreground"
+								onclick={() => toggleSort(c)}
+								>{c.label}{#if sort?.key === c.key}{#if sort.dir === 1}<ArrowUp
+											class="size-3"
+										/>{:else}<ArrowDown class="size-3" />{/if}{/if}</button
+							>
+						</Table.Head>
+					{/each}
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each rows as { row, link, i } (i)}
+					<Table.Row
+						class={link ? 'cursor-pointer' : ''}
+						onclick={(e) => {
+							if (link && !(e.target as HTMLElement).closest('a')) openHref(link);
+						}}
+					>
+						{#each report.columns as c, ci (c.key)}
+							<Table.Cell class="{cls(c)} {ci === 0 ? 'font-medium' : ''} max-w-64 truncate">
+								{#if ci === 0 && link}<a href={link} class="hover:underline"
+										>{show(c, row[c.key])}</a
+									>{:else}{show(c, row[c.key])}{/if}
+							</Table.Cell>
+						{/each}
+					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell
+							colspan={report.columns.length}
+							class="py-10 text-center text-muted-foreground"
+							>{report.rows.length
+								? 'No rows match the filter.'
+								: 'Nothing to report yet.'}</Table.Cell
+						>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+			{#if report.totals && !search}
+				<Table.Footer>
+					<Table.Row>
+						{#each report.columns as c, ci (c.key)}
+							<Table.Cell class="{cls(c)} font-medium whitespace-nowrap"
+								>{ci === 0
+									? report.totals[c.key]
+									: report.totals[c.key] == null
+										? ''
+										: show(c, report.totals[c.key])}</Table.Cell
+							>
+						{/each}
+					</Table.Row>
+				</Table.Footer>
+			{/if}
+		</Table.Root>
+	</div>
+	{#if report.note}<p class="text-xs text-muted-foreground">{report.note}</p>{/if}
+	{#if report.currency === null}<p class="text-xs text-muted-foreground">
+			Amounts are in more than one currency, so money totals are left out.
+		</p>{/if}
+</main>

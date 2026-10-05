@@ -29,6 +29,7 @@ export const EVENT_TYPES = [
 	'announcement.sent',
 	'owner.created',
 	'owner.updated',
+	'import.completed',
 	'listing.published',
 	'listing.closed',
 	'application.submitted',

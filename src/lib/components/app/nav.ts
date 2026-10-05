@@ -12,6 +12,7 @@ import HardHat from '@lucide/svelte/icons/hard-hat';
 import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 import MessagesSquare from '@lucide/svelte/icons/messages-square';
 import Landmark from '@lucide/svelte/icons/landmark';
+import ChartColumn from '@lucide/svelte/icons/chart-column';
 
 /** `key` is the second key of the `g <key>` keyboard shortcut. */
 export const mainNav = [
@@ -26,7 +27,8 @@ export const mainNav = [
 	{ href: '/maintenance', label: 'Maintenance', icon: Wrench, key: 'm' },
 	{ href: '/vendors', label: 'Vendors', icon: HardHat, key: 'v' },
 	{ href: '/inspections', label: 'Inspections', icon: ClipboardCheck, key: 'n' },
-	{ href: '/documents', label: 'Documents', icon: FolderOpen, key: 'o' }
+	{ href: '/documents', label: 'Documents', icon: FolderOpen, key: 'o' },
+	{ href: '/reports', label: 'Reports', icon: ChartColumn, key: 'x' }
 ] as const;
 
 export const secondaryNav = [

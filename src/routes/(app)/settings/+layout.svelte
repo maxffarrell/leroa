@@ -10,6 +10,7 @@
 		{ href: '/settings/team', label: 'Team' },
 		{ href: '/settings/notifications', label: 'Notifications' },
 		{ href: '/settings/templates', label: 'Lease templates' },
+		{ href: '/settings/import', label: 'Import' },
 		{ href: '/settings/payments', label: 'Payments' },
 		{ href: '/settings/security', label: 'Security' },
 		{ href: '/settings/integrations', label: 'Integrations' },

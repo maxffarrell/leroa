@@ -14,7 +14,8 @@ export const API_RESOURCES = [
 	'announcements',
 	'owners',
 	'listings',
-	'applications'
+	'applications',
+	'reports'
 ] as const;
 export type ApiResource = (typeof API_RESOURCES)[number];
 
@@ -39,7 +40,8 @@ export const API_RESOURCE_LABELS: Record<ApiResource, string> = {
 	announcements: 'Announcements',
 	owners: 'Owners',
 	listings: 'Listings',
-	applications: 'Rental applications'
+	applications: 'Rental applications',
+	reports: 'Reports'
 };
 
 const actionsFor = (level: Exclude<AccessLevel, 'none'>): ApiAction[] =>

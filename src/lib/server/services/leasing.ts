@@ -36,7 +36,7 @@ export const tenantNames = sql<string>`coalesce((
 	where ${leaseTenant.leaseId} = ${outer(lease.id)}
 ), '')`;
 
-const balanceSql = sql<number>`(
+export const balanceSql = sql<number>`(
 	coalesce((select sum(${charge.amount}) from ${charge} where ${charge.leaseId} = ${outer(lease.id)} and ${charge.dueDate} <= current_date), 0)
 	- coalesce((select sum(${payment.amount}) from ${payment} where ${payment.leaseId} = ${outer(lease.id)}), 0)
 )`.mapWith(Number);

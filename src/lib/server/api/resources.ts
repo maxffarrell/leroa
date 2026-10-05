@@ -9,6 +9,8 @@ import * as vendors from '#lib/server/services/vendors.ts';
 import * as inspections from '#lib/server/services/inspections.ts';
 import * as messaging from '#lib/server/services/messaging.ts';
 import * as owners from '#lib/server/services/owners.ts';
+import * as reports from '#lib/server/services/reports.ts';
+import { REPORT_KEYS, REPORTS, type ReportKey } from '#lib/reports.ts';
 import * as s from '#lib/schemas.ts';
 
 type Resource = {
@@ -132,6 +134,14 @@ export const resources: Record<string, Resource> = {
 		list: (ctx) => listings.listApplications(ctx.orgId),
 		get: (ctx, id) => listings.getApplication(ctx.orgId, id),
 		update: { schema: s.applicationUpdate, run: listings.updateApplication as never }
+	},
+	reports: {
+		description: `Built-in reports (${REPORT_KEYS.join(', ')}); get one by key, \`?propertyId=\` to filter`,
+		list: async () => REPORT_KEYS.map((key) => ({ key, ...REPORTS[key] })),
+		get: (ctx, id) => {
+			if (!(REPORT_KEYS as readonly string[]).includes(id)) error(404, 'Unknown report');
+			return reports.runReport(ctx.orgId, id as ReportKey, {});
+		}
 	}
 };
 
