@@ -5,6 +5,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import MoneyInput from './money-input.svelte';
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { recordPayment } from '#lib/remote/leasing.remote.ts';
 	import { paymentMethods } from '#lib/schemas.ts';
@@ -39,7 +40,7 @@
 			amount = target.balance > 0 ? target.balance : null;
 			receivedOn = todayISO();
 			reference = '';
-			key++;
+			untrack(() => key++);
 		}
 	});
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { toggleMode, mode } from 'mode-watcher';
@@ -23,6 +24,12 @@
 		onsearch: () => void;
 	};
 	let { user, org, onsearch }: Props = $props();
+
+	const sidebar = Sidebar.useSidebar();
+	$effect(() => {
+		void page.url.pathname;
+		untrack(() => sidebar.openMobile && sidebar.setOpenMobile(false));
+	});
 
 	const isActive = (href: string) =>
 		href === '/settings'

@@ -19,7 +19,7 @@ export const auth = betterAuth({
 	advanced: { ipAddress: { ipAddressHeaders: ['x-forwarded-for'] } },
 	plugins: [
 		organization({ allowUserToCreateOrganization: true }),
-		apiKey({ references: 'organization', defaultPrefix: 'ks_', enableMetadata: true }),
+		apiKey({ references: 'organization', defaultPrefix: 'lr_', enableMetadata: true }),
 		...enterprisePlugins,
 		sveltekitCookies(getRequestEvent) // must be last
 	]

@@ -9,6 +9,14 @@
 	import { formatDate, formatMoney, formatRelative } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
 
+	const methodLabels: Record<string, string> = {
+		ach: 'ACH / bank',
+		card: 'Card',
+		check: 'Check',
+		cash: 'Cash',
+		transfer: 'Wire / transfer',
+		other: 'Other'
+	};
 	const p = $derived(await getPortal());
 	let title = $state('');
 	let description = $state('');
@@ -90,6 +98,28 @@
 						</li>
 					{:else}
 						<li class="px-3 py-4 text-center text-muted-foreground">No charges yet.</li>
+					{/each}
+				</ul>
+			</Card.Content>
+			<Card.Content>
+				<h2 class="mb-2 text-sm font-medium">Payment history</h2>
+				<ul class="divide-y rounded-lg border text-sm">
+					{#each l.payments as pay (pay.id)}
+						<li class="flex items-center gap-3 px-3 py-2">
+							<span class="w-16 text-muted-foreground tabular-nums"
+								>{formatDate(pay.receivedOn, true)}</span
+							>
+							<span class="min-w-0 flex-1 truncate"
+								>{methodLabels[pay.method] ?? pay.method}{#if pay.reference}<span
+										class="text-muted-foreground"
+									>
+										· {pay.reference}</span
+									>{/if}</span
+							>
+							<span class="tabular-nums">{formatMoney(pay.amount, l.currency)}</span>
+						</li>
+					{:else}
+						<li class="px-3 py-4 text-center text-muted-foreground">No payments yet.</li>
 					{/each}
 				</ul>
 			</Card.Content>

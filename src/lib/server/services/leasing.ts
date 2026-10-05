@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, gte, inArray, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableName, gte, inArray, lt, lte, sql } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
@@ -18,15 +19,19 @@ import { emit } from './events.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
+/** Table-qualified column for correlated subqueries; Drizzle omits the qualifier on single-table selects. */
+const outer = (column: AnyPgColumn) =>
+	sql`${sql.identifier(getTableName(column.table))}.${sql.identifier(column.name)}`;
+
 const tenantNames = sql<string>`coalesce((
 	select string_agg(case when ${tenant.kind} = 'company' and ${tenant.companyName} is not null then ${tenant.companyName} else trim(${tenant.firstName} || ' ' || ${tenant.lastName}) end, ', ' order by ${leaseTenant.isPrimary} desc)
 	from ${leaseTenant} join ${tenant} on ${tenant.id} = ${leaseTenant.tenantId}
-	where ${leaseTenant.leaseId} = ${lease.id}
+	where ${leaseTenant.leaseId} = ${outer(lease.id)}
 ), '')`;
 
 const balanceSql = sql<number>`(
-	coalesce((select sum(${charge.amount}) from ${charge} where ${charge.leaseId} = ${lease.id} and ${charge.dueDate} <= current_date), 0)
-	- coalesce((select sum(${payment.amount}) from ${payment} where ${payment.leaseId} = ${lease.id}), 0)
+	coalesce((select sum(${charge.amount}) from ${charge} where ${charge.leaseId} = ${outer(lease.id)} and ${charge.dueDate} <= current_date), 0)
+	- coalesce((select sum(${payment.amount}) from ${payment} where ${payment.leaseId} = ${outer(lease.id)}), 0)
 )`.mapWith(Number);
 
 export async function listLeases(
@@ -98,7 +103,7 @@ export async function getLease(orgId: string, id: string) {
 				description: charge.description,
 				dueDate: charge.dueDate,
 				amount: charge.amount,
-				paid: sql<number>`coalesce((select sum(${payment.amount}) from ${payment} where ${payment.chargeId} = ${charge.id}), 0)`.mapWith(
+				paid: sql<number>`coalesce((select sum(${payment.amount}) from ${payment} where ${payment.chargeId} = ${outer(charge.id)}), 0)`.mapWith(
 					Number
 				)
 			})
@@ -251,12 +256,12 @@ export async function rentRoll(orgId: string, month: string) {
 			description: charge.description,
 			dueDate: charge.dueDate,
 			amount: charge.amount,
-			paid: sql<number>`coalesce((select sum(${payment.amount}) from ${payment} where ${payment.chargeId} = ${charge.id}), 0)`.mapWith(
+			paid: sql<number>`coalesce((select sum(${payment.amount}) from ${payment} where ${payment.chargeId} = ${outer(charge.id)}), 0)`.mapWith(
 				Number
 			),
 			lastPaidOn: sql<
 				string | null
-			>`(select max(${payment.receivedOn}) from ${payment} where ${payment.chargeId} = ${charge.id})`,
+			>`(select max(${payment.receivedOn}) from ${payment} where ${payment.chargeId} = ${outer(charge.id)})`,
 			leaseId: lease.id,
 			currency: lease.currency,
 			unitName: unit.name,

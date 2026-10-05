@@ -3,7 +3,7 @@ import { auth } from '#lib/server/auth.ts';
 import { db } from '#lib/server/db/index.ts';
 import type { OrgContext } from '#lib/server/context.ts';
 
-/** Authenticates `Authorization: Bearer ks_…` against organization-scoped API keys. */
+/** Authenticates `Authorization: Bearer lr_…` against organization-scoped API keys. */
 export async function apiContext(event: RequestEvent): Promise<OrgContext> {
 	const header = event.request.headers.get('authorization') ?? '';
 	const key = header.match(/^Bearer\s+(.+)$/i)?.[1] ?? event.request.headers.get('x-api-key');

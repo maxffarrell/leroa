@@ -38,6 +38,9 @@
 			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Could not save');
 		}
 	}
+
+	const svgWithNamespace = (svg: string) =>
+		svg.includes('xmlns=') ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
 </script>
 
 <div class="flex items-start justify-between gap-4">
@@ -57,7 +60,7 @@
 					{#if i.icon?.startsWith('<svg')}<img
 							alt=""
 							class="size-5 dark:invert"
-							src="data:image/svg+xml,{encodeURIComponent(i.icon)}"
+							src="data:image/svg+xml,{encodeURIComponent(svgWithNamespace(i.icon))}"
 						/>{:else}<Puzzle />{/if}
 				</span>
 				<div class="min-w-0 flex-1 space-y-1">

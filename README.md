@@ -54,7 +54,7 @@ Environment variables are documented in [`src/env.ts`](src/env.ts).
 Create a key under **Settings → API keys**, then:
 
 ```sh
-curl -H "Authorization: Bearer ks_..." https://your-host/api/v1/properties
+curl -H "Authorization: Bearer lr_..." https://your-host/api/v1/properties
 ```
 
 OpenAPI: `/api/v1/openapi.json`. Amounts are integer cents.
