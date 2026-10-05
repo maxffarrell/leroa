@@ -30,6 +30,7 @@
 	let enabled = $state(true);
 	let syncing = $state(false);
 	let confirmDisconnect = $state(false);
+	let showIssues = $state(false);
 
 	const message = (err: unknown, fallback: string) =>
 		(err as { body?: { message?: string } })?.body?.message ?? fallback;
@@ -37,6 +38,7 @@
 	function open(i: Integration) {
 		editingId = i.id;
 		confirmDisconnect = false;
+		showIssues = false;
 		enabled = i.installed ? i.enabled : true;
 		values = { ...i.values };
 		for (const f of i.config) {
@@ -69,7 +71,8 @@
 			if (!i) return;
 			if (result === 'connected') toast.success(`${i.name} connected. The first sync has started.`);
 			else toast.error(CONNECT_ERRORS[result ?? ''] ?? CONNECT_ERRORS.failed!);
-			open(i);
+			// Opening the sheet while the page is still hydrating leaves it inert, so wait a tick.
+			setTimeout(() => open(i));
 		});
 	});
 
@@ -221,36 +224,40 @@
 									{c.lastSyncResult.remaining} more will go next sync{/if}.
 							</p>
 							{#if c.counts.failed || c.counts.skipped}
-								<details class="text-xs">
+								<details class="text-xs" bind:open={showIssues}>
 									<summary class="cursor-pointer text-muted-foreground"
 										>Show records not synced</summary
 									>
-									<svelte:boundary>
-										<ul class="mt-2 max-h-64 divide-y overflow-y-auto rounded border">
-											{#each await getSyncIssues(editing.id) as issue (issue.id)}
-												<li class="space-y-0.5 px-2 py-1.5">
-													<div class="flex items-baseline justify-between gap-2">
-														{#if issue.href}<a
-																class="font-medium underline-offset-2 hover:underline"
-																href={issue.href}>{issue.label}</a
-															>{:else}<span class="font-medium">{issue.label}</span>{/if}
-														{#if issue.amount != null}<span class="tabular-nums"
-																>{formatMoney(issue.amount, issue.currency ?? 'USD')}</span
-															>{/if}
-													</div>
-													{#if issue.detail}<p class="text-muted-foreground">{issue.detail}</p>{/if}
-													<p
-														class={issue.status === 'skipped'
-															? 'text-muted-foreground'
-															: 'text-destructive'}
-													>
-														{issue.status === 'skipped' ? 'Skipped: ' : ''}{issue.error}
-													</p>
-												</li>
-											{/each}
-										</ul>
-										{#snippet pending()}<p class="mt-2 text-muted-foreground">Loading…</p>{/snippet}
-									</svelte:boundary>
+									{#if showIssues}<svelte:boundary>
+											<ul class="mt-2 max-h-64 divide-y overflow-y-auto rounded border">
+												{#each await getSyncIssues(editing.id) as issue (issue.id)}
+													<li class="space-y-0.5 px-2 py-1.5">
+														<div class="flex items-baseline justify-between gap-2">
+															{#if issue.href}<a
+																	class="font-medium underline-offset-2 hover:underline"
+																	href={issue.href}>{issue.label}</a
+																>{:else}<span class="font-medium">{issue.label}</span>{/if}
+															{#if issue.amount != null}<span class="tabular-nums"
+																	>{formatMoney(issue.amount, issue.currency ?? 'USD')}</span
+																>{/if}
+														</div>
+														{#if issue.detail}<p class="text-muted-foreground">
+																{issue.detail}
+															</p>{/if}
+														<p
+															class={issue.status === 'skipped'
+																? 'text-muted-foreground'
+																: 'text-destructive'}
+														>
+															{issue.status === 'skipped' ? 'Skipped: ' : ''}{issue.error}
+														</p>
+													</li>
+												{/each}
+											</ul>
+											{#snippet pending()}<p class="mt-2 text-muted-foreground">
+													Loading…
+												</p>{/snippet}
+										</svelte:boundary>{/if}
 								</details>
 							{/if}
 							<div class="flex flex-wrap gap-2">
