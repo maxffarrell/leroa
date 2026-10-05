@@ -83,10 +83,14 @@ export const biltProvider: PaymentProvider = {
 
 	async checkout(i) {
 		const id = orderId(i.leaseId);
+		const bearer = await accessToken().catch((err) => {
+			console.error('[bilt]', err);
+			error(502, 'Bilt is unavailable right now. Try again in a few minutes.');
+		});
 		const res = await fetch(`${host().api}/partner/checkout/v1/checkout-sessions`, {
 			method: 'POST',
 			headers: {
-				authorization: `Bearer ${await accessToken()}`,
+				authorization: `Bearer ${bearer}`,
 				'content-type': 'application/json',
 				'idempotency-key': id
 			},
