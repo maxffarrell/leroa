@@ -216,9 +216,9 @@
 									<summary class="cursor-pointer text-muted-foreground"
 										>Show records not synced</summary
 									>
-									{#await getSyncIssues(editing.id) then issues}
+									<svelte:boundary>
 										<ul class="mt-2 max-h-64 divide-y overflow-y-auto rounded border">
-											{#each issues as issue (issue.id)}
+											{#each await getSyncIssues(editing.id) as issue (issue.id)}
 												<li class="space-y-0.5 px-2 py-1.5">
 													<div class="flex items-baseline justify-between gap-2">
 														{#if issue.href}<a
@@ -240,7 +240,8 @@
 												</li>
 											{/each}
 										</ul>
-									{/await}
+										{#snippet pending()}<p class="mt-2 text-muted-foreground">Loading…</p>{/snippet}
+									</svelte:boundary>
 								</details>
 							{/if}
 							<div class="flex flex-wrap gap-2">
