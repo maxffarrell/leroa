@@ -8,6 +8,7 @@
 	const tabs = [
 		{ href: '/settings', label: 'General' },
 		{ href: '/settings/team', label: 'Team' },
+		{ href: '/settings/notifications', label: 'Notifications' },
 		{ href: '/settings/security', label: 'Security' },
 		{ href: '/settings/integrations', label: 'Integrations' },
 		{ href: '/settings/webhooks', label: 'Webhooks' },

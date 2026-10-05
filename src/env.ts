@@ -20,6 +20,23 @@ export const variables = defineEnvVars({
 			'Set to `true` for a public demo: visitors get a throwaway sample workspace (deleted after 24h), and sign-up, API access, webhooks, integrations, invites and uploads are disabled.',
 		schema: (value) => value === 'true'
 	},
+	EMAIL_FROM: {
+		description: 'Sender for notification emails, e.g. `Leroa <no-reply@pm.example.com>`.',
+		schema: (value) => value || undefined
+	},
+	RESEND_API_KEY: {
+		description: 'Send email through Resend. Takes precedence over `SMTP_URL`.',
+		schema: (value) => value || undefined
+	},
+	SMTP_URL: {
+		description: 'Send email through SMTP, e.g. `smtps://user:pass@smtp.example.com:465`.',
+		schema: (value) => value || undefined
+	},
+	CRON_SECRET: {
+		description:
+			'Bearer token for `/api/cron`, which posts rent, late fees and reminders for every workspace. Vercel Cron sends it automatically.',
+		schema: (value) => value || undefined
+	},
 	LEROA_CLOUD: {
 		description:
 			'Set to `true` on Leroa Cloud. Enables enterprise features and cloud-only behaviour.',

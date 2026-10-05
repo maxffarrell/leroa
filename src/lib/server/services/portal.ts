@@ -13,6 +13,7 @@ import {
 	unit
 } from '#lib/server/db/schema.ts';
 import { emit } from './events.ts';
+import { notifyPortalRequest } from './notifications.ts';
 
 const TTL_MS = 14 * 86400_000;
 
@@ -153,5 +154,14 @@ export async function portalRequest(
 		action: 'created',
 		summary: `#${created.number} ${created.title} (from tenant portal)`
 	});
+	const [place] = await db
+		.select({ property: property.name, unit: unit.name })
+		.from(unit)
+		.innerJoin(property, eq(property.id, unit.propertyId))
+		.where(eq(unit.id, row.lease.unitId));
+	void notifyPortalRequest(
+		created,
+		place ? `${place.property} · ${place.unit}` : 'your property'
+	).catch((err) => console.error('portal request email failed', err));
 	return created;
 }

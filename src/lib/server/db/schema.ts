@@ -303,6 +303,35 @@ export const activity = pgTable(
 	]
 );
 
+export const notificationSettings = pgTable('notification_settings', {
+	organizationId: text('organization_id')
+		.primaryKey()
+		.references(() => organization.id, { onDelete: 'cascade' }),
+	rentReminders: boolean('rent_reminders').notNull().default(true),
+	reminderDaysBefore: integer('reminder_days_before').notNull().default(3),
+	overdueNotices: boolean('overdue_notices').notNull().default(true),
+	maintenanceUpdates: boolean('maintenance_updates').notNull().default(true),
+	leaseExpiryAlerts: boolean('lease_expiry_alerts').notNull().default(true),
+	updatedAt: timestamp('updated_at', { withTimezone: true })
+		.notNull()
+		.defaultNow()
+		.$onUpdate(() => new Date())
+});
+
+/** One row per email sent, so each notice goes out once per recipient. */
+export const notificationLog = pgTable(
+	'notification_log',
+	{
+		id: id(),
+		organizationId: orgId(),
+		kind: text('kind').notNull(),
+		entityId: text('entity_id').notNull(),
+		recipient: text('recipient').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [uniqueIndex('notification_log_once_idx').on(t.kind, t.entityId, t.recipient)]
+);
+
 export const webhook = pgTable(
 	'webhook',
 	{

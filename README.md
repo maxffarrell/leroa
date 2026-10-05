@@ -49,6 +49,16 @@ Open http://localhost:5173, create an account, then click **Explore with demo da
 
 Environment variables are documented in [`src/env.ts`](src/env.ts).
 
+## Email and scheduled jobs
+
+Leroa emails team invitations, rent reminders, overdue notices, maintenance updates and lease-expiry alerts. Turn each one on or off in **Settings → Notifications**. Set `RESEND_API_KEY` or `SMTP_URL`, plus `EMAIL_FROM`, to send them. Without either, emails are only written to the server log.
+
+Rent posting, late fees and reminders run whenever someone opens Leroa. To run them on time every day, set `CRON_SECRET` and call `GET /api/cron` with `Authorization: Bearer $CRON_SECRET`. On Vercel, the cron in `vercel.json` does this for you. Elsewhere, use any scheduler, for example:
+
+```sh
+curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://pm.example.com/api/cron
+```
+
 ## Public demo
 
 Set `LEROA_DEMO=true` to run a public demo. The sign-in page gets a **Try the live demo** button that creates a private sample workspace for each visitor, with no sign-up. Demo workspaces are deleted after 24 hours. Sign-up, the REST API, API keys, webhooks, integrations, invites and uploads are turned off.

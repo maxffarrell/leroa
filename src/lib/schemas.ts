@@ -97,6 +97,14 @@ export const leaseRenewal = v.object({
 	rentAmount: v.pipe(cents, v.minValue(1, 'Rent must be positive'))
 });
 
+export const notificationSettingsInput = v.object({
+	rentReminders: v.boolean(),
+	reminderDaysBefore: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(14)),
+	overdueNotices: v.boolean(),
+	maintenanceUpdates: v.boolean(),
+	leaseExpiryAlerts: v.boolean()
+});
+
 export const chargeInput = v.object({
 	leaseId: idSchema,
 	kind: v.optional(v.picklist(chargeKinds), 'fee'),

@@ -6,6 +6,7 @@ import { maintenanceTicket, property, tenant, unit, user } from '#lib/server/db/
 import type { OrgContext } from '#lib/server/context.ts';
 import type { ticketInput, ticketUpdate } from '#lib/schemas.ts';
 import { emit } from './events.ts';
+import { notifyTicketStatus } from './notifications.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
@@ -98,6 +99,8 @@ export async function updateTicket(ctx: OrgContext, { id, ...data }: Out<typeof 
 			? `#${t.number} moved to ${data.status.replace('_', ' ')}`
 			: `#${t.number} updated`
 	});
+	if (data.status)
+		void notifyTicketStatus(t).catch((err) => console.error('ticket email failed', err));
 	return t;
 }
 

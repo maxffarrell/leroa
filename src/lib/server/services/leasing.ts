@@ -22,6 +22,7 @@ import type {
 } from '#lib/schemas.ts';
 import { addDays, formatMoney, monthLabel, nextMonth, tenantName, todayISO } from '#lib/format.ts';
 import { emit } from './events.ts';
+import { sendRentNotifications } from './notifications.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
@@ -367,6 +368,7 @@ export async function runRentAutomation(orgId: string, force = false) {
 	await catchUpRentCharges(orgId);
 	await applyLateFees(orgId);
 	await closeRenewedLeases(orgId);
+	void sendRentNotifications(orgId).catch((err) => console.error('rent notifications failed', err));
 }
 
 /** Starts a follow-on lease for the same unit and tenants; the current lease ends the day before. */
