@@ -3,3 +3,7 @@ packages:
 
 allowBuilds:
   esbuild: true
+
+overrides:
+  # drizzle-kit's deprecated @esbuild-kit loader pins esbuild <0.25 (GHSA-67mh-4wv8-2f99).
+  '@esbuild-kit/core-utils>esbuild': ^0.25.12
