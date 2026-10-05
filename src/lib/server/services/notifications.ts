@@ -28,7 +28,8 @@ export const NOTIFICATION_DEFAULTS: NotificationPrefs = {
 	reminderDaysBefore: 3,
 	overdueNotices: true,
 	maintenanceUpdates: true,
-	leaseExpiryAlerts: true
+	leaseExpiryAlerts: true,
+	newApplications: true
 };
 
 /** How long after the due date an overdue notice may still go out. */
@@ -43,7 +44,8 @@ export async function getNotificationPrefs(orgId: string): Promise<NotificationP
 			reminderDaysBefore: s.reminderDaysBefore,
 			overdueNotices: s.overdueNotices,
 			maintenanceUpdates: s.maintenanceUpdates,
-			leaseExpiryAlerts: s.leaseExpiryAlerts
+			leaseExpiryAlerts: s.leaseExpiryAlerts,
+			newApplications: s.newApplications
 		})
 		.from(s)
 		.where(eq(s.organizationId, orgId));
@@ -327,6 +329,54 @@ export async function notifyAgreementSigned(
 				heading: 'Lease signed',
 				lines: [`Every tenant has signed “${agreement.title}”. The signed PDF is on the lease.`],
 				action: { label: 'Open lease', url: `${appOrigin()}/leases/${agreement.leaseId}` }
+			})
+		});
+	}
+}
+
+type ApplicationRef = { id: string; firstName: string; lastName: string; email: string };
+
+/** Confirms to the applicant that their application arrived. */
+export async function notifyApplicationReceived(
+	orgId: string,
+	app: ApplicationRef,
+	listingTitle: string
+) {
+	const org = await orgName(orgId);
+	await notifyOnce(orgId, 'application.received', app.id, {
+		to: app.email,
+		subject: `We received your application: ${listingTitle}`,
+		...renderEmail({
+			orgName: org,
+			heading: 'Application received',
+			lines: [
+				`Hi ${app.firstName},`,
+				`Thanks for applying for “${listingTitle}”. ${org} will review your application and contact you at this address.`
+			]
+		})
+	});
+}
+
+/** Tells owners and admins about a new application from a public listing. */
+export async function notifyNewApplication(
+	orgId: string,
+	app: ApplicationRef,
+	listingTitle: string
+) {
+	if (!(await getNotificationPrefs(orgId)).newApplications) return;
+	const org = await orgName(orgId);
+	for (const to of await managerEmails(orgId)) {
+		await notifyOnce(orgId, 'application.submitted', app.id, {
+			to,
+			subject: `New application: ${listingTitle}`,
+			...renderEmail({
+				orgName: org,
+				heading: 'New rental application',
+				lines: [`${app.firstName} ${app.lastName} applied for “${listingTitle}”.`],
+				action: {
+					label: 'Review application',
+					url: `${appOrigin()}/leasing/applications/${app.id}`
+				}
 			})
 		});
 	}

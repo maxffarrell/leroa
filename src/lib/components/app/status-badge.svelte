@@ -21,7 +21,14 @@
 		vacant: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
 		overdue: 'bg-red-500/10 text-red-700 dark:text-red-400',
 		urgent: 'bg-red-500/10 text-red-700 dark:text-red-400',
-		terminated: 'bg-red-500/10 text-red-700 dark:text-red-400'
+		terminated: 'bg-red-500/10 text-red-700 dark:text-red-400',
+		published: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+		closed: 'bg-muted text-muted-foreground',
+		new: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
+		reviewing: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
+		approved: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+		declined: 'bg-red-500/10 text-red-700 dark:text-red-400',
+		withdrawn: 'bg-muted text-muted-foreground'
 	};
 
 	let { status, class: className = '' }: { status: string; class?: string } = $props();

@@ -7,12 +7,14 @@ import Wrench from '@lucide/svelte/icons/wrench';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
 import Settings from '@lucide/svelte/icons/settings';
 import Puzzle from '@lucide/svelte/icons/puzzle';
+import Megaphone from '@lucide/svelte/icons/megaphone';
 
 /** `key` is the second key of the `g <key>` keyboard shortcut. */
 export const mainNav = [
 	{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, key: 'd' },
 	{ href: '/properties', label: 'Properties', icon: Building2, key: 'p' },
 	{ href: '/tenants', label: 'Tenants', icon: Users, key: 't' },
+	{ href: '/leasing', label: 'Leasing', icon: Megaphone, key: 'a' },
 	{ href: '/leases', label: 'Leases', icon: FileSignature, key: 'l' },
 	{ href: '/rent', label: 'Rent', icon: Wallet, key: 'r' },
 	{ href: '/maintenance', label: 'Maintenance', icon: Wrench, key: 'm' },

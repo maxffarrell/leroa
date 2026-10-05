@@ -4,6 +4,7 @@ import type { OrgContext } from '#lib/server/context.ts';
 import * as portfolio from '#lib/server/services/portfolio.ts';
 import * as leasing from '#lib/server/services/leasing.ts';
 import * as maintenance from '#lib/server/services/maintenance.ts';
+import * as listings from '#lib/server/services/listings.ts';
 import * as s from '#lib/schemas.ts';
 
 type Resource = {
@@ -73,6 +74,18 @@ export const resources: Record<string, Resource> = {
 			}),
 		create: { schema: s.ticketInput, run: maintenance.createTicket as never },
 		update: { schema: s.ticketUpdate, run: maintenance.updateTicket as never }
+	},
+	listings: {
+		description: 'Vacancy listings, published or not',
+		list: (ctx) => listings.listListings(ctx.orgId),
+		get: (ctx, id) => listings.getListing(ctx.orgId, id),
+		update: { schema: s.listingUpdate, run: listings.updateListing as never }
+	},
+	applications: {
+		description: 'Rental applications submitted from public listings',
+		list: (ctx) => listings.listApplications(ctx.orgId),
+		get: (ctx, id) => listings.getApplication(ctx.orgId, id),
+		update: { schema: s.applicationUpdate, run: listings.updateApplication as never }
 	}
 };
 

@@ -102,7 +102,8 @@ export const notificationSettingsInput = v.object({
 	reminderDaysBefore: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(14)),
 	overdueNotices: v.boolean(),
 	maintenanceUpdates: v.boolean(),
-	leaseExpiryAlerts: v.boolean()
+	leaseExpiryAlerts: v.boolean(),
+	newApplications: v.boolean()
 });
 
 export const chargeInput = v.object({
@@ -173,4 +174,73 @@ export const agreementSign = v.object({
 	signedName: v.pipe(v.string(), v.trim(), v.nonEmpty('Type your full name'), v.maxLength(200)),
 	contentHash: v.pipe(v.string(), v.regex(/^[0-9a-f]{64}$/)),
 	consent: v.literal(true, 'Agree to sign electronically')
+});
+
+export const listingStatuses = ['draft', 'published', 'closed'] as const;
+export const applicationStatuses = [
+	'new',
+	'reviewing',
+	'approved',
+	'declined',
+	'withdrawn'
+] as const;
+
+export const listingCreate = v.object({ unitId: idSchema });
+export const listingUpdate = v.object({
+	id: idSchema,
+	title: v.optional(requiredText('Title')),
+	description: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(10_000))),
+	rentAmount: v.optional(cents),
+	depositAmount: v.optional(cents),
+	availableOn: v.optional(v.nullable(isoDate)),
+	leaseTermMonths: v.optional(
+		v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(120)))
+	),
+	petPolicy: optionalText,
+	amenities: v.optional(
+		v.pipe(
+			v.array(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.maxLength(60))),
+			v.maxLength(30, 'Up to 30 amenities')
+		)
+	)
+});
+export const listingStatusInput = v.object({
+	id: idSchema,
+	status: v.picklist(listingStatuses)
+});
+
+const shortText = (max = 200) =>
+	v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(max))));
+
+/** Public application form. Asks nothing about protected characteristics. */
+export const applicationInput = v.object({
+	listingId: idSchema,
+	firstName: v.pipe(v.string(), v.trim(), v.nonEmpty('First name is required'), v.maxLength(100)),
+	lastName: v.pipe(v.string(), v.trim(), v.nonEmpty('Last name is required'), v.maxLength(100)),
+	email: v.pipe(v.string(), v.trim(), v.email('Enter a valid email'), v.maxLength(200)),
+	phone: shortText(40),
+	moveInDate: v.optional(v.nullable(isoDate)),
+	occupants: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(20)), 1),
+	pets: shortText(500),
+	employer: shortText(),
+	monthlyIncome: v.optional(v.nullable(cents)),
+	currentAddress: shortText(300),
+	message: shortText(2000),
+	consent: v.literal(true, 'Confirm the information is accurate'),
+	/** Honeypot: real people leave this empty. */
+	website: v.optional(v.string(), '')
+});
+
+export const applicationUpdate = v.object({
+	id: idSchema,
+	status: v.optional(v.picklist(['new', 'reviewing', 'declined', 'withdrawn'] as const)),
+	notes: optionalText
+});
+
+export const applicationApprove = v.object({
+	id: idSchema,
+	startDate: isoDate,
+	endDate: v.optional(v.nullable(isoDate)),
+	rentAmount: v.pipe(cents, v.minValue(1, 'Rent must be positive')),
+	depositAmount: v.optional(cents, 0)
 });

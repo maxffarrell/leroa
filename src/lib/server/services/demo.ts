@@ -1,6 +1,9 @@
 import type { OrgContext } from '#lib/server/context.ts';
-import { monthKey } from '#lib/format.ts';
-import { createProperty, createTenant, getProperty } from './portfolio.ts';
+import { db } from '#lib/server/db/index.ts';
+import { rentalApplication } from '#lib/server/db/schema.ts';
+import { addDays, monthKey, todayISO } from '#lib/format.ts';
+import { createProperty, createTenant, getProperty, updateUnit } from './portfolio.ts';
+import { createListing, setListingStatus, updateListing } from './listings.ts';
 import { createLease, recordPayment, rentRoll } from './leasing.ts';
 import { createTicket } from './maintenance.ts';
 
@@ -141,5 +144,101 @@ export async function loadDemoData(ctx: OrgContext) {
 			dueDate: null
 		});
 	}
+	await loadDemoListings(ctx, units.slice(people.length));
 	return { properties: 3, leases: leases.length };
+}
+
+const vacancies = [
+	{
+		bedrooms: 1,
+		bathrooms: 1,
+		areaSqft: 720,
+		marketRent: 165000,
+		description:
+			'Bright corner loft with 12-foot ceilings, exposed brick and big east-facing windows. Two blocks from the river trail and a short walk to downtown.',
+		amenities: ['In-unit laundry', 'Dishwasher', 'Air conditioning', 'Hardwood floors'],
+		petPolicy: 'Cats and dogs under 40 lb welcome.',
+		applicants: [
+			[
+				'Ava',
+				'Thompson',
+				'Riverside Dental',
+				520000,
+				1,
+				'Looking to move in at the start of next month.'
+			],
+			['Noah', 'Patel', 'City of Austin', 610000, 2, null]
+		]
+	},
+	{
+		bedrooms: 2,
+		bathrooms: 1,
+		areaSqft: 940,
+		marketRent: 198000,
+		description:
+			'Two-bedroom loft with an open kitchen, quartz counters and a private balcony overlooking Water Street.',
+		amenities: ['Balcony', 'Dishwasher', 'Elevator', 'Parking'],
+		petPolicy: null,
+		applicants: [
+			['Liam', 'Garcia', 'Austin Community College', 700000, 3, 'We have one small dog.']
+		]
+	},
+	{
+		bedrooms: 3,
+		bathrooms: 2,
+		areaSqft: 1480,
+		marketRent: 245000,
+		description:
+			'Three-bedroom single-family home with a fenced backyard, two-car garage and updated kitchen, in a quiet Round Rock neighborhood.',
+		amenities: ['Outdoor space', 'Parking', 'In-unit laundry', 'Storage'],
+		petPolicy: 'Pets considered case by case.',
+		applicants: []
+	}
+] as const;
+
+async function loadDemoListings(ctx: OrgContext, vacant: { id: string }[]) {
+	const today = todayISO();
+	for (const [i, v] of vacancies.entries()) {
+		const unit = vacant[i];
+		if (!unit) break;
+		await updateUnit(ctx, {
+			id: unit.id,
+			bedrooms: v.bedrooms,
+			bathrooms: v.bathrooms,
+			areaSqft: v.areaSqft,
+			marketRent: v.marketRent
+		});
+		const { id } = await createListing(ctx, { unitId: unit.id });
+		await updateListing(ctx, {
+			id,
+			description: v.description,
+			amenities: [...v.amenities],
+			petPolicy: v.petPolicy,
+			availableOn: addDays(today, 7 + i * 10),
+			leaseTermMonths: 12
+		});
+		// The last vacancy stays a draft so the editor has something to publish.
+		if (i < vacancies.length - 1) await setListingStatus(ctx, { id, status: 'published' });
+		for (const [
+			j,
+			[firstName, lastName, employer, income, occupants, message]
+		] of v.applicants.entries()) {
+			await db.insert(rentalApplication).values({
+				organizationId: ctx.orgId,
+				listingId: id,
+				unitId: unit.id,
+				status: j === 0 ? 'new' : 'reviewing',
+				firstName,
+				lastName,
+				email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+				phone: `(512) 555-02${i}${j}`,
+				moveInDate: addDays(today, 14 + j * 7),
+				occupants,
+				employer,
+				monthlyIncome: income,
+				message,
+				consentAt: new Date()
+			});
+		}
+	}
 }

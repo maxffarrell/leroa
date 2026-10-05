@@ -19,7 +19,12 @@ export const EVENT_TYPES = [
 	'charge.created',
 	'payment.recorded',
 	'maintenance.created',
-	'maintenance.updated'
+	'maintenance.updated',
+	'listing.published',
+	'listing.closed',
+	'application.submitted',
+	'application.approved',
+	'application.declined'
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

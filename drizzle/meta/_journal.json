@@ -43,6 +43,13 @@
       "when": 1791169688586,
       "tag": "0005_lease_agreements",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791176184442,
+      "tag": "0006_listings_applications",
+      "breakpoints": true
     }
   ]
 }

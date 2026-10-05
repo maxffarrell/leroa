@@ -318,6 +318,7 @@ export const notificationSettings = pgTable('notification_settings', {
 	overdueNotices: boolean('overdue_notices').notNull().default(true),
 	maintenanceUpdates: boolean('maintenance_updates').notNull().default(true),
 	leaseExpiryAlerts: boolean('lease_expiry_alerts').notNull().default(true),
+	newApplications: boolean('new_applications').notNull().default(true),
 	updatedAt: timestamp('updated_at', { withTimezone: true })
 		.notNull()
 		.defaultNow()
@@ -452,5 +453,89 @@ export const agreementSigner = pgTable(
 	(t) => [
 		primaryKey({ columns: [t.agreementId, t.tenantId] }),
 		index('agreement_signer_tenant_idx').on(t.tenantId)
+	]
+);
+
+export const listingStatus = pgEnum('listing_status', ['draft', 'published', 'closed']);
+
+/** A public advertisement for a unit, with an online application form while published. */
+export const listing = pgTable(
+	'listing',
+	{
+		id: id(),
+		organizationId: orgId(),
+		unitId: text('unit_id')
+			.notNull()
+			.references(() => unit.id, { onDelete: 'cascade' }),
+		status: listingStatus('status').notNull().default('draft'),
+		title: text('title').notNull(),
+		description: text('description').notNull().default(''),
+		rentAmount: integer('rent_amount').notNull(),
+		depositAmount: integer('deposit_amount').notNull().default(0),
+		currency: text('currency').notNull().default('USD'),
+		availableOn: date('available_on', { mode: 'string' }),
+		leaseTermMonths: integer('lease_term_months'),
+		petPolicy: text('pet_policy'),
+		amenities: text('amenities')
+			.array()
+			.notNull()
+			.default(sql`'{}'::text[]`),
+		publishedAt: timestamp('published_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [
+		index('listing_org_status_idx').on(t.organizationId, t.status),
+		uniqueIndex('listing_open_unit_idx')
+			.on(t.unitId)
+			.where(sql`${t.status} <> 'closed'`)
+	]
+);
+
+export const applicationStatus = pgEnum('application_status', [
+	'new',
+	'reviewing',
+	'approved',
+	'declined',
+	'withdrawn'
+]);
+
+/**
+ * A rental application submitted from a public listing. Deliberately collects no protected-class
+ * data, SSNs or dates of birth; screening belongs to a partner integration.
+ */
+export const rentalApplication = pgTable(
+	'rental_application',
+	{
+		id: id(),
+		organizationId: orgId(),
+		listingId: text('listing_id').references(() => listing.id, { onDelete: 'set null' }),
+		unitId: text('unit_id').references(() => unit.id, { onDelete: 'set null' }),
+		status: applicationStatus('status').notNull().default('new'),
+		firstName: text('first_name').notNull(),
+		lastName: text('last_name').notNull(),
+		email: text('email').notNull(),
+		phone: text('phone'),
+		moveInDate: date('move_in_date', { mode: 'string' }),
+		occupants: integer('occupants').notNull().default(1),
+		pets: text('pets'),
+		employer: text('employer'),
+		monthlyIncome: integer('monthly_income'),
+		currentAddress: text('current_address'),
+		message: text('message'),
+		/** Internal notes, never shown to the applicant. */
+		notes: text('notes'),
+		consentAt: timestamp('consent_at', { withTimezone: true }).notNull(),
+		ip: text('ip'),
+		userAgent: text('user_agent'),
+		decidedAt: timestamp('decided_at', { withTimezone: true }),
+		decidedBy: text('decided_by').references(() => user.id, { onDelete: 'set null' }),
+		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
+		leaseId: text('lease_id').references(() => lease.id, { onDelete: 'set null' }),
+		...timestamps
+	},
+	(t) => [
+		index('application_org_status_idx').on(t.organizationId, t.status, t.createdAt),
+		index('application_listing_idx').on(t.listingId),
+		index('application_email_idx').on(t.listingId, t.email)
 	]
 );

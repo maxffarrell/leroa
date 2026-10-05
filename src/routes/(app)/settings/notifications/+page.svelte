@@ -146,11 +146,16 @@
 		<Card.Title>Your team</Card.Title>
 		<Card.Description>Sent to workspace owners and admins.</Card.Description>
 	</Card.Header>
-	<Card.Content>
+	<Card.Content class="divide-y">
 		{@render toggle(
 			'leaseExpiryAlerts',
 			'Leases ending soon',
 			'An alert 60 days before a lease ends without a renewal.'
+		)}
+		{@render toggle(
+			'newApplications',
+			'New applications',
+			'An alert when someone applies through a public listing.'
 		)}
 	</Card.Content>
 </Card.Root>

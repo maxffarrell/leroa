@@ -17,6 +17,7 @@
 		deleteUnit,
 		archiveProperty
 	} from '#lib/remote/portfolio.remote.ts';
+	import { createListing } from '#lib/remote/listings.remote.ts';
 	import { unitStatuses } from '#lib/schemas.ts';
 	import { formatMoney, formatDate } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
@@ -69,6 +70,15 @@
 			toast.success('Unit removed');
 		} catch (err) {
 			toast.error(message(err, 'Could not remove unit'));
+		}
+	}
+
+	async function listUnit(unitId: string) {
+		try {
+			const { id: listingId } = await createListing({ unitId });
+			await goto(`/leasing/listings/${listingId}`);
+		} catch (err) {
+			toast.error(message(err, 'Could not create listing'));
 		}
 	}
 
@@ -213,6 +223,8 @@
 									<DropdownMenu.Item
 										onclick={() => goto(`/maintenance?new=1&property=${id}&unit=${u.id}`)}
 										>New request</DropdownMenu.Item
+									>
+									<DropdownMenu.Item onclick={() => listUnit(u.id)}>List for rent</DropdownMenu.Item
 									>
 									<DropdownMenu.Separator />
 									<DropdownMenu.Item variant="destructive" onclick={() => removeUnit(u.id)}

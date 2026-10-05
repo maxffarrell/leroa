@@ -194,6 +194,10 @@ export async function createLease(ctx: OrgContext, input: Out<typeof leaseInput>
 }
 
 export async function updateLease(ctx: OrgContext, { id, ...data }: Out<typeof leaseUpdate>) {
+	const [before] = await db
+		.select({ status: lease.status })
+		.from(lease)
+		.where(and(eq(lease.organizationId, ctx.orgId), eq(lease.id, id)));
 	const [l] = await db
 		.update(lease)
 		.set(data)
@@ -211,6 +215,7 @@ export async function updateLease(ctx: OrgContext, { id, ...data }: Out<typeof l
 				.update(unit)
 				.set({ status: occupied ? 'occupied' : 'vacant' })
 				.where(eq(unit.id, l.unitId));
+		if (occupied && before?.status === 'draft') await activateDraft(ctx.orgId, l);
 	}
 	await emit({
 		orgId: ctx.orgId,
@@ -221,6 +226,27 @@ export async function updateLease(ctx: OrgContext, { id, ...data }: Out<typeof l
 		summary: data.status ? `Lease marked ${data.status}` : 'Lease updated'
 	});
 	return l;
+}
+
+/** A draft that goes active gets the deposit charge and rent that `createLease` adds for active leases. */
+async function activateDraft(orgId: string, l: typeof lease.$inferSelect) {
+	if (l.depositAmount > 0) {
+		const [existing] = await db
+			.select({ id: charge.id })
+			.from(charge)
+			.where(and(eq(charge.leaseId, l.id), eq(charge.kind, 'deposit')));
+		if (!existing)
+			await db.insert(charge).values({
+				organizationId: orgId,
+				leaseId: l.id,
+				kind: 'deposit',
+				description: 'Security deposit',
+				dueDate: l.startDate,
+				amount: l.depositAmount
+			});
+	}
+	await ensureRentCharges(orgId, l.startDate.slice(0, 7));
+	await runRentAutomation(orgId, true);
 }
 
 type RentLease = { id: string; rentAmount: number; rentDueDay: number };
