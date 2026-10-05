@@ -489,7 +489,7 @@ async function maintenanceReport(orgId: string, p: ReportParams): Promise<Built>
 				: null,
 			cost: r.cost
 		})),
-		links: rows.map((r) => `/maintenance/${r.id}`),
+		links: rows.map((r) => `/maintenance?ticket=${r.id}`),
 		totalOverrides: { number: null },
 		currency: single(await orgCurrencies(orgId)),
 		note: `Requests opened ${formatDate(from)} – ${formatDate(to)}. Cost is what staff or the vendor recorded on the job.`
