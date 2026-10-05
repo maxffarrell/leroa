@@ -44,6 +44,16 @@
 		await goto('/login', { invalidateAll: true });
 	}
 	const unread = getUnreadCount();
+	$effect(() => {
+		unread.then(
+			() => {},
+			() => {}
+		);
+		const timer = setInterval(() => {
+			if (document.visibilityState === 'visible') void unread.refresh();
+		}, 60_000);
+		return () => clearInterval(timer);
+	});
 </script>
 
 <Sidebar.Root collapsible="icon" variant="inset">

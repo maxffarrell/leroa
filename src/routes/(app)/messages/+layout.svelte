@@ -18,7 +18,9 @@
 	const selected = $derived(page.params.tenantId ?? null);
 	const onAnnouncements = $derived(page.url.pathname.startsWith('/messages/announcements'));
 	const unread = $derived(threads.filter((t) => t.unread).length);
-	let composing = $state(page.url.searchParams.has('new'));
+	let composing = $state(
+		page.url.searchParams.has('new') && !page.url.pathname.startsWith('/messages/announcements')
+	);
 
 	$effect(() => {
 		const timer = setInterval(() => {

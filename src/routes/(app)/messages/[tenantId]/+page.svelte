@@ -31,6 +31,7 @@
 
 	$effect(() => {
 		const tenantId = id;
+		void getThread(tenantId).refresh();
 		const timer = setInterval(() => {
 			if (document.visibilityState === 'visible') void getThread(tenantId).refresh();
 		}, 10_000);

@@ -39,9 +39,9 @@
 	const time = (d: Date) => new Date(d).getTime();
 
 	const firstNew = $derived(
-		lastReadAt
-			? messages.findIndex((m) => m.authorType !== side && time(m.createdAt) > time(lastReadAt!))
-			: -1
+		messages.findIndex(
+			(m) => m.authorType !== side && (!lastReadAt || time(m.createdAt) > time(lastReadAt))
+		)
 	);
 	const lastMine = $derived(messages.findLastIndex((m) => m.authorType === side));
 	const seen = $derived(
