@@ -32,6 +32,14 @@
 	let confirmDisconnect = $state(false);
 	let showIssues = $state(false);
 
+	// The first sync after connecting runs in the background; poll until it finishes.
+	const anySyncing = $derived(list.some((i) => i.connection?.syncing));
+	$effect(() => {
+		if (!anySyncing) return;
+		const timer = setInterval(() => getIntegrations().refresh(), 3000);
+		return () => clearInterval(timer);
+	});
+
 	const message = (err: unknown, fallback: string) =>
 		(err as { body?: { message?: string } })?.body?.message ?? fallback;
 
