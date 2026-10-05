@@ -60,6 +60,59 @@ export const variables = defineEnvVars({
 		description: '`production` (default) or `staging`.',
 		schema: (value) => (value === 'staging' ? 'staging' : 'production')
 	},
+	PAYPAL_CLIENT_ID: {
+		description: 'PayPal REST app client ID. Lets tenants pay rent with PayPal.',
+		schema: (value) => value || undefined
+	},
+	PAYPAL_CLIENT_SECRET: {
+		description: 'PayPal REST app secret.',
+		schema: (value) => value || undefined
+	},
+	PAYPAL_WEBHOOK_ID: {
+		description:
+			'ID of the PayPal webhook pointing at `/api/payments/paypal/webhook`, used to verify deliveries.',
+		schema: (value) => value || undefined
+	},
+	PAYPAL_ENVIRONMENT: {
+		description: '`live` (default) or `sandbox`.',
+		schema: (value) => (value === 'sandbox' ? 'sandbox' : 'live')
+	},
+	SQUARE_ACCESS_TOKEN: {
+		description: 'Square access token. Lets tenants pay rent by card through Square checkout.',
+		schema: (value) => value || undefined
+	},
+	SQUARE_WEBHOOK_SIGNATURE_KEY: {
+		description:
+			'Signature key of the Square webhook subscription for `/api/payments/square/webhook`.',
+		schema: (value) => value || undefined
+	},
+	SQUARE_LOCATION_ID: {
+		description: 'Square location that takes rent payments. Defaults to the first active location.',
+		schema: (value) => value || undefined
+	},
+	SQUARE_ENVIRONMENT: {
+		description: '`production` (default) or `sandbox`.',
+		schema: (value) => (value === 'sandbox' ? 'sandbox' : 'production')
+	},
+	GOCARDLESS_ACCESS_TOKEN: {
+		description:
+			'GoCardless access token. Lets tenants pay rent by bank (Instant Bank Pay or direct debit).',
+		schema: (value) => value || undefined
+	},
+	GOCARDLESS_WEBHOOK_SECRET: {
+		description:
+			'Secret of the GoCardless webhook endpoint for `/api/payments/gocardless/webhook`.',
+		schema: (value) => value || undefined
+	},
+	GOCARDLESS_ENVIRONMENT: {
+		description: '`live` (default) or `sandbox`.',
+		schema: (value) => (value === 'sandbox' ? 'sandbox' : 'live')
+	},
+	MOLLIE_API_KEY: {
+		description:
+			'Mollie API key (`live_…` or `test_…`). Lets tenants pay rent with iDEAL, cards, SEPA and more.',
+		schema: (value) => value || undefined
+	},
 	CRON_SECRET: {
 		description:
 			'Bearer token for `/api/cron`, which posts rent, late fees and reminders for every workspace. Vercel Cron sends it automatically.',

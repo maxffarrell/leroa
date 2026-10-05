@@ -20,6 +20,8 @@
 		cash: 'Cash',
 		transfer: 'Wire / transfer',
 		bilt: 'Bilt',
+		paypal: 'PayPal',
+		direct_debit: 'Direct debit',
 		other: 'Other'
 	};
 	const p = $derived(await getPortal());

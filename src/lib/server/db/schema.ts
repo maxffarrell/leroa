@@ -200,6 +200,8 @@ export const paymentMethod = pgEnum('payment_method', [
 	'cash',
 	'transfer',
 	'bilt',
+	'paypal',
+	'direct_debit',
 	'other'
 ]);
 

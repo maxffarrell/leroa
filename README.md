@@ -74,6 +74,39 @@ Card and bank payments through Stripe Checkout.
 
 Self-hosted installs take payments into the Stripe account of `STRIPE_SECRET_KEY`. A workspace can instead connect its own account through Stripe Connect. That is required on Leroa Cloud (`LEROA_CLOUD=true`). Connected-account events need a second webhook endpoint with "Listen to events on Connected accounts". Put both signing secrets in `STRIPE_WEBHOOK_SECRET`, separated by a comma.
 
+### PayPal
+
+PayPal balance, bank, card, Pay Later and Venmo (US), through PayPal Checkout.
+
+1. Create a REST app in the [PayPal developer dashboard](https://developer.paypal.com/dashboard/) and set `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` (`PAYPAL_ENVIRONMENT=sandbox` while testing).
+2. Add a webhook to `https://<your-domain>/api/payments/paypal/webhook` for `CHECKOUT.ORDER.APPROVED` and `PAYMENT.CAPTURE.COMPLETED`, and put its ID in `PAYPAL_WEBHOOK_ID`.
+
+Leroa captures the order when PayPal reports it approved.
+
+### Square
+
+Card, Apple Pay, Google Pay and Cash App Pay, through Square payment links.
+
+1. Set `SQUARE_ACCESS_TOKEN` from the [Square developer console](https://developer.squareup.com/apps) (`SQUARE_ENVIRONMENT=sandbox` while testing). Payments go to the first active location unless you set `SQUARE_LOCATION_ID`. Leases must be in that location's currency.
+2. Add a webhook subscription to `https://<your-domain>/api/payments/square/webhook` for `payment.created` and `payment.updated`, and put its signature key in `SQUARE_WEBHOOK_SIGNATURE_KEY`. Square signs the exact URL, so set `ORIGIN`.
+
+### GoCardless
+
+Bank payments: Instant Bank Pay for GBP and EUR, a one-off direct debit for USD, CAD, AUD, NZD, SEK and DKK.
+
+1. Create an access token in the [GoCardless dashboard](https://manage.gocardless.com/developers) and set `GOCARDLESS_ACCESS_TOKEN` (`GOCARDLESS_ENVIRONMENT=sandbox` while testing).
+2. Add a webhook endpoint for `https://<your-domain>/api/payments/gocardless/webhook` and put its secret in `GOCARDLESS_WEBHOOK_SECRET`.
+
+Payments are recorded when GoCardless confirms them, which takes a few days for direct debits.
+
+### Mollie
+
+iDEAL, Bancontact, cards, SEPA and other European methods, through Mollie Checkout.
+
+Set `MOLLIE_API_KEY` (a `test_` key while testing). Leroa sends Mollie the webhook URL with each payment, so there's nothing else to set up, but the URL must be reachable from the internet.
+
+All four, like Bilt, use one account per install, so they're only offered on self-hosted installs for now.
+
 ### Bilt
 
 Tenants pay with their Bilt account and earn points on rent, through [Bilt Checkout](https://developers.bilt.com/docs/). Bilt's partner API is invite-only and still a draft, so this needs Bilt partner onboarding (email checkout@bilt.com).
