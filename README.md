@@ -173,6 +173,15 @@ Sends tenants to QuickBooks as customers, charges as invoices (using Rent, Fees,
 3. Set `QBO_CLIENT_ID` and `QBO_CLIENT_SECRET`. With development keys, also set `QBO_ENVIRONMENT=sandbox`.
 4. In **Settings → Integrations → QuickBooks Online**, click **Connect to QuickBooks Online** and choose the company.
 
+### Xero
+
+Sends tenants to Xero as contacts, charges as approved sales invoices and payments as payments on those invoices. Like QuickBooks it's one-way, skips deposits unless you turn them on, and only sends records dated on or after **Sync records from**. Invoice amounts include any tax set on the chosen revenue account. Xero only takes payments against invoices, so payments that aren't applied to a charge stay in Leroa.
+
+1. Create a **Web app** at [developer.xero.com/app/manage](https://developer.xero.com/app/manage).
+2. Add `<ORIGIN>/api/integrations/xero/callback` as a redirect URI.
+3. Set `XERO_CLIENT_ID` and `XERO_CLIENT_SECRET`. Leroa requests `offline_access accounting.contacts accounting.transactions accounting.settings.read`. If your app has to use other scopes, set them in `XERO_SCOPES`.
+4. In **Settings → Integrations → Xero**, click **Connect to Xero** and pick the organisation.
+
 ## Stack
 
 SvelteKit 3 · Svelte 5 (remote functions, async) · Tailwind 4 · shadcn-svelte · PostgreSQL · Drizzle · Better Auth

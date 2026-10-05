@@ -132,6 +132,25 @@ export const variables = defineEnvVars({
 			'Development only: send QuickBooks sign-in and API requests to this mock server instead of Intuit.',
 		schema: (value) => value || undefined
 	},
+	XERO_CLIENT_ID: {
+		description:
+			'Client ID of your Xero app. Lets workspaces connect Xero and sync tenants, charges and payments to it.',
+		schema: (value) => value || undefined
+	},
+	XERO_CLIENT_SECRET: {
+		description: 'Client secret of your Xero app.',
+		schema: (value) => value || undefined
+	},
+	XERO_SCOPES: {
+		description:
+			'Space-separated OAuth scopes to request from Xero instead of the defaults, for apps that must use different scopes.',
+		schema: (value) => value?.trim() || undefined
+	},
+	XERO_BASE_URL: {
+		description:
+			'Development only: send Xero sign-in and API requests to this mock server instead of Xero.',
+		schema: (value) => value || undefined
+	},
 	CRON_SECRET: {
 		description:
 			'Bearer token for `/api/cron`, which posts rent, late fees and reminders for every workspace. Vercel Cron sends it automatically.',

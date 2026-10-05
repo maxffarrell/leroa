@@ -93,7 +93,15 @@ export type OAuthSpec = {
 	revokeBody?: 'form' | 'json';
 	/** Display name of the connected account, e.g. the company name. */
 	accountName?: (connection: Connection, fetcher: typeof fetch) => Promise<string | null>;
+	/**
+	 * Finds the connected account after sign-in when the callback doesn't name it, e.g. Xero's
+	 * organisation. Takes precedence over `accountParam` and `accountName`; `params` are kept on the
+	 * connection. Throw to reject the connection.
+	 */
+	account?: (connection: Connection, fetcher: typeof fetch) => Promise<OAuthAccount>;
 };
+
+export type OAuthAccount = { id: string; name?: string | null; params?: Record<string, string> };
 
 export type Connection = {
 	accessToken: string;

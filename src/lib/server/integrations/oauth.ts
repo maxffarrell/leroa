@@ -55,7 +55,7 @@ export function startOAuth(def: OAuthIntegration, orgId: string, userId: string,
 	const url = new URL(app.authorizeUrl ?? def.oauth.authorizeUrl);
 	url.searchParams.set('client_id', app.clientId);
 	url.searchParams.set('response_type', 'code');
-	url.searchParams.set('scope', def.oauth.scopes.join(' '));
+	url.searchParams.set('scope', (app.scopes ?? def.oauth.scopes).join(' '));
 	url.searchParams.set('redirect_uri', redirectUri(origin, def.id));
 	url.searchParams.set('state', state);
 	return { url: url.toString(), nonce };
@@ -147,16 +147,25 @@ export async function completeOAuth(
 		const value = url.searchParams.get(key);
 		if (value) params[key] = value.slice(0, 200);
 	}
-	const account = def.oauth.accountParam ? (params[def.oauth.accountParam] ?? '') : '';
+	const connection = { accessToken: tokens.access_token, params: { ...params, ...app.params } };
+	const fetcher: typeof fetch = (input, init) => fetch(input, { ...init, signal: timeout() });
+	let account = def.oauth.accountParam ? (params[def.oauth.accountParam] ?? '') : '';
 	let accountName: string | null = null;
-	try {
-		accountName =
-			(await def.oauth.accountName?.(
-				{ accessToken: tokens.access_token, params: { ...params, ...app.params } },
-				(input, init) => fetch(input, { ...init, signal: timeout() })
-			)) ?? null;
-	} catch (err) {
-		console.warn(`[integration:${def.id}] could not read account name`, err);
+	if (def.oauth.account) {
+		const found = await def.oauth.account(connection, fetcher).catch((err: unknown) => {
+			console.warn(`[integration:${def.id}] could not find the connected account`, err);
+			error(400, err instanceof Error ? err.message : `Could not connect ${def.name}`);
+		});
+		account = found.id.slice(0, 200);
+		accountName = found.name ?? null;
+		for (const [key, value] of Object.entries(found.params ?? {}))
+			params[key] = value.slice(0, 200);
+	} else {
+		try {
+			accountName = (await def.oauth.accountName?.(connection, fetcher)) ?? null;
+		} catch (err) {
+			console.warn(`[integration:${def.id}] could not read account name`, err);
+		}
 	}
 
 	const values = {
