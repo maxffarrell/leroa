@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
@@ -135,7 +135,7 @@ async function loadState(orgId: string) {
 		db
 			.select({ unitId: lease.unitId, startDate: lease.startDate, status: lease.status })
 			.from(lease)
-			.where(and(eq(lease.organizationId, orgId), inArray(lease.status, ['draft', 'active'])))
+			.where(eq(lease.organizationId, orgId))
 	]);
 	const byEmail = new Map<string, string>();
 	const byName = new Map<string, string>();

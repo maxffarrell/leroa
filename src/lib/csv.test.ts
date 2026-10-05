@@ -46,3 +46,13 @@ describe('toCsv', () => {
 		expect(parseCsv(toCsv(rows))).toEqual(rows);
 	});
 });
+
+describe('report row filter', () => {
+	it('matches text cells case-insensitively and carries q in the query string', async () => {
+		const { matchesQuery, withSearch } = await import('./reports.ts');
+		expect(matchesQuery({ residents: 'Maya Chen', rent: 145000 }, ' maya ')).toBe(true);
+		expect(matchesQuery({ residents: 'Maya Chen', rent: 145000 }, '1450')).toBe(false);
+		expect(withSearch('propertyId=p1', ' Maya ')).toBe('propertyId=p1&q=Maya');
+		expect(withSearch('propertyId=p1', '  ')).toBe('propertyId=p1');
+	});
+});

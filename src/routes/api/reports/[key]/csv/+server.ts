@@ -6,7 +6,7 @@ import { runReport } from '#lib/server/services/reports.ts';
 import { reportParams } from '#lib/schemas.ts';
 import { toCsv, type CsvValue } from '#lib/csv.ts';
 import { todayISO } from '#lib/format.ts';
-import type { ReportColumn, ReportValue } from '#lib/reports.ts';
+import { matchesQuery, type ReportColumn, type ReportValue } from '#lib/reports.ts';
 
 const num = (s: string | null) => (s ? Number(s) : undefined);
 
@@ -31,12 +31,15 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const { key, ...rest } = parsed.output;
 	const report = await runReport(ctx.orgId, key, rest);
 	const columns = report.columns;
+	const search = (q.get('q') ?? '').slice(0, 200).trim();
+	const rows = search ? report.rows.filter((r) => matchesQuery(r, search)) : report.rows;
+	const totals = search ? null : report.totals;
 	const lines: CsvValue[][] = [
 		columns.map((c) =>
 			c.type === 'money' && report.currency ? `${c.label} (${report.currency})` : c.label
 		),
-		...report.rows.map((r) => columns.map((c) => exportValue(c, r[c.key] ?? null))),
-		...(report.totals ? [columns.map((c) => exportValue(c, report.totals![c.key] ?? null))] : [])
+		...rows.map((r) => columns.map((c) => exportValue(c, r[c.key] ?? null))),
+		...(totals ? [columns.map((c) => exportValue(c, totals[c.key] ?? null))] : [])
 	];
 	const name = `${key}-${todayISO()}.csv`;
 	return new Response(toCsv(lines), {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import PageHeader from '#lib/components/app/page-header.svelte';
@@ -12,7 +13,9 @@
 	import { getProperties } from '#lib/remote/portfolio.remote.ts';
 	import {
 		REPORTS,
+		matchesQuery,
 		reportQuery,
+		withSearch,
 		type ReportColumn,
 		type ReportParams,
 		type ReportValue
@@ -35,34 +38,35 @@
 		from: meta.param === 'range' ? sp.get('from') || `${todayISO().slice(0, 4)}-01-01` : undefined,
 		to: meta.param === 'range' ? sp.get('to') || todayISO() : undefined
 	});
-	const query = $derived(reportQuery(params));
+	const urlSearch = () => untrack(() => page.url.searchParams.get('q') ?? '');
+	let search = $state(urlSearch());
+	const query = $derived(withSearch(reportQuery(params), search));
 
 	const properties = $derived(await getProperties());
 	const report = $derived(await getReport({ key, ...params }));
 
 	function set(patch: Partial<ReportParams>) {
-		const q = reportQuery({ ...params, ...patch });
+		const q = withSearch(reportQuery({ ...params, ...patch }), search);
 		void goto(`?${q}`, { replace: true, reset: false });
 	}
 
-	let search = $state('');
 	let sort = $state<{ key: string; dir: 1 | -1 } | null>(null);
 	$effect(() => {
 		void key;
 		sort = null;
-		search = '';
+		search = urlSearch();
+	});
+	$effect(() => {
+		if (search.trim() === urlSearch()) return;
+		const t = setTimeout(() => set({}), 300);
+		return () => clearTimeout(t);
 	});
 
 	const indexed = $derived(
 		report.rows.map((row, i) => ({ row, link: report.links[i] ?? null, i }))
 	);
 	const rows = $derived.by(() => {
-		const q = search.trim().toLowerCase();
-		const list = q
-			? indexed.filter(({ row }) =>
-					Object.values(row).some((v) => typeof v === 'string' && v.toLowerCase().includes(q))
-				)
-			: indexed;
+		const list = search.trim() ? indexed.filter(({ row }) => matchesQuery(row, search)) : indexed;
 		if (!sort) return list;
 		const { key: k, dir } = sort;
 		return [...list].sort((a, b) => {
@@ -237,7 +241,7 @@
 					</Table.Row>
 				{/each}
 			</Table.Body>
-			{#if report.totals && !search}
+			{#if report.totals && !search.trim()}
 				<Table.Footer>
 					<Table.Row>
 						{#each report.columns as c, ci (c.key)}

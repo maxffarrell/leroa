@@ -77,6 +77,22 @@ export type ReportParams = {
 	to?: string;
 };
 
+/** Case-insensitive match of the row filter against a row's text cells. */
+export function matchesQuery(row: ReportRow, q: string) {
+	const needle = q.trim().toLowerCase();
+	return (
+		!needle ||
+		Object.values(row).some((v) => typeof v === 'string' && v.toLowerCase().includes(needle))
+	);
+}
+
+/** Adds the row filter (`q`) to a report query string. */
+export function withSearch(query: string, q: string) {
+	const s = new URLSearchParams(query);
+	if (q.trim()) s.set('q', q.trim());
+	return s.toString();
+}
+
 /** Query string shared by the report page and its CSV download. */
 export function reportQuery(p: ReportParams) {
 	const q = new URLSearchParams();
