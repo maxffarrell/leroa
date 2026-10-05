@@ -346,7 +346,7 @@
 							<p class="text-sm text-muted-foreground">{it.notes}</p>
 						{/if}
 
-						{#if it.photos.length || editable}
+						{#if it.photos.length || editable || needsRepair(it.condition)}
 							<div class="flex flex-wrap items-center gap-2">
 								{#each it.photos as p (p.id)}
 									<a
