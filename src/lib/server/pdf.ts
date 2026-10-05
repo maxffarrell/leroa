@@ -14,7 +14,10 @@ export type AgreementPdfInput = {
 	title: string;
 	orgName: string;
 	body: string;
-	draft: boolean;
+	/** Red banner on every page, e.g. for drafts. */
+	watermark: string | null;
+	/** Append the signature certificate page. */
+	certificate: boolean;
 	contentHash: string | null;
 	sentAt: Date | null;
 	completedAt: Date | null;
@@ -84,8 +87,8 @@ export async function agreementPdf(input: AgreementPdfInput) {
 	const newPage = () => {
 		page = pdf.addPage([PAGE.w, PAGE.h]);
 		y = PAGE.h - PAGE.margin;
-		if (input.draft)
-			page.drawText('DRAFT - NOT FOR SIGNATURE', {
+		if (input.watermark)
+			page.drawText(toWinAnsi(input.watermark), {
 				x: PAGE.margin,
 				y: PAGE.h - 36,
 				size: SIZE.small,
@@ -123,7 +126,7 @@ export async function agreementPdf(input: AgreementPdfInput) {
 	}
 
 	// Signature certificate
-	if (!input.draft) {
+	if (input.certificate) {
 		newPage();
 		write('Signature certificate', bold, SIZE.heading, ink, 4);
 		write(

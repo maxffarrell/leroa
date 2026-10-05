@@ -27,6 +27,13 @@ import { portalTenants } from './portal.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
+const WATERMARK: Record<string, string | null> = {
+	draft: 'DRAFT - NOT FOR SIGNATURE',
+	sent: null,
+	signed: null,
+	void: 'VOID - NO LONGER VALID'
+};
+
 const sha256 = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex');
 
 export async function listTemplates(orgId: string) {
@@ -362,7 +369,8 @@ export async function signAgreement(
 		const bytes = await agreementPdf({
 			...a,
 			orgName: org?.name ?? '',
-			draft: false,
+			watermark: null,
+			certificate: true,
 			completedAt,
 			signers
 		});
@@ -440,7 +448,8 @@ export async function agreementFile(
 	const data = await agreementPdf({
 		...a,
 		orgName: org?.name ?? '',
-		draft: a.status !== 'signed',
+		watermark: WATERMARK[a.status],
+		certificate: a.status === 'signed',
 		signers: signers ?? (await signersOf([a.id]))
 	});
 	return { name, data };
