@@ -87,7 +87,12 @@ export async function createTicket(ctx: OrgContext, input: Out<typeof ticketInpu
 			.where(eq(maintenanceTicket.organizationId, ctx.orgId))) as [{ n: number | null }];
 		const [t] = await tx
 			.insert(maintenanceTicket)
-			.values({ ...input, organizationId: ctx.orgId, number: (n ?? 0) + 1 })
+			.values({
+				...input,
+				organizationId: ctx.orgId,
+				number: (n ?? 0) + 1,
+				closedAt: input.status === 'done' || input.status === 'cancelled' ? new Date() : null
+			})
 			.returning();
 		return t!;
 	});

@@ -21,12 +21,14 @@
 	let editing = $state(false);
 
 	const isOpen = (s: string) => s === 'open' || s === 'in_progress' || s === 'on_hold';
-	const year = String(new Date().getFullYear());
+	const year = new Date().getFullYear();
 	const stats = $derived({
 		open: v.jobs.filter((j) => isOpen(j.status)).length,
 		total: v.jobs.length,
 		spendYtd: v.jobs
-			.filter((j) => j.status === 'done' && String(j.closedAt ?? '').startsWith(year))
+			.filter(
+				(j) => j.status === 'done' && j.closedAt && new Date(j.closedAt).getFullYear() === year
+			)
 			.reduce((s, j) => s + (j.costAmount ?? 0), 0)
 	});
 
