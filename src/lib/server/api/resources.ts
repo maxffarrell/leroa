@@ -7,6 +7,7 @@ import * as maintenance from '#lib/server/services/maintenance.ts';
 import * as listings from '#lib/server/services/listings.ts';
 import * as vendors from '#lib/server/services/vendors.ts';
 import * as inspections from '#lib/server/services/inspections.ts';
+import * as messaging from '#lib/server/services/messaging.ts';
 import * as s from '#lib/schemas.ts';
 
 type Resource = {
@@ -95,6 +96,18 @@ export const resources: Record<string, Resource> = {
 				leaseId: url.searchParams.get('leaseId') ?? undefined
 			}),
 		get: (ctx, id) => inspections.getInspection(ctx.orgId, id)
+	},
+	messages: {
+		description:
+			'Tenant conversations. List returns threads; get takes a tenant ID and returns its messages. Create sends a message as the key owner.',
+		list: (ctx) => messaging.listThreads(ctx.orgId),
+		get: (ctx, tenantId) => messaging.getThread(ctx.orgId, tenantId),
+		create: { schema: s.messageSend, run: messaging.sendStaffMessage as never }
+	},
+	announcements: {
+		description: 'Notices posted to residents of one property (`propertyId`) or all of them',
+		list: (ctx) => messaging.listAnnouncements(ctx.orgId),
+		create: { schema: s.announcementCreate, run: messaging.createAnnouncement as never }
 	},
 	listings: {
 		description: 'Vacancy listings, published or not',

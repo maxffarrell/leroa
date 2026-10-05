@@ -11,6 +11,7 @@
 	import { initials } from '#lib/format.ts';
 	import Logo from './logo.svelte';
 	import { mainNav, secondaryNav } from './nav.ts';
+	import { getUnreadCount } from '#lib/remote/messaging.remote.ts';
 	import Search from '@lucide/svelte/icons/search';
 	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 	import LogOut from '@lucide/svelte/icons/log-out';
@@ -42,6 +43,7 @@
 		await authClient.signOut();
 		await goto('/login', { invalidateAll: true });
 	}
+	const unread = getUnreadCount();
 </script>
 
 <Sidebar.Root collapsible="icon" variant="inset">
@@ -87,6 +89,12 @@
 								<a href={item.href} {...props}><item.icon /><span>{item.label}</span></a>
 							{/snippet}
 						</Sidebar.MenuButton>
+						{#if item.href === '/messages' && unread.current}
+							<Sidebar.MenuBadge
+								class="bg-primary text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground"
+								aria-label="{unread.current} unread">{unread.current}</Sidebar.MenuBadge
+							>
+						{/if}
 					</Sidebar.MenuItem>
 				{/each}
 			</Sidebar.Menu>

@@ -17,6 +17,7 @@
 	import Mail from '@lucide/svelte/icons/mail';
 	import Phone from '@lucide/svelte/icons/phone';
 	import FileSignature from '@lucide/svelte/icons/file-signature';
+	import MessagesSquare from '@lucide/svelte/icons/messages-square';
 
 	const id = $derived(page.params.id!);
 	const t = $derived(await getTenant(id));
@@ -52,6 +53,9 @@
 
 <PageHeader title={name} crumbs={[{ label: 'Tenants', href: '/tenants' }]}>
 	{#snippet actions()}
+		<Button size="sm" variant="outline" href="/messages/{id}"
+			><MessagesSquare /> <span class="hidden sm:inline">Message</span></Button
+		>
 		<Button size="sm" variant="outline" onclick={copyPortalLink}
 			><Link />
 			<span class="hidden sm:inline">{t.portalUserId ? 'Portal linked' : 'Portal invite'}</span

@@ -2,6 +2,8 @@
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import PortalAgreements from '#lib/components/app/portal-agreements.svelte';
 	import PortalInspections from '#lib/components/app/portal-inspections.svelte';
+	import PortalMessages from '#lib/components/app/portal-messages.svelte';
+	import PortalAnnouncements from '#lib/components/app/portal-announcements.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -113,6 +115,7 @@
 		<h1 class="text-2xl font-semibold tracking-tight">Hi {p.name}</h1>
 		<p class="text-sm text-muted-foreground">Managed by {p.orgName}</p>
 	</div>
+	<PortalAnnouncements />
 	{#each p.leases as l (l.id)}
 		<Card.Root>
 			<Card.Header>
@@ -245,6 +248,7 @@
 			</Card.Footer>
 		</Card.Root>
 	{/each}
+	<PortalMessages />
 	{#if p.tickets.length}
 		<Card.Root>
 			<Card.Header><Card.Title>Your requests</Card.Title></Card.Header>

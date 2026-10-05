@@ -638,3 +638,61 @@ export const inspectionItem = pgTable(
 	},
 	(t) => [index('inspection_item_inspection_idx').on(t.inspectionId, t.position)]
 );
+
+/** A broadcast to residents of one property, or of every property when `propertyId` is null. */
+export const announcement = pgTable(
+	'announcement',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id').references(() => property.id, { onDelete: 'cascade' }),
+		subject: text('subject').notNull(),
+		body: text('body').notNull(),
+		emailed: boolean('emailed').notNull().default(false),
+		recipientCount: integer('recipient_count').notNull().default(0),
+		sentBy: text('sent_by').references(() => user.id, { onDelete: 'set null' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('announcement_org_idx').on(t.organizationId, t.createdAt)]
+);
+
+export const messageAuthor = pgEnum('message_author', ['staff', 'tenant']);
+
+/** One conversation per tenant between the resident and the management team. */
+export const messageThread = pgTable(
+	'message_thread',
+	{
+		id: id(),
+		organizationId: orgId(),
+		tenantId: text('tenant_id')
+			.notNull()
+			.references(() => tenant.id, { onDelete: 'cascade' }),
+		lastMessageAt: timestamp('last_message_at', { withTimezone: true }).notNull().defaultNow(),
+		lastAuthorType: messageAuthor('last_author_type').notNull(),
+		preview: text('preview').notNull().default(''),
+		staffReadAt: timestamp('staff_read_at', { withTimezone: true }),
+		tenantReadAt: timestamp('tenant_read_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [
+		uniqueIndex('message_thread_tenant_idx').on(t.tenantId),
+		index('message_thread_org_idx').on(t.organizationId, t.lastMessageAt)
+	]
+);
+
+export const message = pgTable(
+	'message',
+	{
+		id: id(),
+		organizationId: orgId(),
+		threadId: text('thread_id')
+			.notNull()
+			.references(() => messageThread.id, { onDelete: 'cascade' }),
+		authorType: messageAuthor('author_type').notNull(),
+		authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
+		authorName: text('author_name').notNull(),
+		body: text('body').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('message_thread_created_idx').on(t.threadId, t.createdAt)]
+);

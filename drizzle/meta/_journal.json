@@ -71,6 +71,13 @@
       "when": 1791180904114,
       "tag": "0009_inspections",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791208250668,
+      "tag": "0010_messaging",
+      "breakpoints": true
     }
   ]
 }

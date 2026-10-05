@@ -2,13 +2,14 @@ import type { OrgContext } from '#lib/server/context.ts';
 import { createVendor } from './vendors.ts';
 import { db } from '#lib/server/db/index.ts';
 import { and, eq, inArray } from 'drizzle-orm';
-import { inspectionItem, rentalApplication, ticketNote } from '#lib/server/db/schema.ts';
+import { inspectionItem, rentalApplication, ticketNote, user } from '#lib/server/db/schema.ts';
 import { completeInspection, createInspection } from './inspections.ts';
 import { addDays, monthKey, todayISO } from '#lib/format.ts';
 import { createProperty, createTenant, getProperty, updateUnit } from './portfolio.ts';
 import { createListing, setListingStatus, updateListing } from './listings.ts';
 import { createLease, recordPayment, rentRoll } from './leasing.ts';
 import { createTicket } from './maintenance.ts';
+import { createAnnouncement, postMessage } from './messaging.ts';
 
 const people = [
 	['Maya', 'Chen'],
@@ -68,6 +69,7 @@ export async function loadDemoData(ctx: OrgContext) {
 	const month = monthKey();
 
 	const leases = [];
+	const tenants = [];
 	for (const [i, [firstName, lastName]] of people.entries()) {
 		const unit = units[i]!;
 		const tenant = await createTenant(ctx, {
@@ -77,6 +79,7 @@ export async function loadDemoData(ctx: OrgContext) {
 			email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
 			phone: `(512) 555-01${String(i).padStart(2, '0')}`
 		});
+		tenants.push(tenant);
 		const rent = 145000 + (i % 4) * 15000;
 		const end = new Date(
 			Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + (i === 2 ? 1 : 7 + i), 0)
@@ -202,6 +205,7 @@ export async function loadDemoData(ctx: OrgContext) {
 	}
 	await loadDemoInspections(ctx, leases[0]!, leases[1]!, start);
 	await loadDemoListings(ctx, units.slice(people.length));
+	await loadDemoMessages(ctx, tenants, maple.id);
 	return { properties: 3, leases: leases.length };
 }
 
@@ -364,4 +368,47 @@ async function loadDemoListings(ctx: OrgContext, vacant: { id: string }[]) {
 			});
 		}
 	}
+}
+
+async function loadDemoMessages(
+	ctx: OrgContext,
+	tenants: { id: string; firstName: string; lastName: string }[],
+	propertyId: string
+) {
+	const [me] = await db.select({ name: user.name }).from(user).where(eq(user.id, ctx.userId));
+	const staff = { type: 'staff' as const, id: ctx.userId, name: me?.name || ctx.org.name };
+	const resident = (t: { firstName: string; lastName: string }) => ({
+		type: 'tenant' as const,
+		id: null,
+		name: `${t.firstName} ${t.lastName}`
+	});
+	const ago = (hours: number) => new Date(Date.now() - hours * 3600_000);
+	const [maya, jordan] = tenants;
+	await postMessage(
+		ctx.orgId,
+		maya!.id,
+		resident(maya!),
+		'Hi! Is it okay to keep a small grill on the balcony this summer?',
+		ago(50)
+	);
+	await postMessage(
+		ctx.orgId,
+		maya!.id,
+		staff,
+		"Hi Maya, small electric grills are fine. Gas and charcoal grills aren't allowed on balconies under the fire code.",
+		ago(49)
+	);
+	await postMessage(
+		ctx.orgId,
+		jordan!.id,
+		resident(jordan!),
+		"The package room keypad hasn't worked since this morning. Could someone take a look?",
+		ago(3)
+	);
+	await createAnnouncement(ctx, {
+		propertyId,
+		subject: 'Water shut-off Tuesday, 9am to noon',
+		body: 'The city is replacing the main valve on Maple Ave. Water will be off in all units on Tuesday from 9am to noon. Please plan ahead and keep a few bottles handy.',
+		email: false
+	});
 }

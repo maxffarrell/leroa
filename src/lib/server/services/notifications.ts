@@ -488,3 +488,77 @@ export async function notifyInspectionAcknowledged(
 		});
 	}
 }
+
+const paragraphs = (body: string) =>
+	body
+		.replace(/\r\n?/g, '\n')
+		.split(/\n+/)
+		.map((l) => l.trim())
+		.filter(Boolean)
+		.slice(0, 40);
+
+/** Emails a resident when the management team sends them a message. */
+export async function notifyResidentMessage(
+	orgId: string,
+	m: { id: string; body: string },
+	r: { name: string; email: string | null }
+) {
+	if (!r.email) return;
+	const org = await orgName(orgId);
+	await notifyOnce(orgId, 'message.created', m.id, {
+		to: r.email,
+		subject: `New message from ${org}`,
+		...renderEmail({
+			orgName: org,
+			heading: `New message from ${org}`,
+			lines: [`Hi ${r.name.split(' ')[0] || 'there'},`, ...paragraphs(m.body)],
+			action: { label: 'Reply in the resident portal', url: `${appOrigin()}/portal#messages` }
+		})
+	});
+}
+
+/** Emails owners and admins when a resident sends a message. */
+export async function notifyStaffMessage(
+	orgId: string,
+	m: { id: string; body: string },
+	from: { tenantId: string; name: string }
+) {
+	const org = await orgName(orgId);
+	for (const to of await managerEmails(orgId)) {
+		await notifyOnce(orgId, 'message.created', m.id, {
+			to,
+			subject: `New message from ${from.name}`,
+			...renderEmail({
+				orgName: org,
+				heading: `${from.name} sent a message`,
+				lines: paragraphs(m.body),
+				action: { label: 'Reply', url: `${appOrigin()}/messages/${from.tenantId}` }
+			})
+		});
+	}
+}
+
+/** Emails an announcement to each resident with an email address. */
+export async function notifyAnnouncement(
+	orgId: string,
+	a: { id: string; subject: string; body: string },
+	residents: { name: string; email: string | null }[]
+) {
+	const org = await orgName(orgId);
+	let sent = 0;
+	for (const r of residents) {
+		if (!r.email) continue;
+		const ok = await notifyOnce(orgId, 'announcement.sent', a.id, {
+			to: r.email,
+			subject: a.subject,
+			...renderEmail({
+				orgName: org,
+				heading: a.subject,
+				lines: [`Hi ${r.name.split(' ')[0] || 'there'},`, ...paragraphs(a.body)],
+				action: { label: 'Open the resident portal', url: `${appOrigin()}/portal` }
+			})
+		});
+		if (ok) sent++;
+	}
+	return sent;
+}

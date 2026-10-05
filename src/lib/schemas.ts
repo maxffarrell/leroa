@@ -329,3 +329,14 @@ export const inspectionAcknowledge = v.object({
 	id: idSchema,
 	comment: v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(2000))))
 });
+
+const messageBody = v.pipe(v.string(), v.trim(), v.nonEmpty('Write a message'), v.maxLength(5000));
+
+export const messageSend = v.object({ tenantId: idSchema, body: messageBody });
+
+export const announcementCreate = v.object({
+	propertyId: v.optional(v.nullable(idSchema)),
+	subject: requiredText('Subject'),
+	body: v.pipe(v.string(), v.trim(), v.nonEmpty('Write the announcement'), v.maxLength(10000)),
+	email: v.optional(v.boolean(), true)
+});
