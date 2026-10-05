@@ -1,0 +1,1 @@
+ALTER TABLE "maintenance_ticket" DROP COLUMN "vendor";

@@ -241,6 +241,27 @@ export const ticketStatus = pgEnum('ticket_status', [
 ]);
 export const ticketPriority = pgEnum('ticket_priority', ['low', 'normal', 'high', 'urgent']);
 
+export const vendor = pgTable(
+	'vendor',
+	{
+		id: id(),
+		organizationId: orgId(),
+		name: text('name').notNull(),
+		contactName: text('contact_name'),
+		email: text('email'),
+		phone: text('phone'),
+		trades: text('trades')
+			.array()
+			.notNull()
+			.default(sql`'{}'::text[]`),
+		notes: text('notes'),
+		insuranceExpiresOn: date('insurance_expires_on', { mode: 'string' }),
+		archivedAt: timestamp('archived_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [index('vendor_org_idx').on(t.organizationId, t.name)]
+);
+
 export const maintenanceTicket = pgTable(
 	'maintenance_ticket',
 	{
@@ -257,15 +278,41 @@ export const maintenanceTicket = pgTable(
 		status: ticketStatus('status').notNull().default('open'),
 		priority: ticketPriority('priority').notNull().default('normal'),
 		assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
-		vendor: text('vendor'),
+		vendorId: text('vendor_id').references(() => vendor.id, { onDelete: 'set null' }),
+		/** What the work cost, in cents, as reported by staff or the vendor. */
+		costAmount: integer('cost_amount'),
+		vendorSentAt: timestamp('vendor_sent_at', { withTimezone: true }),
 		dueDate: date('due_date', { mode: 'string' }),
 		closedAt: timestamp('closed_at', { withTimezone: true }),
 		...timestamps
 	},
 	(t) => [
 		index('ticket_org_status_idx').on(t.organizationId, t.status),
-		uniqueIndex('ticket_org_number_idx').on(t.organizationId, t.number)
+		uniqueIndex('ticket_org_number_idx').on(t.organizationId, t.number),
+		index('ticket_vendor_idx').on(t.vendorId)
 	]
+);
+
+export const ticketAuthor = pgEnum('ticket_author', ['staff', 'vendor', 'tenant']);
+
+export const ticketNote = pgTable(
+	'ticket_note',
+	{
+		id: id(),
+		organizationId: orgId(),
+		ticketId: text('ticket_id')
+			.notNull()
+			.references(() => maintenanceTicket.id, { onDelete: 'cascade' }),
+		authorType: ticketAuthor('author_type').notNull(),
+		authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
+		vendorId: text('vendor_id').references(() => vendor.id, { onDelete: 'set null' }),
+		authorName: text('author_name').notNull(),
+		body: text('body').notNull(),
+		/** Staff-only; hidden from vendors and tenants. */
+		internal: boolean('internal').notNull().default(false),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('ticket_note_ticket_idx').on(t.ticketId, t.createdAt)]
 );
 
 export const document = pgTable(

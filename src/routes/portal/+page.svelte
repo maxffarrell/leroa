@@ -62,13 +62,28 @@
 		}
 	}
 
+	let photos = $state<FileList | undefined>();
+
 	async function submit(e: SubmitEvent, leaseId: string) {
 		e.preventDefault();
 		pending = true;
 		try {
+			const form = e.currentTarget as HTMLFormElement;
 			const t = await submitRequest({ leaseId, title, description: description || null });
+			if (photos?.length) {
+				const body = new FormData();
+				for (const f of photos) body.append('file', f);
+				const res = await fetch(`/api/portal/requests/${t.id}/photos`, { method: 'POST', body });
+				if (!res.ok)
+					toast.error(
+						(await res.json().catch(() => null))?.message ??
+							'Request sent, but the photos did not upload'
+					);
+			}
 			toast.success(`Request #${t.number} sent to your property manager`);
 			title = description = '';
+			photos = undefined;
+			form.reset();
 		} catch (err) {
 			toast.error(
 				(err as { body?: { message?: string } })?.body?.message ?? 'Could not send request'
@@ -205,6 +220,17 @@
 							rows={3}
 							bind:value={description}
 						/></Field.Field
+					>
+					<Field.Field
+						><Field.Label for="req-photos-{l.id}">Photos (optional)</Field.Label><Input
+							id="req-photos-{l.id}"
+							type="file"
+							accept="image/*"
+							multiple
+							bind:files={photos}
+						/><Field.Description
+							>Up to 10. A photo helps us send the right person.</Field.Description
+						></Field.Field
 					>
 					<Button type="submit" disabled={pending || !title.trim()}
 						>{pending ? 'Sending…' : 'Send request'}</Button

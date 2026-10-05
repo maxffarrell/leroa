@@ -1,9 +1,9 @@
 import { and, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
-import { maintenanceTicket, property, tenant, unit } from '#lib/server/db/schema.ts';
+import { maintenanceTicket, property, tenant, unit, vendor } from '#lib/server/db/schema.ts';
 
 export type SearchHit = {
-	type: 'property' | 'unit' | 'tenant' | 'ticket';
+	type: 'property' | 'unit' | 'tenant' | 'ticket' | 'vendor';
 	id: string;
 	title: string;
 	subtitle: string;
@@ -13,7 +13,7 @@ export type SearchHit = {
 export async function search(orgId: string, q: string): Promise<SearchHit[]> {
 	const term = `%${q.trim()}%`;
 	if (q.trim().length < 1) return [];
-	const [props, units, tenants, tickets] = await Promise.all([
+	const [props, units, tenants, tickets, vendorRows] = await Promise.all([
 		db
 			.select({ id: property.id, name: property.name, city: property.city })
 			.from(property)
@@ -83,6 +83,17 @@ export async function search(orgId: string, q: string): Promise<SearchHit[]> {
 					)
 				)
 			)
+			.limit(5),
+		db
+			.select({ id: vendor.id, name: vendor.name, trades: vendor.trades })
+			.from(vendor)
+			.where(
+				and(
+					eq(vendor.organizationId, orgId),
+					isNull(vendor.archivedAt),
+					or(ilike(vendor.name, term), ilike(vendor.contactName, term))
+				)
+			)
 			.limit(5)
 	]);
 	return [
@@ -116,6 +127,13 @@ export async function search(orgId: string, q: string): Promise<SearchHit[]> {
 			title: `#${t.number} ${t.title}`,
 			subtitle: t.status.replace('_', ' '),
 			href: `/maintenance?ticket=${t.id}`
+		})),
+		...vendorRows.map((v) => ({
+			type: 'vendor' as const,
+			id: v.id,
+			title: v.name,
+			subtitle: v.trades.join(', ') || 'Vendor',
+			href: `/vendors/${v.id}`
 		}))
 	];
 }

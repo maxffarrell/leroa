@@ -9,6 +9,7 @@
 	import DoorOpen from '@lucide/svelte/icons/door-open';
 	import User from '@lucide/svelte/icons/user';
 	import Wrench from '@lucide/svelte/icons/wrench';
+	import HardHat from '@lucide/svelte/icons/hard-hat';
 	import Plus from '@lucide/svelte/icons/plus';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
@@ -17,7 +18,13 @@
 	let pendingG = false;
 	let gTimer: ReturnType<typeof setTimeout> | undefined;
 
-	const icons = { property: Building2, unit: DoorOpen, tenant: User, ticket: Wrench };
+	const icons = {
+		property: Building2,
+		unit: DoorOpen,
+		tenant: User,
+		ticket: Wrench,
+		vendor: HardHat
+	};
 	const actions = [
 		{ label: 'New property', href: '/properties?new=1' },
 		{ label: 'New tenant', href: '/tenants?new=1' },
