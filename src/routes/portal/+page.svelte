@@ -7,6 +7,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { getPortal, payOnline, submitRequest } from '#lib/remote/portal.remote.ts';
 	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import CreditCard from '@lucide/svelte/icons/credit-card';
 	import { formatDate, formatMoney, formatRelative } from '#lib/format.ts';
@@ -31,7 +32,7 @@
 			toast.success(
 				'Thanks! Your payment was received. Bank payments can take a few days to clear.'
 			);
-			history.replaceState(history.state, '', '/portal');
+			replaceState('/portal', page.state);
 		}
 	});
 

@@ -1,9 +1,10 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, lte, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import type Stripe from 'stripe';
 import { LEROA_CLOUD } from '$app/env/private';
 import { db } from '#lib/server/db/index.ts';
 import {
+	charge,
 	lease,
 	leaseTenant,
 	payment,
@@ -14,6 +15,7 @@ import {
 	user
 } from '#lib/server/db/schema.ts';
 import type { OrgContext } from '#lib/server/context.ts';
+import { allocate } from '#lib/server/allocation.ts';
 import { appOrigin } from '#lib/server/email.ts';
 import { stripe, stripeConfigured } from '#lib/server/stripe.ts';
 import { formatMoney, todayISO } from '#lib/format.ts';
@@ -188,29 +190,56 @@ async function recordCheckout(event: Stripe.Event, session: Stripe.Checkout.Sess
 		typeof session.payment_intent === 'string'
 			? session.payment_intent
 			: session.payment_intent?.id;
-	const [p] = await db
-		.insert(payment)
-		.values({
-			organizationId: orgId,
-			leaseId,
-			amount: session.amount_total,
-			receivedOn: todayISO(),
-			// Bank debits complete later through `async_payment_succeeded`; cards complete immediately.
-			method: event.type === 'checkout.session.async_payment_succeeded' ? 'ach' : 'card',
-			reference: intent ?? session.id,
-			notes: 'Paid online with Stripe',
-			externalId: intent ?? session.id
-		})
-		.onConflictDoNothing()
-		.returning();
+	const ref = intent ?? session.id;
+	const amount = session.amount_total;
+	// Bank debits complete later through `async_payment_succeeded`; cards complete immediately.
+	const method = event.type === 'checkout.session.async_payment_succeeded' ? 'ach' : 'card';
+	const today = todayISO();
+
+	const rows = await db.transaction(async (tx) => {
+		const open = await tx
+			.select({
+				id: charge.id,
+				open: sql<number>`${charge.amount} - coalesce((select sum(p.amount) from ${payment} p where p.charge_id = "charge"."id"), 0)`.mapWith(
+					Number
+				)
+			})
+			.from(charge)
+			.where(and(eq(charge.leaseId, leaseId), lte(charge.dueDate, today)))
+			.orderBy(asc(charge.dueDate), asc(charge.createdAt));
+		const parts = allocate(amount, open);
+		const inserted = [];
+		for (const [i, part] of parts.entries()) {
+			const [row] = await tx
+				.insert(payment)
+				.values({
+					organizationId: orgId,
+					leaseId,
+					chargeId: part.chargeId,
+					amount: part.amount,
+					receivedOn: today,
+					method,
+					reference: ref,
+					notes: 'Paid online with Stripe',
+					// The unique index on the first part makes replayed webhooks a no-op.
+					externalId: i === 0 ? ref : `${ref}:${i}`
+				})
+				.onConflictDoNothing()
+				.returning();
+			if (!row) return [];
+			inserted.push(row);
+		}
+		return inserted;
+	});
+	const p = rows[0];
 	if (!p) return;
 	await emit({
 		orgId,
 		entityType: 'payment',
 		entityId: p.id,
 		action: 'recorded',
-		summary: `${formatMoney(p.amount, l.currency)} paid online`,
-		data: { leaseId, amount: p.amount, method: p.method, online: true }
+		summary: `${formatMoney(amount, l.currency)} paid online`,
+		data: { leaseId, amount, method, online: true, payments: rows.map((r) => r.id) }
 	});
 }
 
