@@ -18,6 +18,7 @@
 		archiveProperty
 	} from '#lib/remote/portfolio.remote.ts';
 	import { createListing } from '#lib/remote/listings.remote.ts';
+	import { getPropertyOwners } from '#lib/remote/owners.remote.ts';
 	import { unitStatuses } from '#lib/schemas.ts';
 	import { formatMoney, formatDate } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
@@ -28,6 +29,7 @@
 
 	const id = $derived(page.params.id!);
 	const p = $derived(await getProperty(id));
+	const owners = $derived(await getPropertyOwners(id));
 	const occupied = $derived(p.units.filter((u) => u.status === 'occupied').length);
 	const scheduled = $derived(p.units.reduce((s, u) => s + (u.leaseRent ?? 0), 0));
 	const highlighted = $derived(page.url.searchParams.get('unit'));
@@ -121,6 +123,18 @@
 		<h1 class="text-xl font-semibold tracking-tight">{p.name}</h1>
 		<p class="text-sm text-muted-foreground">
 			{[p.addressLine1, p.city, p.region, p.postalCode].filter(Boolean).join(', ') || 'No address'}
+		</p>
+		<p class="mt-1 text-sm text-muted-foreground">
+			{#if owners.length}
+				Owned by {#each owners as o, i (o.id)}{i ? ', ' : ''}<a
+						href="/owners/{o.id}"
+						class="text-foreground hover:underline">{o.name}</a
+					>{/each}
+			{:else}
+				No owner set · <a href="/owners?new=1&property={id}" class="text-foreground hover:underline"
+					>Add owner</a
+				>
+			{/if}
 		</p>
 	</div>
 

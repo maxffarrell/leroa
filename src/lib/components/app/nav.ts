@@ -11,12 +11,14 @@ import Megaphone from '@lucide/svelte/icons/megaphone';
 import HardHat from '@lucide/svelte/icons/hard-hat';
 import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 import MessagesSquare from '@lucide/svelte/icons/messages-square';
+import Landmark from '@lucide/svelte/icons/landmark';
 
 /** `key` is the second key of the `g <key>` keyboard shortcut. */
 export const mainNav = [
 	{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, key: 'd' },
 	{ href: '/properties', label: 'Properties', icon: Building2, key: 'p' },
 	{ href: '/tenants', label: 'Tenants', icon: Users, key: 't' },
+	{ href: '/owners', label: 'Owners', icon: Landmark, key: 'w' },
 	{ href: '/messages', label: 'Messages', icon: MessagesSquare, key: 'e' },
 	{ href: '/leasing', label: 'Leasing', icon: Megaphone, key: 'a' },
 	{ href: '/leases', label: 'Leases', icon: FileSignature, key: 'l' },

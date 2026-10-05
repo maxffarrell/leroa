@@ -696,3 +696,39 @@ export const message = pgTable(
 	},
 	(t) => [index('message_thread_created_idx').on(t.threadId, t.createdAt)]
 );
+
+/** A property owner (landlord or investor) who gets a read-only view of their properties. */
+export const owner = pgTable(
+	'owner',
+	{
+		id: id(),
+		organizationId: orgId(),
+		name: text('name').notNull(),
+		email: text('email'),
+		phone: text('phone'),
+		notes: text('notes'),
+		portalUserId: text('portal_user_id').references(() => user.id, { onDelete: 'set null' }),
+		archivedAt: timestamp('archived_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [
+		index('owner_org_idx').on(t.organizationId, t.name),
+		index('owner_portal_user_idx').on(t.portalUserId)
+	]
+);
+
+export const propertyOwner = pgTable(
+	'property_owner',
+	{
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		ownerId: text('owner_id')
+			.notNull()
+			.references(() => owner.id, { onDelete: 'cascade' })
+	},
+	(t) => [
+		primaryKey({ columns: [t.propertyId, t.ownerId] }),
+		index('property_owner_owner_idx').on(t.ownerId)
+	]
+);

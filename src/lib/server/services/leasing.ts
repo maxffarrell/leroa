@@ -27,10 +27,10 @@ import { sendRentNotifications } from './notifications.ts';
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
 /** Table-qualified column for correlated subqueries; Drizzle omits the qualifier on single-table selects. */
-const outer = (column: AnyPgColumn) =>
+export const outer = (column: AnyPgColumn) =>
 	sql`${sql.identifier(getTableName(column.table))}.${sql.identifier(column.name)}`;
 
-const tenantNames = sql<string>`coalesce((
+export const tenantNames = sql<string>`coalesce((
 	select string_agg(case when ${tenant.kind} = 'company' and ${tenant.companyName} is not null then ${tenant.companyName} else trim(${tenant.firstName} || ' ' || ${tenant.lastName}) end, ', ' order by ${leaseTenant.isPrimary} desc)
 	from ${leaseTenant} join ${tenant} on ${tenant.id} = ${leaseTenant.tenantId}
 	where ${leaseTenant.leaseId} = ${outer(lease.id)}

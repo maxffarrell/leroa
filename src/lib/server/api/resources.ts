@@ -8,6 +8,7 @@ import * as listings from '#lib/server/services/listings.ts';
 import * as vendors from '#lib/server/services/vendors.ts';
 import * as inspections from '#lib/server/services/inspections.ts';
 import * as messaging from '#lib/server/services/messaging.ts';
+import * as owners from '#lib/server/services/owners.ts';
 import * as s from '#lib/schemas.ts';
 
 type Resource = {
@@ -108,6 +109,17 @@ export const resources: Record<string, Resource> = {
 		description: 'Notices posted to residents of one property (`propertyId`) or all of them',
 		list: (ctx) => messaging.listAnnouncements(ctx.orgId),
 		create: { schema: s.announcementCreate, run: messaging.createAnnouncement as never }
+	},
+	owners: {
+		description:
+			'Property owners and the properties they own (`propertyIds`). `?archived=true` includes archived owners.',
+		list: (ctx, url) =>
+			owners.listOwners(ctx.orgId, {
+				includeArchived: url.searchParams.get('archived') === 'true'
+			}),
+		get: (ctx, id) => owners.getOwner(ctx.orgId, id),
+		create: { schema: s.ownerInput, run: owners.createOwner as never },
+		update: { schema: s.ownerUpdate, run: owners.updateOwner as never }
 	},
 	listings: {
 		description: 'Vacancy listings, published or not',

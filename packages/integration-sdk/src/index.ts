@@ -27,6 +27,8 @@ export const EVENT_TYPES = [
 	'inspection.acknowledged',
 	'message.created',
 	'announcement.sent',
+	'owner.created',
+	'owner.updated',
 	'listing.published',
 	'listing.closed',
 	'application.submitted',

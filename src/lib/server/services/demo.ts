@@ -10,6 +10,7 @@ import { createListing, setListingStatus, updateListing } from './listings.ts';
 import { createLease, recordPayment, rentRoll } from './leasing.ts';
 import { createTicket } from './maintenance.ts';
 import { createAnnouncement, postMessage } from './messaging.ts';
+import { createOwner } from './owners.ts';
 
 const people = [
 	['Maya', 'Chen'],
@@ -206,6 +207,17 @@ export async function loadDemoData(ctx: OrgContext) {
 	await loadDemoInspections(ctx, leases[0]!, leases[1]!, start);
 	await loadDemoListings(ctx, units.slice(people.length));
 	await loadDemoMessages(ctx, tenants, maple.id);
+	await createOwner(ctx, {
+		name: 'Rivera Family Trust',
+		email: 'trust@rivera.example',
+		notes: 'Prefers a call before any repair over $1,000.',
+		propertyIds: [maple.id, cedar.id]
+	});
+	await createOwner(ctx, {
+		name: 'Harbor Lofts LLC',
+		email: 'ops@harborlofts.example',
+		propertyIds: [harbor.id]
+	});
 	return { properties: 3, leases: leases.length };
 }
 

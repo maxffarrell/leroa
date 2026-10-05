@@ -185,6 +185,23 @@ export const vendorUpdate = v.object({
 	archived: v.optional(v.boolean())
 });
 
+export const ownerInput = v.object({
+	name: requiredText('Name'),
+	email: v.optional(
+		v.nullable(
+			v.union([v.literal(''), v.pipe(v.string(), v.trim(), v.email('Enter a valid email'))])
+		)
+	),
+	phone: shortOptional(40),
+	notes: optionalText,
+	propertyIds: v.optional(v.pipe(v.array(idSchema), v.maxLength(500)))
+});
+export const ownerUpdate = v.object({
+	id: idSchema,
+	...v.partial(ownerInput).entries,
+	archived: v.optional(v.boolean())
+});
+
 /** What a vendor may do from their work-order link. */
 export const workOrderUpdate = v.object({
 	token: v.pipe(v.string(), v.maxLength(500)),
