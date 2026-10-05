@@ -381,3 +381,60 @@ export async function notifyNewApplication(
 		});
 	}
 }
+
+/** Sends a vendor their work-order link. Not deduplicated: staff may resend on purpose. */
+export async function notifyWorkOrder(
+	orgId: string,
+	t: { number: number; title: string; priority: string; dueDate: string | null },
+	to: { name: string; email: string },
+	place: string,
+	path: string
+) {
+	const org = await orgName(orgId);
+	return sendEmail({
+		to: to.email,
+		subject: `Work order #${t.number} from ${org}: ${t.title}`,
+		...renderEmail({
+			orgName: org,
+			heading: `Work order #${t.number}`,
+			lines: [
+				`Hi ${to.name},`,
+				`${org} has a job for you at ${place}: “${t.title}”.`,
+				...(t.priority === 'urgent' || t.priority === 'high' ? [`Priority: ${t.priority}.`] : []),
+				...(t.dueDate ? [`Needed by ${formatDate(t.dueDate)}.`] : []),
+				'Use the link to see the details and photos, post updates, and mark the job done. No account needed.'
+			],
+			action: { label: 'Open work order', url: `${appOrigin()}${path}` }
+		})
+	});
+}
+
+/** Tells owners and admins what a vendor did from their work-order link. */
+export async function notifyVendorUpdate(
+	t: TicketRef,
+	vendorName: string,
+	changes: string[],
+	note: string | null,
+	key: string
+) {
+	if (!(await getNotificationPrefs(t.organizationId)).maintenanceUpdates) return;
+	const org = await orgName(t.organizationId);
+	for (const to of await managerEmails(t.organizationId)) {
+		await notifyOnce(t.organizationId, 'ticket.vendor_update', key, {
+			to,
+			subject: `#${t.number} ${t.title}: ${vendorName} ${changes.join(', ')}`,
+			...renderEmail({
+				orgName: org,
+				heading: `${vendorName} updated #${t.number}`,
+				lines: [
+					`${vendorName} ${changes.join(', ')} on “${t.title}”.`,
+					...(note ? [`“${note}”`] : [])
+				],
+				action: {
+					label: 'Open request',
+					url: `${appOrigin()}/maintenance?ticket=${t.id}`
+				}
+			})
+		});
+	}
+}

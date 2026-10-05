@@ -133,10 +133,65 @@ export const ticketInput = v.object({
 	priority: v.optional(v.picklist(ticketPriorities), 'normal'),
 	status: v.optional(v.picklist(ticketStatuses), 'open'),
 	assigneeId: v.optional(v.nullable(idSchema)),
-	vendor: optionalText,
+	vendorId: v.optional(v.nullable(idSchema)),
+	costAmount: v.optional(v.nullable(cents)),
 	dueDate: v.optional(v.nullable(isoDate))
 });
 export const ticketUpdate = v.object({ id: idSchema, ...v.partial(ticketInput).entries });
+
+const noteBody = v.pipe(v.string(), v.trim(), v.nonEmpty('Write a note'), v.maxLength(5000));
+export const ticketNoteInput = v.object({
+	ticketId: idSchema,
+	body: noteBody,
+	internal: v.optional(v.boolean(), false)
+});
+
+export const vendorTrades = [
+	'General',
+	'Plumbing',
+	'Electrical',
+	'HVAC',
+	'Appliances',
+	'Roofing',
+	'Painting',
+	'Cleaning',
+	'Landscaping',
+	'Pest control',
+	'Locksmith',
+	'Flooring'
+] as const;
+
+const shortOptional = (max = 200) =>
+	v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(max))));
+export const vendorInput = v.object({
+	name: requiredText('Name'),
+	contactName: shortOptional(),
+	email: v.optional(
+		v.nullable(
+			v.union([v.literal(''), v.pipe(v.string(), v.trim(), v.email('Enter a valid email'))])
+		)
+	),
+	phone: shortOptional(40),
+	trades: v.optional(
+		v.pipe(v.array(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.maxLength(40))), v.maxLength(20)),
+		[]
+	),
+	notes: optionalText,
+	insuranceExpiresOn: v.optional(v.nullable(isoDate))
+});
+export const vendorUpdate = v.object({
+	id: idSchema,
+	...v.partial(vendorInput).entries,
+	archived: v.optional(v.boolean())
+});
+
+/** What a vendor may do from their work-order link. */
+export const workOrderUpdate = v.object({
+	token: v.pipe(v.string(), v.maxLength(500)),
+	status: v.optional(v.picklist(['in_progress', 'on_hold', 'done'] as const)),
+	costAmount: v.optional(v.nullable(cents)),
+	note: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(5000)))
+});
 
 export const webhookInput = v.object({
 	url: v.pipe(v.string(), v.url('Enter a valid URL')),

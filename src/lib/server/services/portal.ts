@@ -173,3 +173,24 @@ export async function portalRequest(
 	).catch((err) => console.error('portal request email failed', err));
 	return created;
 }
+
+const MAX_REQUEST_PHOTOS = 10;
+
+/** Lets a tenant attach photos to a request they reported. */
+export async function portalRequestPhotos(userId: string, ticketId: string, files: File[]) {
+	const ids = (await portalTenants(userId)).map((t) => t.tenant.id);
+	if (!ids.length) error(403, 'No tenant account');
+	const [t] = await db
+		.select({ id: maintenanceTicket.id, orgId: maintenanceTicket.organizationId })
+		.from(maintenanceTicket)
+		.where(and(eq(maintenanceTicket.id, ticketId), inArray(maintenanceTicket.tenantId, ids)));
+	if (!t) error(404, 'Request not found');
+	const { IMAGE_TYPE, entityImages, saveDocument } = await import('./documents.ts');
+	const images = files.filter((f) => IMAGE_TYPE.test(f.type));
+	if (!images.length) error(400, 'Photos must be JPEG, PNG, WebP, GIF or AVIF');
+	const existing = await entityImages(t.orgId, 'maintenance', t.id);
+	if (existing.length + images.length > MAX_REQUEST_PHOTOS)
+		error(400, `You can add up to ${MAX_REQUEST_PHOTOS} photos to a request`);
+	for (const f of images) await saveDocument(t.orgId, userId, f, { type: 'maintenance', id: t.id });
+	return images.length;
+}

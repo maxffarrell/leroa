@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { randomUUID } from 'node:crypto';
 import { db } from '#lib/server/db/index.ts';
@@ -33,38 +33,62 @@ export async function listDocuments(orgId: string, entity?: { type: string; id: 
 		.orderBy(desc(document.createdAt));
 }
 
-export async function uploadDocument(
-	ctx: OrgContext,
+/** Stores a file for a workspace. `uploadedBy` is null for uploads from vendor or tenant links. */
+export async function saveDocument(
+	orgId: string,
+	uploadedBy: string | null,
 	file: File,
 	entity?: { type: string; id: string }
 ) {
 	assertNotDemo();
 	if (file.size === 0) error(400, 'File is empty');
 	if (file.size > MAX_UPLOAD_BYTES) error(413, 'Files must be 10 MB or smaller');
-	const storageKey = `${ctx.orgId}/${randomUUID()}`;
+	const storageKey = `${orgId}/${randomUUID()}`;
 	await store.put(storageKey, new Uint8Array(await file.arrayBuffer()));
 	const [doc] = await db
 		.insert(document)
 		.values({
-			organizationId: ctx.orgId,
+			organizationId: orgId,
 			name: file.name.slice(0, 200),
 			contentType: file.type || 'application/octet-stream',
 			size: file.size,
 			storageKey,
 			entityType: entity?.type ?? null,
 			entityId: entity?.id ?? null,
-			uploadedBy: ctx.userId
+			uploadedBy
 		})
 		.returning();
 	await emit({
-		orgId: ctx.orgId,
-		actorId: ctx.userId,
+		orgId,
+		actorId: uploadedBy,
 		entityType: 'document',
 		entityId: doc!.id,
 		action: 'created',
 		summary: `Uploaded ${doc!.name}`
 	});
 	return doc!;
+}
+
+export function uploadDocument(ctx: OrgContext, file: File, entity?: { type: string; id: string }) {
+	return saveDocument(ctx.orgId, ctx.userId, file, entity);
+}
+
+export const IMAGE_TYPE = /^image\/(png|jpeg|gif|webp|avif)$/;
+
+/** Image documents attached to one record, oldest first. */
+export async function entityImages(orgId: string, type: string, id: string) {
+	const rows = await db
+		.select({ id: document.id, name: document.name, contentType: document.contentType })
+		.from(document)
+		.where(
+			and(
+				eq(document.organizationId, orgId),
+				eq(document.entityType, type),
+				eq(document.entityId, id)
+			)
+		)
+		.orderBy(asc(document.createdAt));
+	return rows.filter((r) => IMAGE_TYPE.test(r.contentType));
 }
 
 export async function readDocument(orgId: string, id: string) {

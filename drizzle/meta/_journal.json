@@ -50,6 +50,20 @@
       "when": 1791176184442,
       "tag": "0006_listings_applications",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791178434331,
+      "tag": "0007_vendors_work_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791178463382,
+      "tag": "0008_drop_ticket_vendor_text",
+      "breakpoints": true
     }
   ]
 }

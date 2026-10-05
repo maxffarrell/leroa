@@ -5,6 +5,7 @@ import * as portfolio from '#lib/server/services/portfolio.ts';
 import * as leasing from '#lib/server/services/leasing.ts';
 import * as maintenance from '#lib/server/services/maintenance.ts';
 import * as listings from '#lib/server/services/listings.ts';
+import * as vendors from '#lib/server/services/vendors.ts';
 import * as s from '#lib/schemas.ts';
 
 type Resource = {
@@ -70,10 +71,21 @@ export const resources: Record<string, Resource> = {
 		description: 'Maintenance requests',
 		list: (ctx, url) =>
 			maintenance.listTickets(ctx.orgId, {
-				propertyId: url.searchParams.get('propertyId') ?? undefined
+				propertyId: url.searchParams.get('propertyId') ?? undefined,
+				vendorId: url.searchParams.get('vendorId') ?? undefined
 			}),
 		create: { schema: s.ticketInput, run: maintenance.createTicket as never },
 		update: { schema: s.ticketUpdate, run: maintenance.updateTicket as never }
+	},
+	vendors: {
+		description: 'Contractors and service companies (`?archived=true` to include archived)',
+		list: (ctx, url) =>
+			vendors.listVendors(ctx.orgId, {
+				includeArchived: url.searchParams.get('archived') === 'true'
+			}),
+		get: (ctx, id) => vendors.getVendor(ctx.orgId, id),
+		create: { schema: s.vendorInput, run: vendors.createVendor as never },
+		update: { schema: s.vendorUpdate, run: vendors.updateVendor as never }
 	},
 	listings: {
 		description: 'Vacancy listings, published or not',

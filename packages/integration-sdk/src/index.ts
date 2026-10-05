@@ -20,6 +20,8 @@ export const EVENT_TYPES = [
 	'payment.recorded',
 	'maintenance.created',
 	'maintenance.updated',
+	'vendor.created',
+	'vendor.updated',
 	'listing.published',
 	'listing.closed',
 	'application.submitted',

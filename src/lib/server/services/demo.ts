@@ -1,6 +1,7 @@
 import type { OrgContext } from '#lib/server/context.ts';
+import { createVendor } from './vendors.ts';
 import { db } from '#lib/server/db/index.ts';
-import { rentalApplication } from '#lib/server/db/schema.ts';
+import { rentalApplication, ticketNote } from '#lib/server/db/schema.ts';
 import { addDays, monthKey, todayISO } from '#lib/format.ts';
 import { createProperty, createTenant, getProperty, updateUnit } from './portfolio.ts';
 import { createListing, setListingStatus, updateListing } from './listings.ts';
@@ -118,20 +119,63 @@ export async function loadDemoData(ctx: OrgContext) {
 		}
 	}
 
+	const [plumber, electric, grounds] = await Promise.all(
+		(
+			[
+				[
+					'Rapid Plumbing',
+					'Dana Ruiz',
+					'dispatch@rapidplumbing.example',
+					'(512) 555-0142',
+					['Plumbing', 'Appliances'],
+					210
+				],
+				[
+					'Brightline Electric',
+					'Sam Okafor',
+					'jobs@brightline.example',
+					'(512) 555-0178',
+					['Electrical'],
+					12
+				],
+				[
+					'Evergreen Grounds',
+					null,
+					'hello@evergreen.example',
+					'(512) 555-0110',
+					['Landscaping', 'Painting', 'Cleaning'],
+					-20
+				]
+			] as const
+		).map(([name, contactName, email, phone, trades, days]) =>
+			createVendor(ctx, {
+				name,
+				contactName,
+				email,
+				phone,
+				trades: [...trades],
+				notes: null,
+				insuranceExpiresOn: addDays(todayISO(), days)
+			})
+		)
+	);
+
 	const tickets: [
 		string,
 		string,
 		'low' | 'normal' | 'high' | 'urgent',
-		'open' | 'in_progress' | 'on_hold' | 'done'
+		'open' | 'in_progress' | 'on_hold' | 'done',
+		string | null,
+		number | null
 	][] = [
-		[maple.id, 'Water heater not working', 'urgent', 'open'],
-		[maple.id, 'Replace hallway light fixtures', 'low', 'open'],
-		[harbor.id, 'Dishwasher leaking', 'high', 'in_progress'],
-		[cedar.id, 'Gutter cleaning', 'normal', 'on_hold'],
-		[maple.id, 'Repaint unit 104 after move-out', 'normal', 'done']
+		[maple.id, 'Water heater not working', 'urgent', 'open', plumber!.id, null],
+		[maple.id, 'Replace hallway light fixtures', 'low', 'open', electric!.id, null],
+		[harbor.id, 'Dishwasher leaking', 'high', 'in_progress', plumber!.id, null],
+		[cedar.id, 'Gutter cleaning', 'normal', 'on_hold', grounds!.id, null],
+		[maple.id, 'Repaint unit 104 after move-out', 'normal', 'done', grounds!.id, 68000]
 	];
-	for (const [propertyId, title, priority, status] of tickets) {
-		await createTicket(ctx, {
+	for (const [propertyId, title, priority, status, vendorId, costAmount] of tickets) {
+		const t = await createTicket(ctx, {
 			propertyId,
 			unitId: null,
 			tenantId: null,
@@ -140,9 +184,19 @@ export async function loadDemoData(ctx: OrgContext) {
 			priority,
 			status,
 			assigneeId: null,
-			vendor: null,
+			vendorId,
+			costAmount,
 			dueDate: null
 		});
+		if (title === 'Dishwasher leaking')
+			await db.insert(ticketNote).values({
+				organizationId: ctx.orgId,
+				ticketId: t.id,
+				authorType: 'vendor',
+				vendorId: plumber!.id,
+				authorName: plumber!.name,
+				body: 'Drain hose is cracked. Replacement part arrives Thursday; I will be back then.'
+			});
 	}
 	await loadDemoListings(ctx, units.slice(people.length));
 	return { properties: 3, leases: leases.length };

@@ -12,7 +12,21 @@
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import { getTickets, updateTicket } from '#lib/remote/maintenance.remote.ts';
+	import MoneyInput from '#lib/components/app/money-input.svelte';
+	import InsuranceBadge from '#lib/components/app/insurance-badge.svelte';
+	import VendorDialog from '#lib/components/app/vendor-dialog.svelte';
+	import TicketActivity from '#lib/components/app/ticket-activity.svelte';
+	import {
+		getTickets,
+		getWorkOrderLink,
+		sendWorkOrder,
+		updateTicket
+	} from '#lib/remote/maintenance.remote.ts';
+	import { getVendors } from '#lib/remote/vendors.remote.ts';
+	import { untrack } from 'svelte';
+	import Mail from '@lucide/svelte/icons/mail';
+	import LinkIcon from '@lucide/svelte/icons/link';
+	import HardHat from '@lucide/svelte/icons/hard-hat';
 	import { ticketPriorities, ticketStatuses } from '#lib/schemas.ts';
 	import { formatRelative, tenantName } from '#lib/format.ts';
 	import type { Ticket } from '#lib/server/services/maintenance.ts';
@@ -20,6 +34,7 @@
 	import Plus from '@lucide/svelte/icons/plus';
 
 	const tickets = $derived(await getTickets());
+	const vendors = $derived(await getVendors(false));
 	const params = page.url.searchParams;
 	let creating = $state(params.has('new'));
 	let search = $state('');
@@ -35,7 +50,7 @@
 					(t) =>
 						t.status === status &&
 						(!search ||
-							`#${t.number} ${t.title} ${t.propertyName} ${t.unitName ?? ''} ${t.vendor ?? ''}`
+							`#${t.number} ${t.title} ${t.propertyName} ${t.unitName ?? ''} ${t.vendorName ?? ''}`
 								.toLowerCase()
 								.includes(search.toLowerCase())) &&
 						(status !== 'done' ||
@@ -52,7 +67,9 @@
 
 	async function patch(
 		id: string,
-		data: Partial<Pick<Ticket, 'status' | 'priority' | 'vendor' | 'description' | 'title'>>
+		data: Partial<
+			Pick<Ticket, 'status' | 'priority' | 'vendorId' | 'costAmount' | 'description' | 'title'>
+		>
 	) {
 		await updateTicket({ id, ...data }).catch((err) =>
 			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Update failed')
@@ -74,6 +91,42 @@
 	}
 
 	const label = (s: string) => s.replace('_', ' ');
+
+	let addingVendor = $state(false);
+	let sending = $state(false);
+	let cost = $state<number | null>(null);
+	const selectedVendor = $derived(vendors.find((v) => v.id === selected?.vendorId) ?? null);
+
+	$effect.pre(() => {
+		const next = selected?.costAmount ?? null;
+		void selected?.id;
+		untrack(() => (cost = next));
+	});
+
+	const errMsg = (err: unknown, fallback: string) =>
+		(err as { body?: { message?: string } })?.body?.message ?? fallback;
+
+	async function sendToVendor(t: Ticket) {
+		sending = true;
+		try {
+			await sendWorkOrder(t.id);
+			toast.success(`Work order emailed to ${t.vendorName}`);
+		} catch (err) {
+			toast.error(errMsg(err, 'Could not send'));
+		} finally {
+			sending = false;
+		}
+	}
+
+	async function copyLink(t: Ticket) {
+		try {
+			const { path } = await getWorkOrderLink(t.id);
+			await navigator.clipboard.writeText(`${location.origin}${path}`);
+			toast.success('Link copied. Anyone with it can view and update this job.');
+		} catch (err) {
+			toast.error(errMsg(err, 'Could not copy link'));
+		}
+	}
 </script>
 
 <svelte:window {onkeydown} />
@@ -140,6 +193,11 @@
 									>
 									<span class="ml-auto shrink-0">{formatRelative(t.createdAt)}</span>
 								</div>
+								{#if t.vendorName}
+									<p class="mt-1.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+										<HardHat class="size-3 shrink-0" />{t.vendorName}
+									</p>
+								{/if}
 							</button>
 						</li>
 					{/each}
@@ -193,15 +251,86 @@
 						</Select.Root>
 					</Field.Field>
 				</div>
-				<Field.Field>
-					<Field.Label for="tk-vendor">Vendor</Field.Label>
-					<Input
-						id="tk-vendor"
-						placeholder="e.g. Rapid Plumbing"
-						value={selected.vendor ?? ''}
-						onchange={(e) => patch(selected!.id, { vendor: e.currentTarget.value || null })}
-					/>
-				</Field.Field>
+				<section class="space-y-3 rounded-lg border p-3" aria-label="Vendor">
+					<Field.Field>
+						<div class="flex items-center justify-between">
+							<Field.Label>Vendor</Field.Label>
+							{#if selected.vendorId}<a
+									href="/vendors/{selected.vendorId}"
+									class="text-xs text-muted-foreground hover:underline">View vendor</a
+								>{/if}
+						</div>
+						<Select.Root
+							type="single"
+							value={selected.vendorId ?? '__none'}
+							onValueChange={(v) =>
+								v === '__new'
+									? (addingVendor = true)
+									: patch(selected!.id, { vendorId: v === '__none' ? null : v })}
+						>
+							<Select.Trigger class="w-full"
+								><span class="truncate">{selected.vendorName ?? 'Unassigned'}</span></Select.Trigger
+							>
+							<Select.Content>
+								<Select.Item value="__none">Unassigned</Select.Item>
+								{#each vendors as v (v.id)}
+									<Select.Item value={v.id} label={v.name}
+										>{v.name}<span class="ml-auto pl-3 text-xs text-muted-foreground"
+											>{v.trades[0] ?? ''}</span
+										></Select.Item
+									>
+								{/each}
+								<Select.Item value="__new" label="New vendor">
+									<Plus class="size-4" /> New vendor…</Select.Item
+								>
+							</Select.Content>
+						</Select.Root>
+					</Field.Field>
+					{#if selected.vendorId}
+						{#if selectedVendor}<InsuranceBadge
+								expiresOn={selectedVendor.insuranceExpiresOn}
+							/>{/if}
+						<div class="flex flex-wrap gap-2">
+							<Button
+								size="sm"
+								disabled={sending ||
+									!selected.vendorEmail ||
+									selected.status === 'done' ||
+									selected.status === 'cancelled'}
+								title={selected.vendorEmail
+									? undefined
+									: 'Add an email address to this vendor first'}
+								onclick={() => sendToVendor(selected!)}
+								><Mail />{sending
+									? 'Sending…'
+									: selected.vendorSentAt
+										? 'Resend work order'
+										: 'Send work order'}</Button
+							>
+							<Button size="sm" variant="outline" onclick={() => copyLink(selected!)}
+								><LinkIcon /> Copy link</Button
+							>
+						</div>
+						<p class="text-xs text-muted-foreground">
+							{selected.vendorSentAt
+								? `Emailed ${formatRelative(selected.vendorSentAt)}.`
+								: selected.vendorEmail
+									? 'Not sent yet.'
+									: 'No email on file. Copy the link and text it instead.'}
+							The vendor can post updates, photos and the cost from the link.
+						</p>
+					{/if}
+					<Field.Field class="max-w-48">
+						<Field.Label for="tk-cost">Cost</Field.Label>
+						<div
+							onfocusout={() =>
+								cost !== (selected?.costAmount ?? null) &&
+								patch(selected!.id, { costAmount: cost })}
+						>
+							<MoneyInput id="tk-cost" placeholder="—" bind:value={cost} />
+						</div>
+					</Field.Field>
+				</section>
 				<Field.Field>
 					<Field.Label for="tk-desc2">Details</Field.Label>
 					<Textarea
@@ -221,6 +350,10 @@
 						>
 					</p>
 				{/if}
+				<svelte:boundary>
+					<TicketActivity ticketId={selected.id} />
+					{#snippet pending()}<p class="text-sm text-muted-foreground">Loading notes…</p>{/snippet}
+				</svelte:boundary>
 				<p class="text-xs text-muted-foreground">
 					Opened {formatRelative(selected.createdAt)} · updated {formatRelative(selected.updatedAt)}
 				</p>
@@ -228,5 +361,10 @@
 		{/if}
 	</Sheet.Content>
 </Sheet.Root>
+
+<VendorDialog
+	bind:open={addingVendor}
+	onsaved={(v) => selected && patch(selected.id, { vendorId: v.id })}
+/>
 
 <TicketForm bind:open={creating} propertyId={params.get('property')} unitId={params.get('unit')} />
