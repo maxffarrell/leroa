@@ -90,6 +90,7 @@ export async function getWorkOrder(token: string) {
 				id: ticketNote.id,
 				authorType: ticketNote.authorType,
 				authorName: ticketNote.authorName,
+				vendorId: ticketNote.vendorId,
 				body: ticketNote.body,
 				createdAt: ticketNote.createdAt
 			})
@@ -111,7 +112,10 @@ export async function getWorkOrder(token: string) {
 		property: row.property,
 		unitName: row.unitName,
 		photos: photos.map((p) => ({ id: p.id, name: p.name })),
-		notes
+		notes: notes.map(({ vendorId, ...n }) => ({
+			...n,
+			mine: n.authorType === 'vendor' && vendorId === row.vendorId
+		}))
 	};
 }
 

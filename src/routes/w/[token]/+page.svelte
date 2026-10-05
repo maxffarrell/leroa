@@ -84,8 +84,6 @@
 			uploading = false;
 		}
 	}
-
-	const who = { staff: 'Property manager', vendor: 'You', tenant: 'Resident' } as const;
 </script>
 
 <svelte:head>
@@ -217,35 +215,38 @@
 							<MoneyInput id="wo-cost" bind:value={cost} />
 						</div>
 					</Field.Field>
-					<div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-						{#if !done}
-							{#if w.status !== 'in_progress'}
-								<Button type="button" disabled={!!pending} onclick={() => send('in_progress')}
-									>{pending === 'in_progress' ? 'Sending…' : 'Start work'}</Button
-								>
-							{:else}
+					{#key w.status}
+						<div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+							{#if w.status !== 'done'}
+								{#if w.status !== 'in_progress'}
+									<Button type="button" disabled={!!pending} onclick={() => send('in_progress')}
+										>{pending === 'in_progress' ? 'Sending…' : 'Start work'}</Button
+									>
+								{:else}
+									<Button
+										type="button"
+										variant="outline"
+										disabled={!!pending}
+										onclick={() => send('on_hold')}
+										>{pending === 'on_hold' ? 'Sending…' : 'Put on hold'}</Button
+									>
+								{/if}
 								<Button
 									type="button"
-									variant="outline"
+									variant={w.status === 'in_progress' ? 'default' : 'outline'}
 									disabled={!!pending}
-									onclick={() => send('on_hold')}
-									>{pending === 'on_hold' ? 'Sending…' : 'Put on hold'}</Button
+									onclick={() => send('done')}
+									>{pending === 'done' ? 'Sending…' : 'Mark done'}</Button
 								>
 							{/if}
 							<Button
-								type="button"
-								variant={w.status === 'in_progress' ? 'default' : 'outline'}
-								disabled={!!pending}
-								onclick={() => send('done')}>{pending === 'done' ? 'Sending…' : 'Mark done'}</Button
+								type="submit"
+								variant="ghost"
+								disabled={!!pending || (!note.trim() && !costTouched)}
+								>{pending === 'note' ? 'Sending…' : 'Send note only'}</Button
 							>
-						{/if}
-						<Button
-							type="submit"
-							variant="ghost"
-							disabled={!!pending || (!note.trim() && !costTouched)}
-							>{pending === 'note' ? 'Sending…' : 'Send note only'}</Button
-						>
-					</div>
+						</div>
+					{/key}
 				</form>
 			</Card.Content>
 		</Card.Root>
@@ -264,7 +265,7 @@
 					{#each w.notes as n (n.id)}
 						<li class="rounded-md bg-muted/50 p-3">
 							<p class="text-xs text-muted-foreground">
-								{n.authorType === 'staff' ? n.authorName : who[n.authorType]} · {formatRelative(
+								{n.mine ? 'You' : n.authorType === 'tenant' ? 'Resident' : n.authorName} · {formatRelative(
 									n.createdAt
 								)}
 							</p>
