@@ -57,6 +57,8 @@ Create a key under **Settings → API keys**, then:
 curl -H "Authorization: Bearer lr_..." https://your-host/api/v1/properties
 ```
 
+Each key is granted `read` or `read & write` per resource (properties, units, tenants, leases, charges, payments, tickets). Requests outside a key's permissions return `403`.
+
 OpenAPI: `/api/v1/openapi.json`. Amounts are integer cents.
 
 Webhooks are signed: `x-leroa-signature: sha256=<hex HMAC-SHA256 of the raw body with your signing secret>`.

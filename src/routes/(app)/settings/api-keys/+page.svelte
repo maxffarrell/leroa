@@ -1,27 +1,76 @@
 <script lang="ts">
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { getApiKeys, createApiKey, deleteApiKey } from '#lib/remote/api-keys.remote.ts';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import ApiPermissionsEditor from '#lib/components/app/api-permissions-editor.svelte';
+	import {
+		getApiKeys,
+		createApiKey,
+		updateApiKeyPermissions,
+		deleteApiKey
+	} from '#lib/remote/api-keys.remote.ts';
+	import {
+		API_RESOURCES,
+		API_RESOURCE_LABELS,
+		describePermissions,
+		everything,
+		levelOf,
+		normalizePermissions,
+		type ApiPermissions
+	} from '#lib/api-permissions.ts';
 	import { formatRelative } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
 	import Copy from '@lucide/svelte/icons/copy';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash from '@lucide/svelte/icons/trash-2';
 
+	type Key = Awaited<ReturnType<typeof getApiKeys>>[number];
+
 	const keys = $derived(await getApiKeys());
+	let editing = $state<{ id: string | null; title: string } | null>(null);
 	let name = $state('');
+	let permissions = $state<ApiPermissions>({});
+	let pending = $state(false);
 	let created = $state<string | null>(null);
 
-	async function create(e: SubmitEvent) {
+	const presetLabels = { full: 'Full access', read: 'Read-only', none: 'No access' } as const;
+
+	function openCreate() {
+		name = '';
+		permissions = everything('read');
+		editing = { id: null, title: 'New API key' };
+	}
+
+	function openEdit(k: Key) {
+		permissions = normalizePermissions(k.permissions);
+		editing = { id: k.id, title: `Permissions for ${k.name ?? 'unnamed key'}` };
+	}
+
+	async function save(e: SubmitEvent) {
 		e.preventDefault();
+		if (!editing) return;
+		if (!Object.keys(permissions).length) {
+			toast.error('Grant at least one permission');
+			return;
+		}
+		pending = true;
 		try {
-			created = (await createApiKey({ name })).key;
-			name = '';
+			if (editing.id) {
+				await updateApiKeyPermissions({ keyId: editing.id, permissions });
+				toast.success('Permissions updated');
+			} else {
+				created = (await createApiKey({ name, permissions })).key;
+			}
+			editing = null;
 		} catch (err) {
-			toast.error(
-				(err as { body?: { message?: string } })?.body?.message ?? 'Could not create key'
-			);
+			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Could not save key');
+		} finally {
+			pending = false;
 		}
 	}
 </script>
@@ -30,16 +79,14 @@
 	<Card.Header>
 		<Card.Title>API keys</Card.Title>
 		<Card.Description
-			>Use with <code>Authorization: Bearer &lt;key&gt;</code> against <code>/api/v1</code>. See
+			>Use with <code>Authorization: Bearer &lt;key&gt;</code> against <code>/api/v1</code>. Each
+			key only reaches the resources you grant it. See
 			<a class="underline" href="/api/v1/openapi.json" target="_blank">the OpenAPI spec</a
 			>.</Card.Description
 		>
+		<Card.Action><Button size="sm" onclick={openCreate}><Plus /> New key</Button></Card.Action>
 	</Card.Header>
 	<Card.Content class="space-y-4">
-		<form class="flex gap-2" onsubmit={create}>
-			<Input placeholder="Key name, e.g. Zapier" required bind:value={name} />
-			<Button type="submit">Create key</Button>
-		</form>
 		{#if created}
 			<Alert.Root>
 				<Alert.Title>Copy your key now. It won't be shown again.</Alert.Title>
@@ -61,15 +108,37 @@
 		{#if keys.length}
 			<ul class="divide-y rounded-lg border">
 				{#each keys as k (k.id)}
-					<li class="flex items-center gap-3 p-3">
-						<div class="min-w-0 flex-1">
+					{@const summary = describePermissions(k.permissions)}
+					<li class="flex items-start gap-3 p-3">
+						<div class="min-w-0 flex-1 space-y-1.5">
 							<p class="text-sm font-medium">{k.name ?? 'Unnamed key'}</p>
 							<p class="text-xs text-muted-foreground">
 								<code>{k.start ?? k.prefix}…</code> · created {formatRelative(
 									k.createdAt
 								)}{k.lastRequest ? ` · last used ${formatRelative(k.lastRequest)}` : ''}
 							</p>
+							<div class="flex flex-wrap gap-1">
+								{#if summary === 'custom'}
+									{#each API_RESOURCES.filter((r) => levelOf(k.permissions, r) !== 'none') as r (r)}
+										<Badge variant="outline"
+											>{API_RESOURCE_LABELS[r]} · {levelOf(k.permissions, r) === 'write'
+												? 'read & write'
+												: 'read'}</Badge
+										>
+									{/each}
+								{:else}
+									<Badge variant={summary === 'none' ? 'destructive' : 'secondary'}
+										>{presetLabels[summary]}</Badge
+									>
+								{/if}
+							</div>
 						</div>
+						<Button
+							size="icon-sm"
+							variant="ghost"
+							aria-label="Edit permissions"
+							onclick={() => openEdit(k)}><Pencil /></Button
+						>
 						<Button
 							size="icon-sm"
 							variant="ghost"
@@ -79,6 +148,29 @@
 					</li>
 				{/each}
 			</ul>
+		{:else}
+			<p class="text-sm text-muted-foreground">No API keys yet.</p>
 		{/if}
 	</Card.Content>
 </Card.Root>
+
+<Dialog.Root bind:open={() => !!editing, (v) => !v && (editing = null)}>
+	<Dialog.Content class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+		<form onsubmit={save} class="space-y-5">
+			<Dialog.Header>
+				<Dialog.Title>{editing?.title}</Dialog.Title>
+				<Dialog.Description>Requests outside these permissions return 403.</Dialog.Description>
+			</Dialog.Header>
+			{#if !editing?.id}
+				<Field.Field>
+					<Field.Label for="key-name">Name</Field.Label>
+					<Input id="key-name" placeholder="e.g. Zapier" required bind:value={name} />
+				</Field.Field>
+			{/if}
+			<ApiPermissionsEditor bind:value={permissions} />
+			<Dialog.Footer>
+				<Button type="submit" disabled={pending}>{editing?.id ? 'Save' : 'Create key'}</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>

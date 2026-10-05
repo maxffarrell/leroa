@@ -12,7 +12,7 @@ export const GET: RequestHandler = ({ url }) => {
 			get: {
 				tags,
 				summary: `List ${name}`,
-				description: r.description,
+				description: `${r.description}. Requires \`${name}:read\`.`,
 				responses: { 200: { description: 'OK' } }
 			},
 			...(r.create
@@ -20,6 +20,7 @@ export const GET: RequestHandler = ({ url }) => {
 						post: {
 							tags,
 							summary: `Create ${one}`,
+							description: `Requires \`${name}:write\`.`,
 							requestBody: { content: { 'application/json': {} } },
 							responses: {
 								201: { description: 'Created' },
@@ -37,6 +38,7 @@ export const GET: RequestHandler = ({ url }) => {
 							get: {
 								tags,
 								summary: `Get ${one}`,
+								description: `Requires \`${name}:read\`.`,
 								responses: { 200: { description: 'OK' }, 404: { description: 'Not found' } }
 							}
 						}
@@ -46,6 +48,7 @@ export const GET: RequestHandler = ({ url }) => {
 							patch: {
 								tags,
 								summary: `Update ${one}`,
+								description: `Requires \`${name}:write\`.`,
 								requestBody: { content: { 'application/json': {} } },
 								responses: { 200: { description: 'OK' } }
 							}
@@ -59,7 +62,7 @@ export const GET: RequestHandler = ({ url }) => {
 		info: {
 			title: 'Leroa API',
 			version: '1.0.0',
-			description: `Amounts are integer cents. Webhook event types: ${EVENT_TYPES.join(', ')}.`
+			description: `API keys carry per-resource \`read\`/\`write\` permissions; requests outside them get 403. Amounts are integer cents. Webhook event types: ${EVENT_TYPES.join(', ')}.`
 		},
 		servers: [{ url: `${url.origin}/api/v1` }],
 		security: [{ bearer: [] }],
