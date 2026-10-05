@@ -392,3 +392,65 @@ export const integrationInstall = pgTable(
 	},
 	(t) => [uniqueIndex('integration_install_org_idx').on(t.organizationId, t.integrationId)]
 );
+
+export const leaseTemplate = pgTable(
+	'lease_template',
+	{
+		id: id(),
+		organizationId: orgId(),
+		name: text('name').notNull(),
+		body: text('body').notNull(),
+		...timestamps
+	},
+	(t) => [index('lease_template_org_idx').on(t.organizationId, t.name)]
+);
+
+export const agreementStatus = pgEnum('agreement_status', ['draft', 'sent', 'signed', 'void']);
+
+/** A lease document rendered from a template. The body is frozen once sent for signature. */
+export const leaseAgreement = pgTable(
+	'lease_agreement',
+	{
+		id: id(),
+		organizationId: orgId(),
+		leaseId: text('lease_id')
+			.notNull()
+			.references(() => lease.id, { onDelete: 'cascade' }),
+		templateId: text('template_id').references(() => leaseTemplate.id, { onDelete: 'set null' }),
+		title: text('title').notNull(),
+		body: text('body').notNull(),
+		status: agreementStatus('status').notNull().default('draft'),
+		/** SHA-256 of the body at the time it was sent. */
+		contentHash: text('content_hash'),
+		sentAt: timestamp('sent_at', { withTimezone: true }),
+		completedAt: timestamp('completed_at', { withTimezone: true }),
+		documentId: text('document_id').references(() => document.id, { onDelete: 'set null' }),
+		createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+		...timestamps
+	},
+	(t) => [index('lease_agreement_lease_idx').on(t.organizationId, t.leaseId)]
+);
+
+/** One row per tenant who must sign, created when the agreement is sent. */
+export const agreementSigner = pgTable(
+	'agreement_signer',
+	{
+		agreementId: text('agreement_id')
+			.notNull()
+			.references(() => leaseAgreement.id, { onDelete: 'cascade' }),
+		tenantId: text('tenant_id')
+			.notNull()
+			.references(() => tenant.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		email: text('email'),
+		signedName: text('signed_name'),
+		signedAt: timestamp('signed_at', { withTimezone: true }),
+		signedByUserId: text('signed_by_user_id').references(() => user.id, { onDelete: 'set null' }),
+		ip: text('ip'),
+		userAgent: text('user_agent')
+	},
+	(t) => [
+		primaryKey({ columns: [t.agreementId, t.tenantId] }),
+		index('agreement_signer_tenant_idx').on(t.tenantId)
+	]
+);

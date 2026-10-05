@@ -286,3 +286,48 @@ export async function notifyPortalRequest(t: TicketRef, place: string) {
 		});
 	}
 }
+
+/** Asks each signer to review and sign a lease agreement in the portal. */
+export async function notifyAgreementSent(
+	orgId: string,
+	agreement: { id: string; title: string },
+	signers: { name: string; email: string | null }[]
+) {
+	const org = await orgName(orgId);
+	for (const s of signers) {
+		if (!s.email) continue;
+		await notifyOnce(orgId, 'agreement.sent', agreement.id, {
+			to: s.email,
+			subject: `Please sign: ${agreement.title}`,
+			...renderEmail({
+				orgName: org,
+				heading: 'Your lease is ready to sign',
+				lines: [
+					`Hi ${s.name.split(' ')[0] || 'there'},`,
+					`${org} sent you “${agreement.title}” to review and sign.`
+				],
+				action: { label: 'Review and sign', url: `${appOrigin()}/portal` }
+			})
+		});
+	}
+}
+
+/** Tells owners and admins that every tenant has signed. */
+export async function notifyAgreementSigned(
+	orgId: string,
+	agreement: { id: string; title: string; leaseId: string }
+) {
+	const org = await orgName(orgId);
+	for (const to of await managerEmails(orgId)) {
+		await notifyOnce(orgId, 'agreement.signed', agreement.id, {
+			to,
+			subject: `Signed: ${agreement.title}`,
+			...renderEmail({
+				orgName: org,
+				heading: 'Lease signed',
+				lines: [`Every tenant has signed “${agreement.title}”. The signed PDF is on the lease.`],
+				action: { label: 'Open lease', url: `${appOrigin()}/leases/${agreement.leaseId}` }
+			})
+		});
+	}
+}

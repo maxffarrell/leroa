@@ -36,6 +36,13 @@
       "when": 1791168440622,
       "tag": "0004_more_payment_methods",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791169688586,
+      "tag": "0005_lease_agreements",
+      "breakpoints": true
     }
   ]
 }

@@ -150,3 +150,27 @@ export type TenantInput = v.InferInput<typeof tenantInput>;
 export type LeaseInput = v.InferInput<typeof leaseInput>;
 export type PaymentInput = v.InferInput<typeof paymentInput>;
 export type TicketInput = v.InferInput<typeof ticketInput>;
+
+const agreementBody = v.pipe(
+	v.string(),
+	v.trim(),
+	v.nonEmpty('The document is empty'),
+	v.maxLength(100_000)
+);
+export const templateInput = v.object({
+	id: v.optional(idSchema),
+	name: requiredText('Name'),
+	body: agreementBody
+});
+export const agreementCreate = v.object({ leaseId: idSchema, templateId: v.optional(idSchema) });
+export const agreementUpdate = v.object({
+	id: idSchema,
+	title: requiredText('Title'),
+	body: agreementBody
+});
+export const agreementSign = v.object({
+	id: idSchema,
+	signedName: v.pipe(v.string(), v.trim(), v.nonEmpty('Type your full name'), v.maxLength(200)),
+	contentHash: v.pipe(v.string(), v.regex(/^[0-9a-f]{64}$/)),
+	consent: v.literal(true, 'Agree to sign electronically')
+});

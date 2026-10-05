@@ -86,6 +86,8 @@ export async function portalOverview(userId: string) {
 
 	const { getLease } = await import('./leasing.ts');
 	const { payableProviders } = await import('./online-payments.ts');
+	const { portalAgreements } = await import('./agreements.ts');
+	const agreements = await portalAgreements(tenantIds);
 	const payable = await payableProviders([...new Set(leases.map((l) => l.organizationId))]);
 	const details = await Promise.all(leases.map((l) => getLease(l.organizationId, l.id)));
 	const tickets = await db
@@ -111,7 +113,8 @@ export async function portalOverview(userId: string) {
 				.filter((p) => p.supportsCurrency(l.currency))
 				.map((p) => ({ id: p.id, label: p.payLabel, newTab: !!p.newTab })),
 			charges: details[i]!.charges.slice(0, 12),
-			payments: details[i]!.payments.slice(0, 12)
+			payments: details[i]!.payments.slice(0, 12),
+			agreements: agreements.filter((a) => a.leaseId === l.id)
 		})),
 		tickets
 	};

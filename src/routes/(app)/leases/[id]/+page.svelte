@@ -6,6 +6,7 @@
 	import MoneyInput from '#lib/components/app/money-input.svelte';
 	import LateFeeDialog from '#lib/components/app/late-fee-dialog.svelte';
 	import RenewLeaseDialog from '#lib/components/app/renew-lease-dialog.svelte';
+	import LeaseAgreements from '#lib/components/app/lease-agreements.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
@@ -185,6 +186,8 @@
 			{/each}
 		</div>
 	</section>
+
+	<LeaseAgreements leaseId={id} />
 
 	<Tabs.Root bind:value={tab}>
 		<div class="flex items-center gap-2">
