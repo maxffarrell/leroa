@@ -30,7 +30,7 @@
 		"@sveltejs/kit": "^3.0.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.3.3",
-		"@types/node": "^24.19.1",
+		"@types/node": "^26.6.4",
 		"@types/nodemailer": "^8.0.2",
 		"auth": "^1.7.7",
 		"bits-ui": "^2.19.5",

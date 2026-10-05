@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-FROM node:24-alpine AS base
-RUN corepack enable
+FROM node:26-alpine AS base
+# Node 25+ no longer bundles Corepack.
+RUN npm install -g pnpm@12.4.1 && npm cache clean --force
 WORKDIR /app
 
 FROM base AS build
