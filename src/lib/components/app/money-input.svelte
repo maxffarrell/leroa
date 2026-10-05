@@ -16,11 +16,12 @@
 	};
 
 	let text = $state(format(value));
+	let focused = $state(false);
 
-	// Reflect values set from outside (prefills, shortcuts) without clobbering what's being typed.
+	// Reflect values set from outside (prefills, shortcuts), but never while the user is typing.
 	$effect.pre(() => {
 		const next = value;
-		if (untrack(() => parse(text)) !== next) text = format(next);
+		if (!focused && untrack(() => parse(text)) !== next) text = format(next);
 	});
 
 	function oninput(e: Event) {
@@ -39,5 +40,7 @@
 		class="tabular-nums"
 		value={text}
 		{oninput}
+		onfocus={() => (focused = true)}
+		onblur={() => (focused = false)}
 	/>
 </InputGroup.Root>

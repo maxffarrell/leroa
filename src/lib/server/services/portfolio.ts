@@ -93,7 +93,16 @@ export async function getProperty(orgId: string, id: string) {
 			leaseEnd: lease.endDate
 		})
 		.from(unit)
-		.leftJoin(lease, and(eq(lease.unitId, unit.id), eq(lease.status, 'active')))
+		.leftJoin(
+			lease,
+			and(
+				eq(lease.unitId, unit.id),
+				eq(lease.status, 'active'),
+				// The current lease: skip renewals that haven't started and leases a started renewal replaced.
+				sql`not (${lease.renewedFromId} is not null and ${lease.startDate} > current_date)`,
+				sql`not exists (select 1 from ${lease} r where r.renewed_from_id = ${lease.id} and r.status = 'active' and r.start_date <= current_date)`
+			)
+		)
 		.where(and(eq(unit.organizationId, orgId), eq(unit.propertyId, id)))
 		.orderBy(sql`length(${unit.name})`, asc(unit.name));
 
