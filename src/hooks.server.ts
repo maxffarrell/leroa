@@ -4,8 +4,13 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { auth } from '#lib/server/auth.ts';
 import { isEnterpriseAuthPath } from '#lib/server/ee/auth.ts';
 import { isEnterpriseEnabled } from '#lib/server/ee/license.ts';
+import { isDemoBlockedPath } from '#lib/server/demo-mode.ts';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	if (isDemoBlockedPath(event.url.pathname)) {
+		return Response.json({ message: 'This is turned off in the public demo.' }, { status: 403 });
+	}
+
 	if (isEnterpriseAuthPath(event.url.pathname) && !isEnterpriseEnabled()) {
 		return Response.json(
 			{ error: 'This feature requires Leroa Cloud or an Enterprise license.' },

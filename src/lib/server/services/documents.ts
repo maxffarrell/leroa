@@ -6,6 +6,7 @@ import { document, user } from '#lib/server/db/schema.ts';
 import type { OrgContext } from '#lib/server/context.ts';
 import { MAX_UPLOAD_BYTES, store } from './storage.ts';
 import { emit } from './events.ts';
+import { assertNotDemo } from '#lib/server/demo-mode.ts';
 
 export async function listDocuments(orgId: string, entity?: { type: string; id: string }) {
 	return db
@@ -37,6 +38,7 @@ export async function uploadDocument(
 	file: File,
 	entity?: { type: string; id: string }
 ) {
+	assertNotDemo();
 	if (file.size === 0) error(400, 'File is empty');
 	if (file.size > MAX_UPLOAD_BYTES) error(413, 'Files must be 10 MB or smaller');
 	const storageKey = `${ctx.orgId}/${randomUUID()}`;

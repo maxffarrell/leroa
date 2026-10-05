@@ -4,6 +4,7 @@ import { getRequestEvent, command, query } from '$app/server';
 import { auth } from '#lib/server/auth.ts';
 import { requireOrg } from '#lib/server/context.ts';
 import { apiPermissionsSchema } from '#lib/api-permissions.ts';
+import { assertNotDemo } from '#lib/server/demo-mode.ts';
 
 type StoredKey = {
 	id: string;
@@ -48,6 +49,7 @@ export const createApiKey = command(
 		permissions: apiPermissionsSchema
 	}),
 	async ({ name, permissions }) => {
+		assertNotDemo();
 		const { orgId, userId } = await requireOrg('admin');
 		const key = await auth.api.createApiKey({
 			body: {
@@ -66,6 +68,7 @@ export const createApiKey = command(
 export const updateApiKeyPermissions = command(
 	v.object({ keyId: v.string(), permissions: apiPermissionsSchema }),
 	async ({ keyId, permissions }) => {
+		assertNotDemo();
 		const { orgId, userId } = await requireOrg('admin');
 		if (!(await listKeys(orgId)).some((k) => k.id === keyId)) error(404, 'API key not found');
 		await auth.api.updateApiKey({

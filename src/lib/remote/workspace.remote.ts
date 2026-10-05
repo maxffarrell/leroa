@@ -12,6 +12,7 @@ import { loadDemoData } from '#lib/server/services/demo.ts';
 import { property } from '#lib/server/db/schema.ts';
 import { getIntegration, listIntegrations } from '#lib/server/integrations/runtime.ts';
 import { idSchema, webhookInput } from '#lib/schemas.ts';
+import { assertNotDemo } from '#lib/server/demo-mode.ts';
 
 export const getDashboard = query(async () => dashboard((await requireOrg()).orgId));
 export const searchAll = query(v.pipe(v.string(), v.maxLength(100)), async (q) =>
@@ -45,6 +46,7 @@ export const getWebhooks = query(async () => {
 		.orderBy(desc(webhook.createdAt));
 });
 export const createWebhook = command(webhookInput, async (input) => {
+	assertNotDemo();
 	const { orgId } = await requireOrg('admin');
 	const [w] = await db
 		.insert(webhook)
@@ -61,6 +63,7 @@ export const createWebhook = command(webhookInput, async (input) => {
 export const toggleWebhook = command(
 	v.object({ id: idSchema, enabled: v.boolean() }),
 	async ({ id, enabled }) => {
+		assertNotDemo();
 		const { orgId } = await requireOrg('admin');
 		await db
 			.update(webhook)
@@ -108,6 +111,7 @@ export const saveIntegration = command(
 		config: v.record(v.string(), v.union([v.string(), v.boolean()]))
 	}),
 	async ({ id, enabled, config }) => {
+		assertNotDemo();
 		const { orgId } = await requireOrg('admin');
 		const def = getIntegration(id);
 		if (!def) error(404, 'Unknown integration');

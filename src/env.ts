@@ -15,6 +15,11 @@ export const variables = defineEnvVars({
 			'Enterprise license key. Unlocks SAML/OIDC SSO and passkeys on self-hosted installs.',
 		schema: (value) => value || undefined
 	},
+	LEROA_DEMO: {
+		description:
+			'Set to `true` for a public demo: visitors get a throwaway sample workspace (deleted after 24h), and sign-up, API access, webhooks, integrations, invites and uploads are disabled.',
+		schema: (value) => value === 'true'
+	},
 	LEROA_CLOUD: {
 		description:
 			'Set to `true` on Leroa Cloud. Enables enterprise features and cloud-only behaviour.',

@@ -12,6 +12,17 @@
 <Sidebar.Provider>
 	<AppSidebar user={data.user} org={data.org} onsearch={() => (paletteOpen = true)} />
 	<Sidebar.Inset class="min-w-0">
+		{#if data.demo}
+			<div
+				class="flex flex-wrap items-center justify-center gap-x-2 bg-primary px-4 py-1.5 text-center text-xs text-primary-foreground"
+			>
+				<span>You're in a private demo workspace. It's deleted after 24 hours.</span>
+				<a
+					class="font-medium underline underline-offset-2"
+					href="https://github.com/maxffarrell/leroa#quick-start">Deploy your own</a
+				>
+			</div>
+		{/if}
 		<svelte:boundary>
 			{@render children()}
 			{#snippet pending()}

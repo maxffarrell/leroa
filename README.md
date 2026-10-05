@@ -49,6 +49,15 @@ Open http://localhost:5173, create an account, then click **Explore with demo da
 
 Environment variables are documented in [`src/env.ts`](src/env.ts).
 
+## Public demo
+
+Set `LEROA_DEMO=true` to run a public demo. The sign-in page gets a **Try the live demo** button that creates a private sample workspace for each visitor, with no sign-up. Demo workspaces are deleted after 24 hours. Sign-up, the REST API, API keys, webhooks, integrations, invites and uploads are turned off.
+
+The cheapest hosting options:
+
+- **$0:** Vercel Hobby with Neon's free Postgres. Vercel's Hobby plan is meant for non-commercial use.
+- **About €4–5 a month:** the smallest Hetzner VPS running `docker compose up -d` with `LEROA_DEMO=true`, behind Cloudflare's free plan.
+
 ## API
 
 Create a key under **Settings → API keys**, then:

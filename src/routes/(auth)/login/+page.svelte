@@ -8,6 +8,7 @@
 	import { Separator } from '#lib/components/ui/separator/index.js';
 	import KeyRound from '@lucide/svelte/icons/key-round';
 	import Building from '@lucide/svelte/icons/building-2';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import { toast } from 'svelte-sonner';
 
 	let email = $state('');
@@ -39,6 +40,19 @@
 </script>
 
 <svelte:head><title>Sign in · Leroa</title></svelte:head>
+
+{#if page.data.demo}
+	<form method="POST" action="/demo" class="mb-8 space-y-3 rounded-xl border bg-muted/40 p-4">
+		<div class="space-y-1">
+			<h2 class="font-semibold">Try the live demo</h2>
+			<p class="text-sm text-muted-foreground">
+				Get a private sample portfolio with properties, tenants, leases, rent and maintenance. No
+				sign-up. It's deleted after 24 hours.
+			</p>
+		</div>
+		<Button type="submit" class="w-full"><Sparkles /> Open demo workspace</Button>
+	</form>
+{/if}
 
 <form class="flex flex-col gap-6" onsubmit={submit}>
 	<div class="space-y-1">
@@ -87,10 +101,10 @@
 			</Button>
 		</div>
 	{/if}
-	<p class="text-center text-sm text-muted-foreground">
-		New to Leroa? <a
-			href="/signup{page.url.search}"
-			class="font-medium text-foreground underline-offset-4 hover:underline">Create an account</a
-		>
-	</p>
+	{#if !page.data.demo}<p class="text-center text-sm text-muted-foreground">
+			New to Leroa? <a
+				href="/signup{page.url.search}"
+				class="font-medium text-foreground underline-offset-4 hover:underline">Create an account</a
+			>
+		</p>{/if}
 </form>

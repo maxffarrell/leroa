@@ -1,8 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import { isEnterpriseEnabled } from '#lib/server/ee/license.ts';
+import { isDemo } from '#lib/server/demo-mode.ts';
 
-export const load: LayoutServerLoad = ({ locals }) => {
+export const load: LayoutServerLoad = ({ locals, url }) => {
 	if (locals.user) redirect(303, '/dashboard');
-	return { enterprise: isEnterpriseEnabled() };
+	if (isDemo() && url.pathname.startsWith('/signup')) redirect(303, '/login');
+	return { enterprise: isEnterpriseEnabled(), demo: isDemo() };
 };
