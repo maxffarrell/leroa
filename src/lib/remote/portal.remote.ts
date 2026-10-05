@@ -3,6 +3,9 @@ import { command, query } from '$app/server';
 import { requireUser, requireOrg } from '#lib/server/context.ts';
 import { portalOverview, portalRequest, portalToken } from '#lib/server/services/portal.ts';
 import { db } from '#lib/server/db/index.ts';
+import { assertNotDemo } from '#lib/server/demo-mode.ts';
+import { createCheckout } from '#lib/server/services/online-payments.ts';
+import { idSchema } from '#lib/schemas.ts';
 import { error } from '@sveltejs/kit';
 
 export const getPortal = query(async () => portalOverview(requireUser().user.id));
@@ -28,4 +31,9 @@ export const createPortalLink = command(v.string(), async (tenantId) => {
 	});
 	if (!t) error(404, 'Tenant not found');
 	return { path: `/portal/claim/${portalToken(t.id)}` };
+});
+
+export const payOnline = command(idSchema, async (leaseId) => {
+	assertNotDemo();
+	return { url: await createCheckout(requireUser().user.id, leaseId) };
 });

@@ -59,6 +59,16 @@ Rent posting, late fees and reminders run whenever someone opens Leroa. To run t
 curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://pm.example.com/api/cron
 ```
 
+## Online rent payments
+
+Tenants can pay their balance by card or bank transfer from the portal through Stripe Checkout. Leroa never holds the money: it goes straight to Stripe, and a webhook records each payment.
+
+1. Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
+2. In Stripe, add a webhook to `https://<your-domain>/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded` and `account.updated`.
+3. Turn it on in **Settings → Payments**.
+
+Self-hosted installs take payments into the Stripe account of `STRIPE_SECRET_KEY`. A workspace can instead connect its own account through Stripe Connect. That is required on Leroa Cloud (`LEROA_CLOUD=true`). Connected-account events need a second webhook endpoint with "Listen to events on Connected accounts". Put both signing secrets in `STRIPE_WEBHOOK_SECRET`, separated by a comma.
+
 ## Public demo
 
 Set `LEROA_DEMO=true` to run a public demo. The sign-in page gets a **Try the live demo** button that creates a private sample workspace for each visitor, with no sign-up. Demo workspaces are deleted after 24 hours. Sign-up, the REST API, API keys, webhooks, integrations, invites and uploads are turned off.

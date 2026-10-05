@@ -5,7 +5,10 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { getPortal, submitRequest } from '#lib/remote/portal.remote.ts';
+	import { getPortal, payOnline, submitRequest } from '#lib/remote/portal.remote.ts';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import CreditCard from '@lucide/svelte/icons/credit-card';
 	import { formatDate, formatMoney, formatRelative } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
 
@@ -21,6 +24,29 @@
 	let title = $state('');
 	let description = $state('');
 	let pending = $state(false);
+	let paying = $state<string | null>(null);
+
+	onMount(() => {
+		if (page.url.searchParams.get('paid') === '1') {
+			toast.success(
+				'Thanks! Your payment was received. Bank payments can take a few days to clear.'
+			);
+			history.replaceState(history.state, '', '/portal');
+		}
+	});
+
+	async function pay(leaseId: string) {
+		paying = leaseId;
+		try {
+			const { url } = await payOnline(leaseId);
+			location.assign(url);
+		} catch (err) {
+			paying = null;
+			toast.error(
+				(err as { body?: { message?: string } })?.body?.message ?? 'Could not start payment'
+			);
+		}
+	}
 
 	async function submit(e: SubmitEvent, leaseId: string) {
 		e.preventDefault();
@@ -71,6 +97,11 @@
 					>
 						{formatMoney(Math.max(0, l.balance), l.currency)}
 					</p>
+					{#if l.canPayOnline && l.balance > 0}
+						<Button class="mt-2" size="sm" disabled={paying !== null} onclick={() => pay(l.id)}
+							><CreditCard /> {paying === l.id ? 'Opening…' : 'Pay now'}</Button
+						>
+					{/if}
 				</div>
 				<div>
 					<p class="text-xs text-muted-foreground">Monthly rent</p>

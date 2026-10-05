@@ -32,6 +32,16 @@ export const variables = defineEnvVars({
 		description: 'Send email through SMTP, e.g. `smtps://user:pass@smtp.example.com:465`.',
 		schema: (value) => value || undefined
 	},
+	STRIPE_SECRET_KEY: {
+		description:
+			'Stripe secret key. Lets tenants pay rent online with Stripe Checkout; money goes straight to Stripe, never through Leroa.',
+		schema: (value) => value || undefined
+	},
+	STRIPE_WEBHOOK_SECRET: {
+		description:
+			'Signing secret(s) for `/api/stripe/webhook`. Comma-separate several (e.g. account and Connect endpoints).',
+		schema: (value) => value || undefined
+	},
 	CRON_SECRET: {
 		description:
 			'Bearer token for `/api/cron`, which posts rent, late fees and reminders for every workspace. Vercel Cron sends it automatically.',

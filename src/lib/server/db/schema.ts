@@ -217,10 +217,13 @@ export const payment = pgTable(
 		reference: text('reference'),
 		notes: text('notes'),
 		recordedBy: text('recorded_by').references(() => user.id, { onDelete: 'set null' }),
+		/** Payment-processor ID (e.g. Stripe PaymentIntent) for payments made online. */
+		externalId: text('external_id'),
 		...timestamps
 	},
 	(t) => [
 		index('payment_org_received_idx').on(t.organizationId, t.receivedOn),
+		uniqueIndex('payment_external_idx').on(t.externalId),
 		index('payment_lease_idx').on(t.leaseId),
 		index('payment_charge_idx').on(t.chargeId)
 	]
@@ -312,6 +315,19 @@ export const notificationSettings = pgTable('notification_settings', {
 	overdueNotices: boolean('overdue_notices').notNull().default(true),
 	maintenanceUpdates: boolean('maintenance_updates').notNull().default(true),
 	leaseExpiryAlerts: boolean('lease_expiry_alerts').notNull().default(true),
+	updatedAt: timestamp('updated_at', { withTimezone: true })
+		.notNull()
+		.defaultNow()
+		.$onUpdate(() => new Date())
+});
+
+export const paymentSettings = pgTable('payment_settings', {
+	organizationId: text('organization_id')
+		.primaryKey()
+		.references(() => organization.id, { onDelete: 'cascade' }),
+	onlineEnabled: boolean('online_enabled').notNull().default(false),
+	stripeAccountId: text('stripe_account_id'),
+	stripeChargesEnabled: boolean('stripe_charges_enabled').notNull().default(false),
 	updatedAt: timestamp('updated_at', { withTimezone: true })
 		.notNull()
 		.defaultNow()

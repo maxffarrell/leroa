@@ -34,6 +34,7 @@ export function assertNotDemo() {
 export function isDemoBlockedPath(path: string) {
 	if (!LEROA_DEMO) return false;
 	if (path.startsWith('/api/v1/')) return path !== '/api/v1/openapi.json';
+	if (path.startsWith('/api/stripe/')) return true;
 	return BLOCKED_AUTH_PATHS.some((p) => path.startsWith(p));
 }
 

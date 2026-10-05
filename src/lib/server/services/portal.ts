@@ -85,6 +85,8 @@ export async function portalOverview(userId: string) {
 		.orderBy(desc(lease.startDate));
 
 	const { getLease } = await import('./leasing.ts');
+	const { onlinePaymentsEnabledFor } = await import('./online-payments.ts');
+	const payable = await onlinePaymentsEnabledFor([...new Set(leases.map((l) => l.organizationId))]);
 	const details = await Promise.all(leases.map((l) => getLease(l.organizationId, l.id)));
 	const tickets = await db
 		.select({
@@ -105,6 +107,7 @@ export async function portalOverview(userId: string) {
 		leases: leases.map((l, i) => ({
 			...l,
 			balance: details[i]!.balance,
+			canPayOnline: payable.has(l.organizationId),
 			charges: details[i]!.charges.slice(0, 12),
 			payments: details[i]!.payments.slice(0, 12)
 		})),
