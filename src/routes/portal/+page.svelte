@@ -4,6 +4,7 @@
 	import PortalInspections from '#lib/components/app/portal-inspections.svelte';
 	import PortalMessages from '#lib/components/app/portal-messages.svelte';
 	import PortalAnnouncements from '#lib/components/app/portal-announcements.svelte';
+	import PortalProfile from '#lib/components/app/portal-profile.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -249,6 +250,7 @@
 		</Card.Root>
 	{/each}
 	<PortalMessages />
+	<PortalProfile />
 	{#if p.tickets.length}
 		<Card.Root>
 			<Card.Header><Card.Title>Your requests</Card.Title></Card.Header>

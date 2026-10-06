@@ -5,7 +5,10 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
+	import { Separator } from '#lib/components/ui/separator/index.js';
 	import { toast } from 'svelte-sonner';
+	import { onMount } from 'svelte';
+	import SocialSignIn from '#lib/components/app/social-sign-in.svelte';
 
 	let name = $state('');
 	let email = $state('');
@@ -20,6 +23,16 @@
 		if (error) return toast.error(error.message ?? 'Could not create account');
 		await goto(page.url.searchParams.get('next') ?? '/onboarding', { invalidateAll: true });
 	}
+
+	onMount(() => {
+		const err = page.url.searchParams.get('error');
+		if (err)
+			toast.error(
+				err === 'account_not_linked'
+					? 'Sign in with your password first, then connect this account from the resident portal.'
+					: 'Could not sign in with that account. Try again or use your email.'
+			);
+	});
 </script>
 
 <svelte:head><title>Create account · Leroa</title></svelte:head>
@@ -29,6 +42,16 @@
 		<h1 class="text-2xl font-semibold tracking-tight">Create your account</h1>
 		<p class="text-sm text-muted-foreground">Free to self-host. Takes about a minute.</p>
 	</div>
+	{#if page.data.social?.length}
+		<SocialSignIn
+			providers={page.data.social}
+			next={page.url.searchParams.get('next') ?? '/onboarding'}
+			newUserNext={page.url.searchParams.get('next') ?? '/onboarding'}
+		/>
+		<div class="flex items-center gap-3 text-xs text-muted-foreground">
+			<Separator class="flex-1" /> or use email <Separator class="flex-1" />
+		</div>
+	{/if}
 	<Field.Group>
 		<Field.Field>
 			<Field.Label for="name">Your name</Field.Label>

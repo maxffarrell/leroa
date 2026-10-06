@@ -22,7 +22,9 @@ const BLOCKED_AUTH_PATHS = [
 	'/api/auth/delete-user',
 	'/api/auth/update-user',
 	'/api/auth/passkey/',
-	'/api/auth/sso/'
+	'/api/auth/sso/',
+	'/api/auth/sign-in/social',
+	'/api/auth/link-social'
 ];
 
 export const isDemo = (): boolean => LEROA_DEMO;
@@ -35,6 +37,7 @@ export function isDemoBlockedPath(path: string) {
 	if (!LEROA_DEMO) return false;
 	if (path.startsWith('/api/v1/')) return path !== '/api/v1/openapi.json';
 	if (path.startsWith('/api/payments/')) return true;
+	if (path.startsWith('/api/profile/') || path.startsWith('/id')) return true;
 	return BLOCKED_AUTH_PATHS.some((p) => path.startsWith(p));
 }
 

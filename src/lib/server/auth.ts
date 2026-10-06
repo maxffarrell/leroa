@@ -9,6 +9,7 @@ import { db } from '#lib/server/db/index.ts';
 import { enterprisePlugins } from '#lib/server/ee/auth.ts';
 import { appOrigin, sendEmail } from '#lib/server/email.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
+import { socialProviders } from '#lib/server/social.ts';
 
 export const auth = betterAuth({
 	appName: 'Leroa',
@@ -16,6 +17,7 @@ export const auth = betterAuth({
 	secret: BETTER_AUTH_SECRET,
 	database: drizzleAdapter(db, { provider: 'pg' }),
 	emailAndPassword: { enabled: true },
+	socialProviders: socialProviders(),
 	session: { cookieCache: { enabled: true, maxAge: 60 } },
 	// Deploy targets (Railway, Vercel, Docker via scripts/server.ts) all provide x-forwarded-for.
 	advanced: { ipAddress: { ipAddressHeaders: ['x-forwarded-for'] } },

@@ -2,13 +2,21 @@ import type { PageServerLoad } from './$types';
 import { getOrg } from '#lib/server/context.ts';
 import { publicListing } from '#lib/server/services/listings.ts';
 import { getLeasingSettings } from '#lib/server/services/crm.ts';
+import { profileHubUrl, takePrefill } from '#lib/server/profile/client.ts';
+import { applicationPrefill } from '#lib/profile.ts';
 
-export const load: PageServerLoad = async ({ params, setHeaders }) => {
+export const load: PageServerLoad = async ({ params, setHeaders, cookies }) => {
 	const viewer = await getOrg();
 	const data = await publicListing(params.org, params.listing, viewer?.orgId ?? null);
 	const { selfBooking } = await getLeasingSettings(data.org.id);
+	const shared = takePrefill(cookies);
 	setHeaders({
-		'cache-control': data.preview || viewer ? 'private, no-store' : 'public, max-age=60'
+		'cache-control': data.preview || viewer || shared ? 'private, no-store' : 'public, max-age=60'
 	});
-	return { ...data, selfBooking };
+	return {
+		...data,
+		selfBooking,
+		profileHub: !!profileHubUrl(),
+		prefill: shared ? applicationPrefill(shared) : null
+	};
 };

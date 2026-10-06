@@ -10,6 +10,8 @@
 	import Building from '@lucide/svelte/icons/building-2';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import { toast } from 'svelte-sonner';
+	import { onMount } from 'svelte';
+	import SocialSignIn from '#lib/components/app/social-sign-in.svelte';
 
 	let email = $state('');
 	let password = $state('');
@@ -37,6 +39,16 @@
 		const { error } = await authClient.signIn.sso({ email, callbackURL: next });
 		if (error) toast.error(error.message ?? 'No SSO connection for this domain');
 	}
+
+	onMount(() => {
+		const err = page.url.searchParams.get('error');
+		if (err)
+			toast.error(
+				err === 'account_not_linked'
+					? 'Sign in with your password first, then connect this account from the resident portal.'
+					: 'Could not sign in with that account. Try again or use your email.'
+			);
+	});
 </script>
 
 <svelte:head><title>Sign in · Leroa</title></svelte:head>
@@ -59,6 +71,16 @@
 		<h1 class="text-2xl font-semibold tracking-tight">Welcome back</h1>
 		<p class="text-sm text-muted-foreground">Sign in to your workspace.</p>
 	</div>
+	{#if page.data.social?.length}
+		<SocialSignIn
+			providers={page.data.social}
+			{next}
+			newUserNext={page.url.searchParams.get('next') ?? '/onboarding'}
+		/>
+		<div class="flex items-center gap-3 text-xs text-muted-foreground">
+			<Separator class="flex-1" /> or use email <Separator class="flex-1" />
+		</div>
+	{/if}
 	<Field.Group>
 		<Field.Field>
 			<Field.Label for="email">Email</Field.Label>

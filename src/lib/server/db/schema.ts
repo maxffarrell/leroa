@@ -13,6 +13,7 @@ import {
 	timestamp,
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
+import type { ProfileData, SharedProfile } from '../../profile.ts';
 import { organization, user } from './auth.schema.ts';
 
 export * from './auth.schema.ts';
@@ -112,6 +113,8 @@ export const tenant = pgTable(
 		phone: text('phone'),
 		notes: text('notes'),
 		portalUserId: text('portal_user_id').references(() => user.id, { onDelete: 'set null' }),
+		/** Resident chose to keep this record's contact details in sync with their Leroa Profile. */
+		profileSync: boolean('profile_sync').notNull().default(false),
 		...timestamps
 	},
 	(t) => [
@@ -939,3 +942,66 @@ export const propertyOwner = pgTable(
 		index('property_owner_owner_idx').on(t.ownerId)
 	]
 );
+
+/** Leroa Profile service (LEROA_PROFILE_HUB): one portable profile per resident account. */
+export const residentProfile = pgTable('resident_profile', {
+	userId: text('user_id')
+		.primaryKey()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	data: jsonb('data').$type<ProfileData>().notNull(),
+	...timestamps
+});
+
+/** An install (identified by its origin) a resident has shared their profile with. */
+export const profileGrant = pgTable(
+	'profile_grant',
+	{
+		id: id(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		clientId: text('client_id').notNull(),
+		scopes: text('scopes').array().notNull(),
+		lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [uniqueIndex('profile_grant_user_client_idx').on(t.userId, t.clientId)]
+);
+
+/** Access tokens are stored hashed. Revoking a grant removes all of them. */
+export const profileToken = pgTable(
+	'profile_token',
+	{
+		tokenHash: text('token_hash').primaryKey(),
+		grantId: text('grant_id')
+			.notNull()
+			.references(() => profileGrant.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('profile_token_grant_idx').on(t.grantId)]
+);
+
+/** Single-use authorization codes, bound to a PKCE challenge and redirect. */
+export const profileCode = pgTable('profile_code', {
+	codeHash: text('code_hash').primaryKey(),
+	grantId: text('grant_id')
+		.notNull()
+		.references(() => profileGrant.id, { onDelete: 'cascade' }),
+	codeChallenge: text('code_challenge').notNull(),
+	redirectUri: text('redirect_uri').notNull(),
+	expiresAt: timestamp('expires_at', { withTimezone: true }).notNull()
+});
+
+/** Install side: a local account's connection to a Leroa Profile service. */
+export const profileLink = pgTable('profile_link', {
+	userId: text('user_id')
+		.primaryKey()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	hubUrl: text('hub_url').notNull(),
+	/** Sealed with the server secret. */
+	accessToken: text('access_token').notNull(),
+	scopes: text('scopes').array().notNull(),
+	data: jsonb('data').$type<SharedProfile>().notNull(),
+	syncedAt: timestamp('synced_at', { withTimezone: true }).notNull().defaultNow(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

@@ -20,6 +20,43 @@ export const variables = defineEnvVars({
 			'Set to `true` for a public demo: visitors get a throwaway sample workspace (deleted after 24h), and sign-up, API access, webhooks, integrations, invites and uploads are disabled.',
 		schema: (value) => value === 'true'
 	},
+	GOOGLE_CLIENT_ID: {
+		description:
+			'Google OAuth client ID. Shows "Continue with Google" on sign-in. Redirect URI: `<origin>/api/auth/callback/google`.',
+		schema: (value) => value || undefined
+	},
+	GOOGLE_CLIENT_SECRET: {
+		description: 'Google OAuth client secret.',
+		schema: (value) => value || undefined
+	},
+	FACEBOOK_CLIENT_ID: {
+		description:
+			'Facebook app ID. Shows "Continue with Facebook" on sign-in. Redirect URI: `<origin>/api/auth/callback/facebook`.',
+		schema: (value) => value || undefined
+	},
+	FACEBOOK_CLIENT_SECRET: {
+		description: 'Facebook app secret.',
+		schema: (value) => value || undefined
+	},
+	X_CLIENT_ID: {
+		description:
+			'X (Twitter) OAuth 2.0 client ID. Shows "Continue with X" on sign-in. Redirect URI: `<origin>/api/auth/callback/twitter`. X bills API reads per use.',
+		schema: (value) => value || undefined
+	},
+	X_CLIENT_SECRET: {
+		description: 'X (Twitter) OAuth 2.0 client secret.',
+		schema: (value) => value || undefined
+	},
+	LEROA_PROFILE_URL: {
+		description:
+			'Origin of a Leroa Profile service, e.g. `https://id.example.com`. Lets residents fill applications and keep their details up to date from their portable Leroa profile.',
+		schema: (value) => value?.replace(/\/+$/, '') || undefined
+	},
+	LEROA_PROFILE_HUB: {
+		description:
+			'Set to `true` to run this install as a Leroa Profile service that other installs (including self-hosted ones) connect to.',
+		schema: (value) => value === 'true'
+	},
 	EMAIL_FROM: {
 		description: 'Sender for notification emails, e.g. `Leroa <no-reply@pm.example.com>`.',
 		schema: (value) => value || undefined

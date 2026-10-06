@@ -13,6 +13,9 @@
 	import { formatDate, formatMoney, todayISO } from '#lib/format.ts';
 	import { availability, unitFacts } from '#lib/listings.ts';
 	import { toast } from 'svelte-sonner';
+	import { onMount } from 'svelte';
+	import { replaceState } from '$app/navigation';
+	import UserRound from '@lucide/svelte/icons/user-round';
 	import Building2 from '@lucide/svelte/icons/building-2';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Check from '@lucide/svelte/icons/check';
@@ -51,6 +54,25 @@
 	let form = $state(blank());
 	let pending = $state(false);
 	let submitted = $state(false);
+	const profileHref = $derived(
+		`/api/profile/connect?next=${encodeURIComponent(`${page.url.pathname}#apply`)}`
+	);
+
+	onMount(() => {
+		if (data.prefill && Object.keys(data.prefill).length) {
+			form = { ...form, ...data.prefill };
+			toast.success('Filled in from your Leroa profile. Check everything before you send it.');
+		} else if (page.url.searchParams.get('profile') === 'connected') {
+			toast.info('Your Leroa profile had nothing to fill in yet.');
+		} else if (page.url.searchParams.get('profile') === 'failed') {
+			toast.error('Could not read your Leroa profile. Fill in the form instead.');
+		}
+		if (page.url.searchParams.has('profile')) {
+			const u = new URL(page.url.href);
+			u.searchParams.delete('profile');
+			replaceState(u, page.state);
+		}
+	});
 
 	async function submit(e: SubmitEvent) {
 		e.preventDefault();
@@ -254,6 +276,11 @@
 					<p class="mt-1 text-sm text-muted-foreground">
 						Takes about two minutes. No account or fee needed.
 					</p>
+					{#if data.profileHub && !data.preview}
+						<Button variant="outline" class="mt-4 w-full sm:w-auto" href={profileHref}>
+							<UserRound class="size-4" /> Fill from my Leroa profile
+						</Button>
+					{/if}
 					<form class="mt-5" onsubmit={submit}>
 						<Field.Group class="gap-4">
 							<div class="grid gap-4 sm:grid-cols-2">

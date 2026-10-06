@@ -116,6 +116,18 @@ Tenants pay with their Bilt account and earn points on rent, through [Bilt Check
 
 Bilt is only offered on self-hosted installs and for leases in USD. Tenants must link their Bilt account first. Checkout opens in a new tab.
 
+## Resident sign-in and Leroa Profile
+
+**Social sign-in:** residents and staff can sign in with Google, Facebook or X. Each provider appears once you set its `*_CLIENT_ID` and `*_CLIENT_SECRET`. Register `<ORIGIN>/api/auth/callback/<google|facebook|twitter>` as the redirect URI. Sign-in is local to each install, so it never depends on an outside service. A social login whose email already has a password account isn't linked automatically: the resident signs in with their password first.
+
+**Leroa Profile** is a resident profile that works across management companies, including self-hosted installs. It holds contact details, household, pets and rental-application basics, but never SSNs, dates of birth or screening data.
+
+- **Run a profile service:** set `LEROA_PROFILE_HUB=true`. Residents edit their profile at `/id`, and see and revoke the sites they've shared it with.
+- **Connect an install to one:** set `LEROA_PROFILE_URL` to the service's origin.
+  - Applicants get **Fill from my Leroa profile** on listing pages, a one-time read whose token is revoked straight away.
+  - Residents can connect their profile in the portal and choose which leases keep their contact details in sync. The daily cron and portal visits refresh it.
+- **How sharing works:** OAuth 2.0 with PKCE. The install's own origin is its client ID, so there's nothing to register, and each share needs the resident's consent.
+
 ## Public demo
 
 Set `LEROA_DEMO=true` to run a public demo. The sign-in page gets a **Try the live demo** button that creates a private sample workspace for each visitor, with no sign-up. Demo workspaces are deleted after 24 hours. Sign-up, the REST API, API keys, webhooks, integrations, invites and uploads are turned off.
