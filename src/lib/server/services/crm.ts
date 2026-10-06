@@ -684,8 +684,8 @@ export async function initLeasingTimezone(orgId: string, timezone: string) {
 // ── Property marketing ──────────────────────────────────────────────────────
 
 const publishedCount = sql<number>`(
-	select count(*) from ${listing} inner join ${unit} on ${unit.id} = ${listing.unitId}
-	where ${unit.propertyId} = ${property.id} and ${listing.status} = 'published'
+	select count(*) from "listing" inner join "unit" on "unit"."id" = "listing"."unit_id"
+	where "unit"."property_id" = "property"."id" and "listing"."status" = 'published'
 )`.mapWith(Number);
 
 export async function getPropertyMarketing(orgId: string, id: string) {

@@ -447,18 +447,19 @@ async function loadDemoLeads(ctx: OrgContext, maple: string, harbor: string, ced
 		slotMinutes: 30,
 		noticeHours: 2
 	});
-	await updatePropertyMarketing(ctx, {
-		id: maple,
-		marketingDescription:
-			'A quiet, tree-lined courtyard building five minutes from downtown. Residents get secure bike storage, a shared garden and on-site laundry, and the 7 bus stops at the corner.',
-		amenities: ['Courtyard garden', 'Bike storage', 'On-site laundry', 'Package room']
-	});
+	// Harbor has the published listings; Maple is full, so its page collects waitlist sign-ups.
 	await updatePropertyMarketing(ctx, {
 		id: harbor,
+		marketingDescription:
+			'Bright lofts by the water with exposed brick, big windows and a rooftop deck looking over the marina. The 7 bus stops at the corner and downtown is a ten-minute ride.',
+		amenities: ['Rooftop deck', 'Fitness room', 'Covered parking', 'Package room']
+	});
+	await updatePropertyMarketing(ctx, {
+		id: maple,
 		publicPage: true,
 		marketingDescription:
-			'Bright lofts by the water with exposed brick and big windows. Join the waitlist and we will email you when one opens up.',
-		amenities: ['Rooftop deck', 'Fitness room', 'Covered parking']
+			'A quiet, tree-lined courtyard building five minutes from downtown, with secure bike storage, a shared garden and on-site laundry.',
+		amenities: ['Courtyard garden', 'Bike storage', 'On-site laundry']
 	});
 	const at = (days: number, minutes: number) =>
 		zonedToUtc(addDays(today, days), minutes, timezone).toISOString();
