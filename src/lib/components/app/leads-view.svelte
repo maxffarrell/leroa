@@ -5,6 +5,9 @@
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as Empty from '#lib/components/ui/empty/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { getLeads, updateLead } from '#lib/remote/crm.remote.ts';
@@ -17,8 +20,8 @@
 		OPEN_LEAD_STAGES,
 		type LeadStage
 	} from '#lib/leads.ts';
-	import { formatDate, formatMoney, formatRelative, todayISO } from '#lib/format.ts';
-	import { formatTourTime } from '#lib/tours.ts';
+	import { formatDate, formatMoney, formatRelative } from '#lib/format.ts';
+	import { formatTourTime, localDate } from '#lib/tours.ts';
 	import Search from '@lucide/svelte/icons/search';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Users from '@lucide/svelte/icons/users';
@@ -28,7 +31,7 @@
 	let { timezone, oncreate }: { timezone: string; oncreate: () => void } = $props();
 
 	const leads = $derived(await getLeads());
-	const today = todayISO();
+	const today = $derived(localDate(new Date(), timezone));
 
 	let view = $state<'board' | 'table'>('board');
 	let q = $state('');
@@ -37,6 +40,8 @@
 	let dragging = $state<string | null>(null);
 	let over = $state<LeadStage | null>(null);
 	let moved = $state<Record<string, LeadStage>>({});
+	let losing = $state<(typeof leads)[number] | null>(null);
+	let lostReason = $state('');
 
 	const stageOf = (l: { id: string; stage: LeadStage }) => moved[l.id] ?? l.stage;
 	const filtered = $derived.by(() => {
@@ -71,9 +76,29 @@
 		const l = leads.find((x) => x.id === dragging);
 		dragging = over = null;
 		if (!l || stageOf(l) === stage) return;
+		if (stage === 'lost') {
+			lostReason = '';
+			losing = l;
+			return;
+		}
+		await move(l, stage);
+	}
+
+	async function markLost(e: SubmitEvent) {
+		e.preventDefault();
+		const l = losing;
+		losing = null;
+		if (l) await move(l, 'lost', lostReason.trim() || null);
+	}
+
+	async function move(l: (typeof leads)[number], stage: LeadStage, reason?: string | null) {
 		moved[l.id] = stage;
 		try {
-			await updateLead({ id: l.id, stage });
+			await updateLead({
+				id: l.id,
+				stage,
+				...(stage === 'lost' ? { lostReason: reason ?? null } : {})
+			});
 			toast.success(`${leadName(l)} moved to ${LEAD_STAGE_LABELS[stage]}`);
 		} catch (err) {
 			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Could not move lead');
@@ -266,3 +291,28 @@
 		</div>
 	{/if}
 {/if}
+
+<Dialog.Root open={losing !== null} onOpenChange={(o) => !o && (losing = null)}>
+	<Dialog.Content class="sm:max-w-sm">
+		<form class="space-y-4" onsubmit={markLost}>
+			<Dialog.Header>
+				<Dialog.Title>Mark {losing ? leadName(losing) : ''} lost</Dialog.Title>
+				<Dialog.Description>They'll leave the pipeline and any waitlist.</Dialog.Description>
+			</Dialog.Header>
+			<Field.Field>
+				<Field.Label for="board-lost-reason">Reason (optional)</Field.Label>
+				<Textarea
+					id="board-lost-reason"
+					rows={2}
+					maxlength={500}
+					placeholder="Rented elsewhere, over budget…"
+					bind:value={lostReason}
+				/>
+			</Field.Field>
+			<Dialog.Footer>
+				<Button type="button" variant="outline" onclick={() => (losing = null)}>Cancel</Button>
+				<Button type="submit" variant="destructive">Mark lost</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>

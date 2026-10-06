@@ -84,7 +84,7 @@
 		</div>
 	{/if}
 
-	<div class="mt-6 grid gap-10 lg:grid-cols-[1fr_22rem]">
+	<div class="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
 		<div class="min-w-0 space-y-8">
 			<section class="space-y-2">
 				<h1 class="text-2xl font-semibold tracking-tight text-balance md:text-3xl">{p.name}</h1>
@@ -169,7 +169,7 @@
 			</section>
 		</div>
 
-		<aside id="contact" class="scroll-mt-20">
+		<aside id="contact" class="min-w-0 scroll-mt-20">
 			<div class="space-y-4 rounded-xl border p-5 lg:sticky lg:top-20">
 				<h2 class="font-semibold">
 					{data.listings.length ? 'Come take a look' : 'Join the waitlist'}

@@ -145,7 +145,7 @@
 		</div>
 	{/if}
 
-	<div class="mt-6 grid gap-8 lg:grid-cols-[1fr_20rem]">
+	<div class="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
 		<div class="min-w-0 space-y-8">
 			<section class="space-y-2">
 				<h1 class="text-2xl font-semibold tracking-tight text-balance md:text-3xl">{l.title}</h1>

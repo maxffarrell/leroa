@@ -84,7 +84,7 @@
 					startsAt: slot,
 					message: form.message || null
 				});
-				done = `You're booked for ${r.when}. We've emailed you a confirmation.`;
+				done = `You're booked for ${r.when}.${r.emailed ? " We've emailed you a confirmation." : ''}`;
 			} else {
 				await submitInquiry({
 					...contact(),

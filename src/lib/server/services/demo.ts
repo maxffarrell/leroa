@@ -19,7 +19,7 @@ import {
 	updateLead,
 	updatePropertyMarketing
 } from './crm.ts';
-import { zonedToUtc } from '#lib/tours.ts';
+import { localDate, zonedToUtc } from '#lib/tours.ts';
 
 const people = [
 	['Maya', 'Chen'],
@@ -437,7 +437,7 @@ async function loadDemoMessages(
 
 async function loadDemoLeads(ctx: OrgContext, maple: string, harbor: string, cedar: string) {
 	const timezone = 'America/Chicago';
-	const today = todayISO();
+	const today = localDate(new Date(), timezone);
 	await saveLeasingSettings(ctx.orgId, {
 		selfBooking: true,
 		timezone,

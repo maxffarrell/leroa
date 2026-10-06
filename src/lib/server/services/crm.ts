@@ -1087,7 +1087,7 @@ export async function submitInquiry(input: Out<typeof inquiryInput>, meta: Meta)
 
 /** A tour the prospect books into an open slot from a public page. */
 export async function bookTour(input: Out<typeof tourBookingInput>, meta: Meta) {
-	if (input.website) return { ok: true, when: '' };
+	if (input.website) return { ok: true, when: '', emailed: false };
 	rateLimit(meta.ip);
 	const org = await orgBySlug(input.orgSlug);
 	const p = await visibleProperty(org.id, input.propertyId, false);
@@ -1156,5 +1156,5 @@ export async function bookTour(input: Out<typeof tourBookingInput>, meta: Meta) 
 		`Tour booked: ${leadName(l)}, ${when}`,
 		`${leadName(l)} booked a tour of ${p.name} for ${when}.`
 	);
-	return { ok: true, when };
+	return { ok: true, when, emailed: !isDemo() };
 }

@@ -37,8 +37,8 @@
 		type LeadSource,
 		type LeadStage
 	} from '#lib/leads.ts';
-	import { addDays, formatDate, formatRelative, todayISO } from '#lib/format.ts';
-	import { formatTourTime } from '#lib/tours.ts';
+	import { addDays, formatDate, formatRelative } from '#lib/format.ts';
+	import { formatTourTime, localDate } from '#lib/tours.ts';
 	import { toast } from 'svelte-sonner';
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import Mail from '@lucide/svelte/icons/mail';
@@ -57,7 +57,7 @@
 	const properties = $derived(await getProperties());
 	const members = $derived(await getMembers());
 	const name = $derived(leadName(l));
-	const today = todayISO();
+	const today = $derived(localDate(new Date(), settings.timezone));
 	const isAdmin = $derived(['owner', 'admin'].includes(page.data.role ?? ''));
 	const closed = $derived(l.stage === 'leased' || l.stage === 'lost');
 	const follow = $derived(followUpState(l.nextFollowUpOn, today));
