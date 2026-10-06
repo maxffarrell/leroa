@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import { REPORT_KEYS } from './reports.ts';
 import { IMPORT_KINDS } from './import.ts';
+import { LEAD_NOTE_KINDS, LEAD_SOURCES, LEAD_STAGES, TOUR_KINDS, TOUR_STATUSES } from './leads.ts';
 
 const optionalText = v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(5000))));
 const requiredText = (label: string) =>
@@ -105,7 +106,8 @@ export const notificationSettingsInput = v.object({
 	overdueNotices: v.boolean(),
 	maintenanceUpdates: v.boolean(),
 	leaseExpiryAlerts: v.boolean(),
-	newApplications: v.boolean()
+	newApplications: v.boolean(),
+	newLeads: v.boolean()
 });
 
 export const chargeInput = v.object({
@@ -374,4 +376,134 @@ export const importInput = v.object({
 	csv: v.pipe(v.string(), v.maxLength(2_000_000, 'File is over 2 MB')),
 	mapping: v.record(v.string(), v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0)))),
 	dryRun: v.boolean()
+});
+
+// ── Leasing CRM ─────────────────────────────────────────────────────────────
+
+const name = (label: string) =>
+	v.pipe(v.string(), v.trim(), v.nonEmpty(`${label} is required`), v.maxLength(100));
+const optionalEmail = v.optional(
+	v.nullable(v.pipe(v.string(), v.trim(), v.email('Enter a valid email'), v.maxLength(200)))
+);
+const bedrooms = v.optional(
+	v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(20)))
+);
+
+export const leadInput = v.object({
+	firstName: name('First name'),
+	lastName: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(100)), ''),
+	email: optionalEmail,
+	phone: shortText(40),
+	source: v.optional(v.picklist(LEAD_SOURCES), 'other'),
+	sourceDetail: shortText(200),
+	propertyId: v.optional(v.nullable(idSchema)),
+	listingId: v.optional(v.nullable(idSchema)),
+	moveInDate: v.optional(v.nullable(isoDate)),
+	bedrooms,
+	budgetMax: v.optional(v.nullable(cents)),
+	message: shortText(2000),
+	assignedTo: v.optional(v.nullable(idSchema)),
+	nextFollowUpOn: v.optional(v.nullable(isoDate)),
+	waitlist: v.optional(v.boolean(), false)
+});
+
+/** API-created leads default to the `api` source. */
+export const leadApiInput = v.object({
+	...leadInput.entries,
+	source: v.optional(v.picklist(LEAD_SOURCES), 'api')
+});
+
+export const leadUpdate = v.object({
+	id: idSchema,
+	...v.partial(v.omit(leadInput, ['source'])).entries,
+	source: v.optional(v.picklist(LEAD_SOURCES)),
+	stage: v.optional(v.picklist(LEAD_STAGES)),
+	lostReason: shortText(500)
+});
+
+export const leadNoteInput = v.object({
+	leadId: idSchema,
+	kind: v.optional(v.picklist(LEAD_NOTE_KINDS), 'note'),
+	body: v.pipe(v.string(), v.trim(), v.nonEmpty('Write something first'), v.maxLength(5000)),
+	nextFollowUpOn: v.optional(v.nullable(isoDate))
+});
+
+const instant = v.pipe(v.string(), v.isoTimestamp('Use an ISO 8601 timestamp'));
+
+export const tourInput = v.object({
+	leadId: idSchema,
+	propertyId: idSchema,
+	listingId: v.optional(v.nullable(idSchema)),
+	startsAt: instant,
+	durationMinutes: v.optional(v.pipe(v.number(), v.integer(), v.minValue(10), v.maxValue(240)), 30),
+	kind: v.optional(v.picklist(TOUR_KINDS), 'in_person'),
+	agentId: v.optional(v.nullable(idSchema)),
+	notes: shortText(2000)
+});
+
+export const tourUpdate = v.object({
+	id: idSchema,
+	status: v.optional(v.picklist(TOUR_STATUSES)),
+	startsAt: v.optional(instant),
+	durationMinutes: v.optional(v.pipe(v.number(), v.integer(), v.minValue(10), v.maxValue(240))),
+	kind: v.optional(v.picklist(TOUR_KINDS)),
+	agentId: v.optional(v.nullable(idSchema)),
+	notes: shortText(2000)
+});
+
+export const leasingSettingsInput = v.object({
+	selfBooking: v.boolean(),
+	timezone: v.pipe(v.string(), v.nonEmpty(), v.maxLength(64)),
+	tourDays: v.pipe(
+		v.array(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(6))),
+		v.maxLength(7)
+	),
+	tourStart: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(24 * 60)),
+	tourEnd: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(24 * 60)),
+	slotMinutes: v.picklist([15, 30, 45, 60]),
+	noticeHours: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(168))
+});
+
+export const propertyMarketingInput = v.object({
+	id: idSchema,
+	publicPage: v.optional(v.boolean()),
+	marketingDescription: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(5000))),
+	amenities: v.optional(
+		v.pipe(v.array(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.maxLength(60))), v.maxLength(40))
+	)
+});
+
+const publicContact = {
+	orgSlug: v.pipe(v.string(), v.nonEmpty(), v.maxLength(100)),
+	propertyId: v.optional(v.nullable(idSchema)),
+	listingId: v.optional(v.nullable(idSchema)),
+	firstName: name('First name'),
+	lastName: name('Last name'),
+	email: v.pipe(v.string(), v.trim(), v.email('Enter a valid email'), v.maxLength(200)),
+	phone: shortText(40),
+	consent: v.literal(true, 'Agree to be contacted'),
+	/** Honeypot: real people leave this empty. */
+	website: v.optional(v.string(), '')
+};
+
+/** Public "contact us" / "join the waitlist" form. */
+export const inquiryInput = v.object({
+	...publicContact,
+	moveInDate: v.optional(v.nullable(isoDate)),
+	bedrooms,
+	message: shortText(2000),
+	waitlist: v.optional(v.boolean(), false)
+});
+
+/** Public self-booked tour. */
+export const tourBookingInput = v.object({
+	...publicContact,
+	propertyId: idSchema,
+	startsAt: instant,
+	message: shortText(1000)
+});
+
+export const tourSlotsInput = v.object({
+	orgSlug: v.pipe(v.string(), v.nonEmpty(), v.maxLength(100)),
+	propertyId: idSchema
 });

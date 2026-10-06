@@ -92,6 +92,13 @@
       "when": 1791220327126,
       "tag": "0012_integration_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791247709422,
+      "tag": "0013_leasing_crm",
+      "breakpoints": true
     }
   ]
 }

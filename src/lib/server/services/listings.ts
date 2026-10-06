@@ -27,6 +27,7 @@ import { emit } from './events.ts';
 import { createTenant } from './portfolio.ts';
 import { createLease } from './leasing.ts';
 import { notifyApplicationReceived, notifyNewApplication } from './notifications.ts';
+import { leadApplicationApproved, leadFromApplication } from './crm.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
@@ -393,6 +394,7 @@ export async function submitApplication(
 		summary: `${app!.firstName} ${app!.lastName} applied for “${l.title}”`,
 		data: { listingId: l.id, unitId: l.unitId }
 	});
+	await leadFromApplication(l.orgId, app!, l);
 	// The public demo must not send email to addresses typed in by strangers.
 	if (!isDemo()) await notifyApplicationReceived(l.orgId, app!, l.title);
 	await notifyNewApplication(l.orgId, app!, l.title);
@@ -546,6 +548,7 @@ export async function approveApplication(ctx: OrgContext, input: Out<typeof appl
 			.where(eq(rentalApplication.id, app.id));
 		if (app.listingId && app.listingStatus !== 'closed')
 			await setListingStatus(ctx, { id: app.listingId, status: 'closed' });
+		await leadApplicationApproved(ctx, app.id, t.id);
 		await emit({
 			orgId: ctx.orgId,
 			actorId: ctx.userId,

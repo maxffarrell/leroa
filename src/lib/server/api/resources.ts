@@ -10,6 +10,7 @@ import * as inspections from '#lib/server/services/inspections.ts';
 import * as messaging from '#lib/server/services/messaging.ts';
 import * as owners from '#lib/server/services/owners.ts';
 import * as reports from '#lib/server/services/reports.ts';
+import * as crm from '#lib/server/services/crm.ts';
 import { REPORT_KEYS, REPORTS, type ReportKey } from '#lib/reports.ts';
 import * as s from '#lib/schemas.ts';
 
@@ -134,6 +135,21 @@ export const resources: Record<string, Resource> = {
 		list: (ctx) => listings.listApplications(ctx.orgId),
 		get: (ctx, id) => listings.getApplication(ctx.orgId, id),
 		update: { schema: s.applicationUpdate, run: listings.updateApplication as never }
+	},
+	leads: {
+		description:
+			'Prospective residents in the leasing pipeline. Creating a lead with the email of an open lead updates that lead',
+		list: (ctx) => crm.listLeads(ctx.orgId),
+		get: (ctx, id) => crm.getLead(ctx.orgId, id),
+		create: { schema: s.leadApiInput, run: crm.createLead as never },
+		update: { schema: s.leadUpdate, run: crm.updateLead as never }
+	},
+	tours: {
+		description: 'Property tours with leads, from 30 days ago onward',
+		list: (ctx) => crm.listTours(ctx.orgId),
+		get: (ctx, id) => crm.getTour(ctx.orgId, id),
+		create: { schema: s.tourInput, run: crm.scheduleTour as never },
+		update: { schema: s.tourUpdate, run: crm.updateTour as never }
 	},
 	reports: {
 		description: `Built-in reports (${REPORT_KEYS.join(', ')}); get one by key, \`?propertyId=\` to filter`,

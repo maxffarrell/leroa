@@ -4,6 +4,7 @@
 	import PageHeader from '#lib/components/app/page-header.svelte';
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
+	import PropertyMarketing from '#lib/components/app/property-marketing.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
@@ -262,4 +263,6 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
+
+	<PropertyMarketing propertyId={id} />
 </main>

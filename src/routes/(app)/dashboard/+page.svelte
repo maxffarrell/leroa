@@ -8,6 +8,8 @@
 	import { getDashboard, seedDemo } from '#lib/remote/workspace.remote.ts';
 	import { toast } from 'svelte-sonner';
 	import { formatMoney, formatRelative, formatDate } from '#lib/format.ts';
+	import { formatTourTime } from '#lib/tours.ts';
+	import { leadName } from '#lib/leads.ts';
 	import Building2 from '@lucide/svelte/icons/building-2';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 
@@ -118,10 +120,50 @@
 					>
 				</Card.Header>
 				<Card.Content class="px-0">
-					{#if d.rent.overdue.length === 0 && d.openTickets.length === 0}
+					{#if d.rent.overdue.length === 0 && d.openTickets.length === 0 && d.followUps.length === 0 && d.toursToday.length === 0}
 						<p class="px-6 text-sm text-muted-foreground">You're all caught up.</p>
 					{:else}
 						<ul class="divide-y">
+							{#each d.toursToday as t (t.id)}
+								<li>
+									<a
+										href="/leasing/leads/{t.leadId}"
+										class="flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50"
+									>
+										<StatusBadge status="tour" />
+										<span class="min-w-0 flex-1 truncate text-sm"
+											><span class="font-medium"
+												>Tour with {leadName({
+													firstName: t.leadFirstName,
+													lastName: t.leadLastName
+												})}</span
+											>
+											· {t.propertyName}</span
+										>
+										<span class="text-sm tabular-nums"
+											>{formatTourTime(t.startsAt, d.timezone, false)}</span
+										>
+									</a>
+								</li>
+							{/each}
+							{#each d.followUps as f (f.id)}
+								<li>
+									<a
+										href="/leasing/leads/{f.id}"
+										class="flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50"
+									>
+										<StatusBadge status="follow_up" />
+										<span class="min-w-0 flex-1 truncate text-sm"
+											><span class="font-medium">Follow up with {leadName(f)}</span>{f.propertyName
+												? ` · ${f.propertyName}`
+												: ''}</span
+										>
+										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block"
+											>{formatDate(f.nextFollowUpOn, true)}</span
+										>
+									</a>
+								</li>
+							{/each}
 							{#each d.rent.overdue.slice(0, 6) as r (r.id)}
 								<li>
 									<a

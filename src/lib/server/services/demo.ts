@@ -11,6 +11,15 @@ import { createLease, recordPayment, rentRoll } from './leasing.ts';
 import { createTicket } from './maintenance.ts';
 import { createAnnouncement, postMessage } from './messaging.ts';
 import { createOwner } from './owners.ts';
+import {
+	addLeadNote,
+	createLead,
+	saveLeasingSettings,
+	scheduleTour,
+	updateLead,
+	updatePropertyMarketing
+} from './crm.ts';
+import { zonedToUtc } from '#lib/tours.ts';
 
 const people = [
 	['Maya', 'Chen'],
@@ -207,6 +216,7 @@ export async function loadDemoData(ctx: OrgContext) {
 	await loadDemoInspections(ctx, leases[0]!, leases[1]!, start);
 	await loadDemoListings(ctx, units.slice(people.length));
 	await loadDemoMessages(ctx, tenants, maple.id);
+	await loadDemoLeads(ctx, maple.id, harbor.id, cedar.id);
 	await createOwner(ctx, {
 		name: 'Rivera Family Trust',
 		email: 'trust@rivera.example',
@@ -423,4 +433,169 @@ async function loadDemoMessages(
 		body: 'The city is replacing the main valve on Maple Ave. Water will be off in all units on Tuesday from 9am to noon. Please plan ahead and keep a few bottles handy.',
 		email: false
 	});
+}
+
+async function loadDemoLeads(ctx: OrgContext, maple: string, harbor: string, cedar: string) {
+	const timezone = 'America/Chicago';
+	const today = todayISO();
+	await saveLeasingSettings(ctx.orgId, {
+		selfBooking: true,
+		timezone,
+		tourDays: [1, 2, 3, 4, 5, 6],
+		tourStart: 10 * 60,
+		tourEnd: 18 * 60,
+		slotMinutes: 30,
+		noticeHours: 2
+	});
+	await updatePropertyMarketing(ctx, {
+		id: maple,
+		marketingDescription:
+			'A quiet, tree-lined courtyard building five minutes from downtown. Residents get secure bike storage, a shared garden and on-site laundry, and the 7 bus stops at the corner.',
+		amenities: ['Courtyard garden', 'Bike storage', 'On-site laundry', 'Package room']
+	});
+	await updatePropertyMarketing(ctx, {
+		id: harbor,
+		publicPage: true,
+		marketingDescription:
+			'Bright lofts by the water with exposed brick and big windows. Join the waitlist and we will email you when one opens up.',
+		amenities: ['Rooftop deck', 'Fitness room', 'Covered parking']
+	});
+	const at = (days: number, minutes: number) =>
+		zonedToUtc(addDays(today, days), minutes, timezone).toISOString();
+	type Seed = {
+		firstName: string;
+		lastName: string;
+		source: 'website' | 'phone' | 'referral' | 'walk_in' | 'listing_site';
+		propertyId: string;
+		bedrooms: number | null;
+		budget: number;
+		followUp: number | null;
+		stage?: 'contacted' | 'touring' | 'lost';
+		waitlist?: boolean;
+		tour?: [days: number, minutes: number, kind: 'in_person' | 'virtual'];
+		notes?: [kind: 'note' | 'call' | 'email' | 'text' | 'inquiry', body: string][];
+	};
+	const seeds: Seed[] = [
+		{
+			firstName: 'Ava',
+			lastName: 'Brooks',
+			source: 'website',
+			propertyId: maple,
+			bedrooms: 1,
+			budget: 160000,
+			followUp: 0,
+			notes: [
+				['inquiry', 'Is the one-bedroom still available for a July move? I have a small dog.']
+			]
+		},
+		{
+			firstName: 'Marcus',
+			lastName: 'Lee',
+			source: 'phone',
+			propertyId: maple,
+			bedrooms: 2,
+			budget: 210000,
+			followUp: -2,
+			stage: 'contacted',
+			notes: [['call', 'Relocating for work in about six weeks. Wants two bedrooms near downtown.']]
+		},
+		{
+			firstName: 'Sofia',
+			lastName: 'Ramirez',
+			source: 'listing_site',
+			propertyId: cedar,
+			bedrooms: 2,
+			budget: 190000,
+			followUp: 1,
+			tour: [0, 16 * 60, 'in_person'],
+			notes: [
+				['email', 'Sent available units and parking details. Booked a tour for this afternoon.']
+			]
+		},
+		{
+			firstName: 'Ethan',
+			lastName: 'Clarke',
+			source: 'referral',
+			propertyId: maple,
+			bedrooms: 1,
+			budget: 150000,
+			followUp: 3,
+			tour: [2, 11 * 60, 'virtual'],
+			notes: [
+				['note', 'Referred by Maya Chen in 2B. Currently overseas, wants a video walkthrough.']
+			]
+		},
+		{
+			firstName: 'Grace',
+			lastName: 'Kim',
+			source: 'website',
+			propertyId: harbor,
+			bedrooms: 2,
+			budget: 260000,
+			followUp: 10,
+			waitlist: true,
+			notes: [['inquiry', 'Please let me know when a two-bedroom loft opens up.']]
+		},
+		{
+			firstName: 'Noah',
+			lastName: 'Patel',
+			source: 'walk_in',
+			propertyId: harbor,
+			bedrooms: 1,
+			budget: 200000,
+			followUp: null,
+			waitlist: true
+		},
+		{
+			firstName: 'Liam',
+			lastName: 'Foster',
+			source: 'phone',
+			propertyId: cedar,
+			bedrooms: 3,
+			budget: 180000,
+			followUp: null,
+			stage: 'lost',
+			notes: [['call', 'Needed three bedrooms under budget. Signed elsewhere.']]
+		}
+	];
+	for (const seed of seeds) {
+		const { id } = await createLead(ctx, {
+			firstName: seed.firstName,
+			lastName: seed.lastName,
+			email: `${seed.firstName.toLowerCase()}.${seed.lastName.toLowerCase()}@example.com`,
+			phone: null,
+			source: seed.source,
+			sourceDetail: seed.source === 'listing_site' ? 'Apartment search site' : null,
+			propertyId: seed.propertyId,
+			listingId: null,
+			moveInDate: addDays(today, 30),
+			bedrooms: seed.bedrooms,
+			budgetMax: seed.budget,
+			message: null,
+			assignedTo: ctx.userId,
+			nextFollowUpOn: seed.followUp == null ? null : addDays(today, seed.followUp),
+			waitlist: seed.waitlist ?? false
+		});
+		for (const [kind, body] of seed.notes ?? [])
+			await addLeadNote(ctx, { leadId: id, kind: kind as 'note', body });
+		if (seed.tour) {
+			const [days, minutes, kind] = seed.tour;
+			await scheduleTour(ctx, {
+				leadId: id,
+				propertyId: seed.propertyId,
+				listingId: null,
+				startsAt: at(days, minutes),
+				durationMinutes: 30,
+				kind,
+				agentId: ctx.userId,
+				notes: null
+			});
+		}
+		if (seed.stage)
+			await updateLead(ctx, {
+				id,
+				stage: seed.stage,
+				lostReason: seed.stage === 'lost' ? 'Rented elsewhere' : null
+			});
+	}
 }

@@ -157,5 +157,10 @@
 			'New applications',
 			'An alert when someone applies through a public listing.'
 		)}
+		{@render toggle(
+			'newLeads',
+			'New leads and tour bookings',
+			'An alert when someone contacts you, joins a waitlist or books a tour from a public page.'
+		)}
 	</Card.Content>
 </Card.Root>

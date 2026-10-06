@@ -29,6 +29,7 @@
 		{ label: 'New property', href: '/properties?new=1' },
 		{ label: 'New tenant', href: '/tenants?new=1' },
 		{ label: 'New lease', href: '/leases?new=1' },
+		{ label: 'New lead', href: '/leasing?new=lead' },
 		{ label: 'Record payment', href: '/rent' },
 		{ label: 'New maintenance request', href: '/maintenance?new=1' }
 	];

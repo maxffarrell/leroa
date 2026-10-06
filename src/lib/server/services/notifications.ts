@@ -29,7 +29,8 @@ export const NOTIFICATION_DEFAULTS: NotificationPrefs = {
 	overdueNotices: true,
 	maintenanceUpdates: true,
 	leaseExpiryAlerts: true,
-	newApplications: true
+	newApplications: true,
+	newLeads: true
 };
 
 /** How long after the due date an overdue notice may still go out. */
@@ -45,7 +46,8 @@ export async function getNotificationPrefs(orgId: string): Promise<NotificationP
 			overdueNotices: s.overdueNotices,
 			maintenanceUpdates: s.maintenanceUpdates,
 			leaseExpiryAlerts: s.leaseExpiryAlerts,
-			newApplications: s.newApplications
+			newApplications: s.newApplications,
+			newLeads: s.newLeads
 		})
 		.from(s)
 		.where(eq(s.organizationId, orgId));
@@ -561,4 +563,78 @@ export async function notifyAnnouncement(
 		if (ok) sent++;
 	}
 	return sent;
+}
+
+type LeadRef = { id: string; firstName: string; lastName: string; email: string | null };
+
+/** Tells owners and admins about an inquiry, waitlist sign-up or tour booked from a public page. */
+export async function notifyLeadActivity(
+	orgId: string,
+	key: string,
+	lead: LeadRef,
+	subject: string,
+	line: string
+) {
+	if (!(await getNotificationPrefs(orgId)).newLeads) return;
+	const org = await orgName(orgId);
+	for (const to of await managerEmails(orgId)) {
+		await notifyOnce(orgId, 'lead.activity', key, {
+			to,
+			subject,
+			...renderEmail({
+				orgName: org,
+				heading: subject,
+				lines: [line],
+				action: { label: 'Open lead', url: `${appOrigin()}/leasing/leads/${lead.id}` }
+			})
+		});
+	}
+}
+
+/** Confirms a self-booked tour to the prospect. */
+export async function notifyTourConfirmed(
+	orgId: string,
+	tourId: string,
+	lead: LeadRef & { email: string },
+	when: string,
+	place: string
+) {
+	const org = await orgName(orgId);
+	await notifyOnce(orgId, 'tour.confirmed', tourId, {
+		to: lead.email,
+		subject: `Tour booked: ${place}, ${when}`,
+		...renderEmail({
+			orgName: org,
+			heading: 'Your tour is booked',
+			lines: [
+				`Hi ${lead.firstName},`,
+				`You're booked to tour ${place} on ${when}.`,
+				`If you need to change the time, reply to this email or contact ${org}.`
+			]
+		})
+	});
+}
+
+/** Tells a waitlisted lead that a matching home was listed. Sent once per lead and listing. */
+export async function notifyWaitlistOpening(
+	orgId: string,
+	listingId: string,
+	lead: LeadRef & { email: string },
+	listingTitle: string,
+	url: string
+) {
+	const org = await orgName(orgId);
+	return notifyOnce(orgId, 'waitlist.opening', listingId, {
+		to: lead.email,
+		subject: `Now available: ${listingTitle}`,
+		...renderEmail({
+			orgName: org,
+			heading: 'A home you were waiting for is available',
+			lines: [
+				`Hi ${lead.firstName},`,
+				`You joined the waitlist with ${org}. “${listingTitle}” is now available.`
+			],
+			action: { label: 'See the home and apply', url }
+		})
+	});
 }

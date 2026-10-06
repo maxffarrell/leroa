@@ -34,7 +34,11 @@ export const EVENT_TYPES = [
 	'listing.closed',
 	'application.submitted',
 	'application.approved',
-	'application.declined'
+	'application.declined',
+	'lead.created',
+	'lead.stage_changed',
+	'tour.scheduled',
+	'tour.updated'
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

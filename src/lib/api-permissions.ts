@@ -15,6 +15,8 @@ export const API_RESOURCES = [
 	'owners',
 	'listings',
 	'applications',
+	'leads',
+	'tours',
 	'reports'
 ] as const;
 export type ApiResource = (typeof API_RESOURCES)[number];
@@ -41,6 +43,8 @@ export const API_RESOURCE_LABELS: Record<ApiResource, string> = {
 	owners: 'Owners',
 	listings: 'Listings',
 	applications: 'Rental applications',
+	leads: 'Leads',
+	tours: 'Tours',
 	reports: 'Reports'
 };
 

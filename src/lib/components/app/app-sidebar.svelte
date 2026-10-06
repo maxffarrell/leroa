@@ -12,6 +12,7 @@
 	import Logo from './logo.svelte';
 	import { mainNav, secondaryNav } from './nav.ts';
 	import { getUnreadCount } from '#lib/remote/messaging.remote.ts';
+	import { getLeasingBadge } from '#lib/remote/crm.remote.ts';
 	import Search from '@lucide/svelte/icons/search';
 	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 	import LogOut from '@lucide/svelte/icons/log-out';
@@ -44,13 +45,17 @@
 		await goto('/login', { invalidateAll: true });
 	}
 	const unread = getUnreadCount();
+	const leasing = getLeasingBadge();
 	$effect(() => {
-		unread.then(
-			() => {},
-			() => {}
-		);
+		for (const q of [unread, leasing])
+			q.then(
+				() => {},
+				() => {}
+			);
 		const timer = setInterval(() => {
-			if (document.visibilityState === 'visible') void unread.refresh();
+			if (document.visibilityState !== 'visible') return;
+			void unread.refresh();
+			void leasing.refresh();
 		}, 60_000);
 		return () => clearInterval(timer);
 	});
@@ -103,6 +108,10 @@
 							<Sidebar.MenuBadge
 								class="bg-primary text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground"
 								aria-label="{unread.current} unread">{unread.current}</Sidebar.MenuBadge
+							>
+						{:else if item.href === '/leasing' && leasing.current}
+							<Sidebar.MenuBadge aria-label="{leasing.current} leads need attention"
+								>{leasing.current}</Sidebar.MenuBadge
 							>
 						{/if}
 					</Sidebar.MenuItem>

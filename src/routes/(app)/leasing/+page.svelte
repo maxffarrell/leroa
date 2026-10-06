@@ -3,6 +3,10 @@
 	import PageHeader from '#lib/components/app/page-header.svelte';
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import NewListingDialog from '#lib/components/app/new-listing-dialog.svelte';
+	import NewLeadDialog from '#lib/components/app/new-lead-dialog.svelte';
+	import LeadsView from '#lib/components/app/leads-view.svelte';
+	import ToursView from '#lib/components/app/tours-view.svelte';
+	import { getLeasingSettings, initLeasingTimezone } from '#lib/remote/crm.remote.ts';
 	import { RowNav, openHref } from '#lib/components/app/row-nav.svelte.ts';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Kbd } from '#lib/components/ui/kbd/index.js';
@@ -21,9 +25,26 @@
 	const apps = $derived(await getApplications());
 	const listings = $derived(await getListings());
 
-	let tab = $state(page.url.searchParams.get('tab') === 'listings' ? 'listings' : 'applications');
+	const settings = $derived(await getLeasingSettings());
+	const TABS = ['leads', 'tours', 'applications', 'listings'];
+	const initialTab = page.url.searchParams.get('tab') ?? '';
+	let tab = $state(TABS.includes(initialTab) ? initialTab : 'leads');
 	let filter = $state<'open' | 'decided' | 'all'>('open');
-	let creating = $state(page.url.searchParams.has('new'));
+	let creating = $state(
+		page.url.searchParams.has('new') && page.url.searchParams.get('new') !== 'lead'
+	);
+	let creatingLead = $state(page.url.searchParams.get('new') === 'lead');
+
+	$effect(() => {
+		if (settings.configured) return;
+		const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		if (tz) void initLeasingTimezone(tz).catch(() => {});
+	});
+
+	function create() {
+		if (tab === 'leads' || tab === 'tours') creatingLead = true;
+		else creating = true;
+	}
 
 	const isOpen = (s: string) => s === 'new' || s === 'reviewing';
 	const rows = $derived(
@@ -36,14 +57,14 @@
 	const publicUrl = $derived(`${page.url.origin}/l/${page.data.org?.slug}`);
 
 	const nav = new RowNav({
-		count: () => (tab === 'applications' ? rows.length : listings.length),
+		count: () => (tab === 'applications' ? rows.length : tab === 'listings' ? listings.length : 0),
 		open: (i) =>
 			openHref(
 				tab === 'applications'
 					? `/leasing/applications/${rows[i]!.id}`
 					: `/leasing/listings/${listings[i]!.id}`
 			),
-		create: () => (creating = true)
+		create
 	});
 
 	async function copyLink() {
@@ -59,8 +80,11 @@
 		<Button size="sm" variant="outline" onclick={copyLink}
 			><Link /> <span class="hidden sm:inline">Copy public link</span></Button
 		>
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> <span class="hidden sm:inline">New listing</span>
+		<Button size="sm" onclick={create}
+			><Plus />
+			<span class="hidden sm:inline"
+				>{tab === 'leads' || tab === 'tours' ? 'New lead' : 'New listing'}</span
+			>
 			<Kbd class="hidden sm:inline-flex">C</Kbd></Button
 		>
 	{/snippet}
@@ -68,7 +92,9 @@
 
 <main class="p-4 md:p-6">
 	<Tabs.Root bind:value={tab} onValueChange={() => (nav.index = -1)}>
-		<Tabs.List class="mb-4">
+		<Tabs.List class="mb-4 max-w-full justify-start overflow-x-auto">
+			<Tabs.Trigger value="leads">Leads</Tabs.Trigger>
+			<Tabs.Trigger value="tours">Tours</Tabs.Trigger>
 			<Tabs.Trigger value="applications"
 				>Applications
 				{#if newCount}<span
@@ -82,6 +108,14 @@
 				></Tabs.Trigger
 			>
 		</Tabs.List>
+
+		<Tabs.Content value="leads">
+			<LeadsView timezone={settings.timezone} oncreate={() => (creatingLead = true)} />
+		</Tabs.Content>
+
+		<Tabs.Content value="tours">
+			<ToursView timezone={settings.timezone} />
+		</Tabs.Content>
 
 		<Tabs.Content value="applications">
 			{#if apps.length === 0}
@@ -235,3 +269,4 @@
 </main>
 
 <NewListingDialog bind:open={creating} />
+<NewLeadDialog bind:open={creatingLead} />

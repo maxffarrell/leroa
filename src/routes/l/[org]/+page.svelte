@@ -29,6 +29,20 @@
 			: 'Nothing is available right now. Check back soon.'}
 	</p>
 
+	{#if data.properties.length}
+		<nav class="mt-5 flex flex-wrap gap-2" aria-label="Properties">
+			{#each data.properties as p (p.id)}
+				<a
+					href="/l/{data.org.slug}/p/{p.id}"
+					class="rounded-full border px-3 py-1 text-sm transition-colors hover:bg-muted"
+					>{p.name}{#if p.publishedListings}<span class="ml-1.5 text-muted-foreground tabular-nums"
+							>{p.publishedListings}</span
+						>{/if}</a
+				>
+			{/each}
+		</nav>
+	{/if}
+
 	<ul class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 		{#each data.listings as l, i (l.id)}
 			<li>

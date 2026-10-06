@@ -5,6 +5,7 @@
 	import PageHeader from '#lib/components/app/page-header.svelte';
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
+	import ListingWaitlist from '#lib/components/app/listing-waitlist.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
@@ -387,6 +388,7 @@
 				>
 			</Card.Footer>
 		</Card.Root>
+		<ListingWaitlist listingId={listing.id} published={listing.status === 'published'} {demo} />
 		<p class="text-xs leading-relaxed text-muted-foreground">
 			Applicants are asked for contact details, move-in date, household size, income and pets only.
 			Leroa never asks about protected characteristics and doesn't run credit or background checks.

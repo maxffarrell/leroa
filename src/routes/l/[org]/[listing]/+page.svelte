@@ -8,6 +8,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Carousel from '#lib/components/ui/carousel/index.js';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
+	import PublicContact from '#lib/components/app/public-contact.svelte';
 	import { submitApplication } from '#lib/remote/listings.remote.ts';
 	import { formatDate, formatMoney, todayISO } from '#lib/format.ts';
 	import { availability, unitFacts } from '#lib/listings.ts';
@@ -153,6 +154,11 @@
 						<MapPin class="mt-0.5 size-4 shrink-0" />{address}
 					</p>
 				{/if}
+				<p class="text-sm">
+					<a href="/l/{data.org.slug}/p/{l.propertyId}" class="underline underline-offset-2"
+						>More about {l.propertyName}</a
+					>
+				</p>
 				<div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-1">
 					<p class="text-xl font-semibold tabular-nums">
 						{formatMoney(l.rentAmount, l.currency)}<span
@@ -218,6 +224,19 @@
 						</div>
 					{/if}
 				</dl>
+			</section>
+
+			<section id="tour" class="scroll-mt-20 border-t pt-8 lg:hidden">
+				<h2 class="mb-4 text-lg font-semibold">
+					{data.selfBooking ? 'See it in person' : 'Have a question?'}
+				</h2>
+				<PublicContact
+					org={data.org}
+					propertyId={l.propertyId}
+					listingId={l.id}
+					selfBooking={data.selfBooking}
+					preview={data.preview}
+				/>
 			</section>
 
 			<section id="apply" class="scroll-mt-20 border-t pt-8">
@@ -329,8 +348,8 @@
 			</section>
 		</div>
 
-		<aside class="hidden lg:block">
-			<div class="sticky top-20 space-y-3 rounded-xl border p-5">
+		<aside class="hidden lg:sticky lg:top-20 lg:block lg:self-start">
+			<div class="space-y-3 rounded-xl border p-5">
 				<p class="text-2xl font-semibold tabular-nums">
 					{formatMoney(l.rentAmount, l.currency)}<span
 						class="text-sm font-normal text-muted-foreground">/mo</span
@@ -338,6 +357,18 @@
 				</p>
 				<p class="text-sm text-muted-foreground">{availability(l.availableOn, today)}</p>
 				<Button href="#apply" class="w-full">Apply now</Button>
+			</div>
+			<div class="mt-4 space-y-3 rounded-xl border p-5">
+				<h2 class="font-semibold">
+					{data.selfBooking ? 'See it in person' : 'Have a question?'}
+				</h2>
+				<PublicContact
+					org={data.org}
+					propertyId={l.propertyId}
+					listingId={l.id}
+					selfBooking={data.selfBooking}
+					preview={data.preview}
+				/>
 			</div>
 		</aside>
 	</div>
@@ -355,6 +386,9 @@
 			</p>
 			<p class="truncate text-xs text-muted-foreground">{availability(l.availableOn, today)}</p>
 		</div>
-		<Button href="#apply">Apply now</Button>
+		<div class="flex gap-2">
+			<Button href="#tour" variant="outline">{data.selfBooking ? 'Tour' : 'Ask'}</Button>
+			<Button href="#apply">Apply now</Button>
+		</div>
 	</div>
 {/if}

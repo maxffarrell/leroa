@@ -58,6 +58,14 @@ export const property = pgTable(
 		postalCode: text('postal_code').notNull().default(''),
 		country: text('country').notNull().default('US'),
 		notes: text('notes'),
+		/** Shown on the public property page. */
+		marketingDescription: text('marketing_description').notNull().default(''),
+		amenities: text('amenities')
+			.array()
+			.notNull()
+			.default(sql`'{}'::text[]`),
+		/** The public page is also shown whenever the property has a published listing. */
+		publicPage: boolean('public_page').notNull().default(false),
 		archivedAt: timestamp('archived_at', { withTimezone: true }),
 		...timestamps
 	},
@@ -366,6 +374,7 @@ export const notificationSettings = pgTable('notification_settings', {
 	maintenanceUpdates: boolean('maintenance_updates').notNull().default(true),
 	leaseExpiryAlerts: boolean('lease_expiry_alerts').notNull().default(true),
 	newApplications: boolean('new_applications').notNull().default(true),
+	newLeads: boolean('new_leads').notNull().default(true),
 	updatedAt: timestamp('updated_at', { withTimezone: true })
 		.notNull()
 		.defaultNow()
@@ -645,6 +654,145 @@ export const rentalApplication = pgTable(
 		index('application_email_idx').on(t.listingId, t.email)
 	]
 );
+
+export const leadStage = pgEnum('lead_stage', [
+	'new',
+	'contacted',
+	'touring',
+	'applied',
+	'leased',
+	'lost'
+]);
+export const leadSource = pgEnum('lead_source', [
+	'website',
+	'listing',
+	'application',
+	'phone',
+	'email',
+	'walk_in',
+	'referral',
+	'listing_site',
+	'api',
+	'other'
+]);
+
+/** A prospective resident moving through the leasing pipeline. */
+export const lead = pgTable(
+	'lead',
+	{
+		id: id(),
+		organizationId: orgId(),
+		stage: leadStage('stage').notNull().default('new'),
+		source: leadSource('source').notNull().default('other'),
+		/** Free text, e.g. which listing site or who referred them. */
+		sourceDetail: text('source_detail'),
+		firstName: text('first_name').notNull(),
+		lastName: text('last_name').notNull().default(''),
+		email: text('email'),
+		phone: text('phone'),
+		propertyId: text('property_id').references(() => property.id, { onDelete: 'set null' }),
+		listingId: text('listing_id').references(() => listing.id, { onDelete: 'set null' }),
+		moveInDate: date('move_in_date', { mode: 'string' }),
+		bedrooms: integer('bedrooms'),
+		budgetMax: integer('budget_max'),
+		message: text('message'),
+		assignedTo: text('assigned_to').references(() => user.id, { onDelete: 'set null' }),
+		nextFollowUpOn: date('next_follow_up_on', { mode: 'string' }),
+		lastContactedAt: timestamp('last_contacted_at', { withTimezone: true }),
+		/** Waiting for a home that matches `propertyId` and `bedrooms` to come up. */
+		waitlist: boolean('waitlist').notNull().default(false),
+		waitlistedAt: timestamp('waitlisted_at', { withTimezone: true }),
+		lostReason: text('lost_reason'),
+		applicationId: text('application_id').references(() => rentalApplication.id, {
+			onDelete: 'set null'
+		}),
+		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
+		/** When the prospect agreed to be contacted from a public form. */
+		consentAt: timestamp('consent_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [
+		index('lead_org_stage_idx').on(t.organizationId, t.stage, t.createdAt),
+		index('lead_org_email_idx').on(t.organizationId, t.email),
+		index('lead_org_follow_up_idx').on(t.organizationId, t.nextFollowUpOn),
+		index('lead_waitlist_idx').on(t.organizationId, t.waitlist)
+	]
+);
+
+export const leadNoteKind = pgEnum('lead_note_kind', ['note', 'call', 'email', 'text', 'inquiry']);
+
+/** Notes and logged contact attempts on a lead. Stage changes and tours live in `activity`. */
+export const leadNote = pgTable(
+	'lead_note',
+	{
+		id: id(),
+		organizationId: orgId(),
+		leadId: text('lead_id')
+			.notNull()
+			.references(() => lead.id, { onDelete: 'cascade' }),
+		kind: leadNoteKind('kind').notNull().default('note'),
+		body: text('body').notNull(),
+		authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('lead_note_lead_idx').on(t.leadId, t.createdAt)]
+);
+
+export const tourKind = pgEnum('tour_kind', ['in_person', 'virtual', 'self_guided']);
+export const tourStatus = pgEnum('tour_status', ['scheduled', 'completed', 'no_show', 'cancelled']);
+
+export const tour = pgTable(
+	'tour',
+	{
+		id: id(),
+		organizationId: orgId(),
+		leadId: text('lead_id')
+			.notNull()
+			.references(() => lead.id, { onDelete: 'cascade' }),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		listingId: text('listing_id').references(() => listing.id, { onDelete: 'set null' }),
+		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+		durationMinutes: integer('duration_minutes').notNull().default(30),
+		kind: tourKind('kind').notNull().default('in_person'),
+		status: tourStatus('status').notNull().default('scheduled'),
+		agentId: text('agent_id').references(() => user.id, { onDelete: 'set null' }),
+		/** Booked by the prospect from a public page rather than by staff. */
+		selfBooked: boolean('self_booked').notNull().default(false),
+		notes: text('notes'),
+		...timestamps
+	},
+	(t) => [
+		index('tour_org_starts_idx').on(t.organizationId, t.startsAt),
+		index('tour_lead_idx').on(t.leadId),
+		index('tour_property_starts_idx').on(t.propertyId, t.startsAt)
+	]
+);
+
+/** Per-workspace leasing settings: when prospects may book their own tours. */
+export const leasingSettings = pgTable('leasing_settings', {
+	organizationId: text('organization_id')
+		.primaryKey()
+		.references(() => organization.id, { onDelete: 'cascade' }),
+	selfBooking: boolean('self_booking').notNull().default(false),
+	timezone: text('timezone').notNull().default('UTC'),
+	/** 0 = Sunday … 6 = Saturday. */
+	tourDays: integer('tour_days')
+		.array()
+		.notNull()
+		.default(sql`'{1,2,3,4,5,6}'::integer[]`),
+	/** Minutes after local midnight. */
+	tourStart: integer('tour_start').notNull().default(600),
+	tourEnd: integer('tour_end').notNull().default(1080),
+	slotMinutes: integer('slot_minutes').notNull().default(30),
+	/** Minimum hours between booking and the tour. */
+	noticeHours: integer('notice_hours').notNull().default(12),
+	updatedAt: timestamp('updated_at', { withTimezone: true })
+		.notNull()
+		.defaultNow()
+		.$onUpdate(() => new Date())
+});
 
 export const inspectionKind = pgEnum('inspection_kind', ['move_in', 'move_out', 'routine']);
 export const inspectionStatus = pgEnum('inspection_status', ['in_progress', 'completed']);

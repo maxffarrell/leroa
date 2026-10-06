@@ -29,7 +29,18 @@
 		reviewing: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
 		approved: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
 		declined: 'bg-red-500/10 text-red-700 dark:text-red-400',
-		withdrawn: 'bg-muted text-muted-foreground'
+		withdrawn: 'bg-muted text-muted-foreground',
+		contacted: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
+		touring: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+		applied: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400',
+		leased: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+		lost: 'bg-muted text-muted-foreground',
+		waitlist: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
+		tour: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
+		follow_up: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
+		scheduled: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
+		no_show: 'bg-red-500/10 text-red-700 dark:text-red-400',
+		cancelled: 'bg-muted text-muted-foreground line-through'
 	};
 
 	let { status, class: className = '' }: { status: string; class?: string } = $props();

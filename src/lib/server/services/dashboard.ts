@@ -4,13 +4,14 @@ import { activity, lease, unit, user } from '#lib/server/db/schema.ts';
 import { monthKey, todayISO } from '#lib/format.ts';
 import { rentRoll } from './leasing.ts';
 import { listTickets } from './maintenance.ts';
+import { leasingAttention } from './crm.ts';
 
 export async function dashboard(orgId: string) {
 	const month = monthKey();
 	const today = todayISO();
 	const in60 = new Date(Date.now() + 60 * 86400_000).toISOString().slice(0, 10);
 
-	const [roll, units, expiring, tickets, feed] = await Promise.all([
+	const [roll, units, expiring, tickets, feed, leasing] = await Promise.all([
 		rentRoll(orgId, month),
 		db
 			.select({ status: unit.status, n: sql<number>`count(*)`.mapWith(Number) })
@@ -44,7 +45,8 @@ export async function dashboard(orgId: string) {
 			.leftJoin(user, eq(user.id, activity.actorId))
 			.where(eq(activity.organizationId, orgId))
 			.orderBy(desc(activity.createdAt))
-			.limit(12)
+			.limit(12),
+		leasingAttention(orgId)
 	]);
 
 	const rent = roll.filter((r) => r.kind === 'rent');
@@ -74,6 +76,9 @@ export async function dashboard(orgId: string) {
 		urgentTickets: tickets.filter(
 			(t) => t.priority === 'urgent' && !['done', 'cancelled'].includes(t.status)
 		).length,
-		feed
+		feed,
+		followUps: leasing.followUps.slice(0, 6),
+		toursToday: leasing.tours,
+		timezone: leasing.timezone
 	};
 }
