@@ -379,7 +379,8 @@ export async function updateLead(ctx: OrgContext, input: Out<typeof leadUpdate>)
 						? { lostReason }
 						: {}),
 			...(rest.waitlist === true && !current.waitlist ? { waitlistedAt: new Date() } : {}),
-			...(rest.waitlist === false ? { waitlistedAt: null } : {})
+			...(rest.waitlist === false ? { waitlistedAt: null } : {}),
+			...(stage === 'lost' ? { waitlist: false, waitlistedAt: null } : {})
 		})
 		.where(and(eq(lead.organizationId, ctx.orgId), eq(lead.id, id)))
 		.returning();
