@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -83,10 +83,10 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-lg">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-lg">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header><Dialog.Title>New maintenance request</Dialog.Title></Dialog.Header>
+			<Modal.Header><Modal.Title>New maintenance request</Modal.Title></Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field
 					><Field.Label for="tk-title">What needs fixing?</Field.Label><Input
@@ -158,12 +158,12 @@
 					/></Field.Field
 				>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
 				<Button type="submit" disabled={pending || !title.trim()}
 					>{pending ? 'Creating…' : 'Create request'}</Button
 				>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

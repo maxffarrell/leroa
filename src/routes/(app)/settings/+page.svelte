@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { authClient } from '#lib/auth-client.ts';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { CopyButton } from '#lib/components/ui/copy-button/index.js';
 	import { toast } from 'svelte-sonner';
 
 	const org = $derived(page.data.org!);
@@ -46,11 +47,24 @@
 </Card.Root>
 <Card.Root>
 	<Card.Header
+		><Card.Title>Get familiar</Card.Title><Card.Description
+			>Take the guided tour of the interface again — it opens on the dashboard.</Card.Description
+		></Card.Header
+	>
+	<Card.Content>
+		<Button variant="outline" onclick={() => goto('/dashboard?tour=1')}>Replay the tour</Button>
+	</Card.Content>
+</Card.Root>
+<Card.Root>
+	<Card.Header
 		><Card.Title>Workspace ID</Card.Title><Card.Description
 			>Use this when calling the API or configuring integrations.</Card.Description
 		></Card.Header
 	>
 	<Card.Content
-		><code class="rounded bg-muted px-2 py-1 font-mono text-sm">{org.id}</code></Card.Content
+		><div class="flex items-center gap-2">
+			<code class="rounded bg-muted px-2 py-1 font-mono text-sm">{org.id}</code>
+			<CopyButton size="icon-sm" variant="ghost" aria-label="Copy workspace ID" text={org.id} />
+		</div></Card.Content
 	>
 </Card.Root>

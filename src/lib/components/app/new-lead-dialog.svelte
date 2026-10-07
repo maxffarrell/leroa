@@ -1,9 +1,10 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import { PhoneInput } from '#lib/components/ui/phone-input/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
 	import { goto } from '$app/navigation';
@@ -60,13 +61,13 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+<Modal.Root bind:open>
+	<Modal.Content class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>New lead</Dialog.Title>
-				<Dialog.Description>Someone who called, walked in or was referred.</Dialog.Description>
-			</Dialog.Header>
+			<Modal.Header>
+				<Modal.Title>New lead</Modal.Title>
+				<Modal.Description>Someone who called, walked in or was referred.</Modal.Description>
+			</Modal.Header>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<Field.Field>
 					<Field.Label for="nl-first">First name</Field.Label>
@@ -82,7 +83,7 @@
 				</Field.Field>
 				<Field.Field>
 					<Field.Label for="nl-phone">Phone</Field.Label>
-					<Input id="nl-phone" type="tel" bind:value={form.phone} />
+					<PhoneInput id="nl-phone" bind:value={form.phone} />
 				</Field.Field>
 				<Field.Field>
 					<Field.Label>Source</Field.Label>
@@ -137,9 +138,9 @@
 					>Add to the waitlist for a matching home</Field.Label
 				>
 			</Field.Field>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="submit" disabled={pending || !form.firstName.trim()}>Add lead</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

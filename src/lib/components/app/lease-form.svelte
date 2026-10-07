@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -94,14 +94,13 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-lg">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-lg">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>New lease</Dialog.Title>
-				<Dialog.Description>Rent charges are generated automatically each month.</Dialog.Description
-				>
-			</Dialog.Header>
+			<Modal.Header>
+				<Modal.Title>New lease</Modal.Title>
+				<Modal.Description>Rent charges are generated automatically each month.</Modal.Description>
+			</Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field>
 					<Field.Label>Unit</Field.Label>
@@ -219,12 +218,12 @@
 					>
 				</div>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
 				<Button type="submit" disabled={pending}>{pending ? 'Creating…' : 'Create lease'}</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>
 
 <TenantForm bind:open={addingTenant} oncreated={(t) => (tenantIds = [...tenantIds, t.id])} />

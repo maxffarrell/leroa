@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -41,16 +41,16 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-sm">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-sm">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>Late fee</Dialog.Title>
-				<Dialog.Description
+			<Modal.Header>
+				<Modal.Title>Late fee</Modal.Title>
+				<Modal.Description
 					>Added automatically when rent is still unpaid after the grace period. Late fee limits
-					vary by location.</Dialog.Description
+					vary by location.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<div class="grid grid-cols-2 gap-3">
 				<Field.Field>
 					<Field.Label for="lf-amount">Flat fee</Field.Label>
@@ -62,10 +62,10 @@
 					<Input id="lf-grace" type="number" min={0} max={31} required bind:value={grace} />
 				</Field.Field>
 			</div>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
 				<Button type="submit" disabled={pending}>Save</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

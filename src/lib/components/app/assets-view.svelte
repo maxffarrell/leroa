@@ -4,7 +4,7 @@
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
@@ -309,12 +309,10 @@
 	assetId={detail?.id ?? null}
 />
 
-<Dialog.Root open={dialogOpen} onOpenChange={setDialog}>
-	<Dialog.Content class="sm:max-w-xl">
+<Modal.Root open={dialogOpen} onOpenChange={setDialog}>
+	<Modal.Content class="sm:max-w-xl">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header
-				><Dialog.Title>{editing ? 'Edit asset' : 'New asset'}</Dialog.Title></Dialog.Header
-			>
+			<Modal.Header><Modal.Title>{editing ? 'Edit asset' : 'New asset'}</Modal.Title></Modal.Header>
 			<Field.Group class="gap-4">
 				<div class="grid grid-cols-2 gap-3">
 					<Field.Field>
@@ -402,12 +400,12 @@
 					<Textarea id="as-notes" rows={3} bind:value={fNotes} />
 				</Field.Field>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => setDialog(false)}>Cancel</Button>
 				<Button type="submit" disabled={pending || !fName.trim() || !fProperty}
 					>{pending ? 'Saving…' : editing ? 'Save' : 'Add asset'}</Button
 				>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

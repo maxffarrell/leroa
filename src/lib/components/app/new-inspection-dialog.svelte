@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
@@ -41,16 +41,16 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-md">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-md">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>New inspection</Dialog.Title>
-				<Dialog.Description
+			<Modal.Header>
+				<Modal.Title>New inspection</Modal.Title>
+				<Modal.Description
 					>Starts with a checklist sized to the unit. A move-out reuses the move-in checklist so you
-					can compare room by room.</Dialog.Description
+					can compare room by room.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Unit</Field.Label>
 				<Select.Root type="single" bind:value={unitId}>
@@ -87,11 +87,11 @@
 				<Field.Label for="insp-date">Date</Field.Label>
 				<Input id="insp-date" type="date" bind:value={scheduledFor} />
 			</Field.Field>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="submit" disabled={pending || !unitId}
 					>{pending ? 'Starting…' : 'Start inspection'}</Button
 				>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

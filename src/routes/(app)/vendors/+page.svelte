@@ -9,15 +9,30 @@
 	import { Kbd } from '#lib/components/ui/kbd/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as Empty from '#lib/components/ui/empty/index.js';
+	import {
+		createSvelteTable,
+		FlexRender,
+		renderSnippet
+	} from '#lib/components/ui/data-table/index.js';
+	import SortHead from '#lib/components/app/sort-head.svelte';
+	import {
+		getCoreRowModel,
+		getSortedRowModel,
+		type ColumnDef,
+		type SortingState
+	} from '@tanstack/table-core';
 	import { getVendors } from '#lib/remote/vendors.remote.ts';
 	import { formatMoney } from '#lib/format.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import HardHat from '@lucide/svelte/icons/hard-hat';
 
+	type Row = Awaited<ReturnType<typeof getVendors>>[number];
+
 	let showArchived = $state(false);
 	const vendors = $derived(await getVendors(showArchived));
 	let search = $state('');
 	let creating = $state(page.url.searchParams.has('new'));
+	let sorting = $state<SortingState>([]);
 
 	const rows = $derived(
 		vendors.filter(
@@ -29,9 +44,64 @@
 		)
 	);
 
+	const colClass: Record<string, string> = {
+		contact: 'hidden md:table-cell',
+		openCount: 'text-right',
+		spendYtd: 'hidden text-right lg:table-cell',
+		insuranceExpiresOn: 'hidden sm:table-cell'
+	};
+
+	const columns: ColumnDef<Row>[] = [
+		{
+			accessorKey: 'name',
+			header: 'Vendor',
+			cell: (c) => renderSnippet(vendorCell, c.row.original)
+		},
+		{
+			id: 'contact',
+			accessorFn: (v) => v.contactName ?? v.email ?? '',
+			header: 'Contact',
+			cell: (c) => renderSnippet(contactCell, c.row.original)
+		},
+		{
+			id: 'openCount',
+			accessorFn: (v) => v.openCount,
+			header: 'Open jobs',
+			cell: (c) => renderSnippet(jobsCell, c.row.original)
+		},
+		{
+			accessorKey: 'spendYtd',
+			header: 'Spent this year',
+			cell: (c) => formatMoney(c.getValue<number>())
+		},
+		{
+			accessorKey: 'insuranceExpiresOn',
+			header: 'Insurance',
+			cell: (c) => renderSnippet(insuranceCell, c.row.original)
+		}
+	];
+
+	const table = createSvelteTable<Row>({
+		get data() {
+			return rows;
+		},
+		columns,
+		state: {
+			get sorting() {
+				return sorting;
+			}
+		},
+		onSortingChange: (u) => (sorting = typeof u === 'function' ? u(sorting) : u),
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel()
+	});
+
 	const nav = new RowNav({
-		count: () => rows.length,
-		open: (i) => openHref(`/vendors/${rows[i]!.id}`),
+		count: () => table.getRowModel().rows.length,
+		open: (i) => {
+			const v = table.getRowModel().rows[i]?.original;
+			if (v) openHref(`/vendors/${v.id}`);
+		},
 		create: () => (creating = true)
 	});
 </script>
@@ -77,49 +147,41 @@
 		<div class="overflow-hidden rounded-lg border">
 			<Table.Root>
 				<Table.Header>
-					<Table.Row>
-						<Table.Head>Vendor</Table.Head>
-						<Table.Head class="hidden md:table-cell">Contact</Table.Head>
-						<Table.Head class="text-right">Open jobs</Table.Head>
-						<Table.Head class="hidden text-right lg:table-cell">Spent this year</Table.Head>
-						<Table.Head class="hidden sm:table-cell">Insurance</Table.Head>
-					</Table.Row>
+					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+						<Table.Row>
+							{#each headerGroup.headers as header (header.id)}
+								<Table.Head class={colClass[header.column.id]}>
+									{#if header.column.getCanSort()}
+										<SortHead
+											column={header.column}
+											label={String(header.column.columnDef.header)}
+										/>
+									{:else}
+										{header.column.columnDef.header}
+									{/if}
+								</Table.Head>
+							{/each}
+						</Table.Row>
+					{/each}
 				</Table.Header>
 				<Table.Body>
-					{#each rows as v, i (v.id)}
+					{#each table.getRowModel().rows as row, i (row.original.id)}
 						<Table.Row
 							data-row={i}
 							data-state={nav.index === i ? 'selected' : undefined}
-							class="cursor-pointer {v.archivedAt ? 'opacity-60' : ''}"
-							onclick={() => openHref(`/vendors/${v.id}`)}
+							class="cursor-pointer {row.original.archivedAt ? 'opacity-60' : ''}"
+							onclick={() => openHref(`/vendors/${row.original.id}`)}
 							onmouseenter={() => (nav.index = i)}
 						>
-							<Table.Cell class="max-w-56">
-								<a href="/vendors/{v.id}" class="block truncate font-medium outline-none"
-									>{v.name}{v.archivedAt ? ' (archived)' : ''}</a
-								>
-								<span class="block truncate text-xs text-muted-foreground"
-									>{v.trades.join(', ') || 'No trades set'}</span
-								>
-								<InsuranceBadge expiresOn={v.insuranceExpiresOn} class="mt-1 sm:hidden" />
-							</Table.Cell>
-							<Table.Cell class="hidden max-w-56 text-muted-foreground md:table-cell">
-								<span class="block truncate">{v.contactName ?? v.email ?? '—'}</span>
-								{#if v.phone}<span class="block truncate text-xs tabular-nums">{v.phone}</span>{/if}
-							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums"
-								>{v.openCount}<span class="text-muted-foreground"> / {v.jobCount}</span></Table.Cell
-							>
-							<Table.Cell class="hidden text-right tabular-nums lg:table-cell"
-								>{formatMoney(v.spendYtd)}</Table.Cell
-							>
-							<Table.Cell class="hidden sm:table-cell"
-								><InsuranceBadge expiresOn={v.insuranceExpiresOn} /></Table.Cell
-							>
+							{#each row.getVisibleCells() as cell (cell.id)}
+								<Table.Cell class={colClass[cell.column.id]}>
+									<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+								</Table.Cell>
+							{/each}
 						</Table.Row>
 					{:else}
 						<Table.Row
-							><Table.Cell colspan={5} class="py-8 text-center text-muted-foreground"
+							><Table.Cell colspan={columns.length} class="py-8 text-center text-muted-foreground"
 								>No vendors match.</Table.Cell
 							></Table.Row
 						>
@@ -131,3 +193,32 @@
 </main>
 
 <VendorDialog bind:open={creating} onsaved={(v) => openHref(`/vendors/${v.id}`)} />
+
+{#snippet vendorCell(v: Row)}
+	<div class="max-w-56">
+		<a href="/vendors/{v.id}" class="block truncate font-medium outline-none"
+			>{v.name}{v.archivedAt ? ' (archived)' : ''}</a
+		>
+		<span class="block truncate text-xs text-muted-foreground"
+			>{v.trades.join(', ') || 'No trades set'}</span
+		>
+		<InsuranceBadge expiresOn={v.insuranceExpiresOn} class="mt-1 sm:hidden" />
+	</div>
+{/snippet}
+
+{#snippet contactCell(v: Row)}
+	<div class="max-w-56 text-muted-foreground">
+		<span class="block truncate">{v.contactName ?? v.email ?? '—'}</span>
+		{#if v.phone}<span class="block truncate text-xs tabular-nums">{v.phone}</span>{/if}
+	</div>
+{/snippet}
+
+{#snippet jobsCell(v: Row)}
+	<div class="text-right tabular-nums">
+		{v.openCount}<span class="text-muted-foreground"> / {v.jobCount}</span>
+	</div>
+{/snippet}
+
+{#snippet insuranceCell(v: Row)}
+	<InsuranceBadge expiresOn={v.insuranceExpiresOn} />
+{/snippet}

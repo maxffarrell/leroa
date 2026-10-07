@@ -6,7 +6,7 @@
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import TicketForm from '#lib/components/app/ticket-form.svelte';
 	import { getTurns, startTurn, updateTurn } from '#lib/remote/operations.remote.ts';
 	import { getUnits } from '#lib/remote/portfolio.remote.ts';
@@ -286,10 +286,10 @@
 	unitId={selected?.unitId ?? null}
 />
 
-<Dialog.Root bind:open={starting}>
-	<Dialog.Content class="sm:max-w-md">
+<Modal.Root bind:open={starting}>
+	<Modal.Content class="sm:max-w-md">
 		<form onsubmit={submitStart} class="space-y-5">
-			<Dialog.Header><Dialog.Title>Start a unit turn</Dialog.Title></Dialog.Header>
+			<Modal.Header><Modal.Title>Start a unit turn</Modal.Title></Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field>
 					<Field.Label>Unit</Field.Label>
@@ -326,12 +326,12 @@
 					<Textarea id="new-notes" rows={3} bind:value={newNotes} />
 				</Field.Field>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (starting = false)}>Cancel</Button>
 				<Button type="submit" disabled={pending || !newUnit}
 					>{pending ? 'Starting…' : 'Start turn'}</Button
 				>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

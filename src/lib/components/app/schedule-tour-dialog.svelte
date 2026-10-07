@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -65,15 +65,15 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-md">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-md">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>Book a tour</Dialog.Title>
-				<Dialog.Description
-					>With {leadName}. Times are in {settings?.timezone ?? 'UTC'}.</Dialog.Description
+			<Modal.Header>
+				<Modal.Title>Book a tour</Modal.Title>
+				<Modal.Description
+					>With {leadName}. Times are in {settings?.timezone ?? 'UTC'}.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<Field.Field class="sm:col-span-2">
 					<Field.Label>Property</Field.Label>
@@ -133,9 +133,9 @@
 					<Textarea id="st-notes" rows={2} bind:value={notes} />
 				</Field.Field>
 			</div>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="submit" disabled={pending || !propId}>Book tour</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

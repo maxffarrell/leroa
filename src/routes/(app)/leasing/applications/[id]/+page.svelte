@@ -9,7 +9,7 @@
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import {
@@ -255,16 +255,16 @@
 	</aside>
 </main>
 
-<Dialog.Root bind:open={approving}>
-	<Dialog.Content class="sm:max-w-md">
+<Modal.Root bind:open={approving}>
+	<Modal.Content class="sm:max-w-md">
 		<form onsubmit={approve} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>Approve {a.firstName}</Dialog.Title>
-				<Dialog.Description
+			<Modal.Header>
+				<Modal.Title>Approve {a.firstName}</Modal.Title>
+				<Modal.Description
 					>Creates a tenant and a draft lease, and closes the listing. Nothing is charged until you
-					activate the lease.</Dialog.Description
+					activate the lease.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<Field.Group class="gap-4">
 				<div class="grid grid-cols-2 gap-3">
 					<Field.Field>
@@ -291,9 +291,9 @@
 					</Field.Field>
 				</div>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="submit" disabled={pending}>{pending ? 'Approving…' : 'Approve'}</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

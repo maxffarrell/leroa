@@ -7,7 +7,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { Progress } from '#lib/components/ui/progress/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import {
@@ -494,26 +494,26 @@
 	</div>
 {/if}
 
-<Dialog.Root bind:open={completing}>
-	<Dialog.Content class="sm:max-w-md">
-		<Dialog.Header>
-			<Dialog.Title>Complete inspection?</Dialog.Title>
-			<Dialog.Description>
+<Modal.Root bind:open={completing}>
+	<Modal.Content class="sm:max-w-md">
+		<Modal.Header>
+			<Modal.Title>Complete inspection?</Modal.Title>
+			<Modal.Description>
 				The report is locked and saved as a PDF on the {i.leaseId
 					? 'lease'
 					: 'unit'}.{#if i.leaseId && i.kind !== 'routine'}
 					Residents on the lease are emailed to review it in their portal.{/if}
-			</Dialog.Description>
-		</Dialog.Header>
+			</Modal.Description>
+		</Modal.Header>
 		{#if flagged}
 			<p class="text-sm">
 				{flagged} item{flagged === 1 ? ' is' : 's are'} poor or damaged. You can open maintenance requests
 				for them afterwards too.
 			</p>
 		{/if}
-		<Dialog.Footer>
+		<Modal.Footer>
 			<Button variant="ghost" onclick={() => (completing = false)}>Cancel</Button>
 			<Button disabled={busy} onclick={complete}>{busy ? 'Completing…' : 'Complete'}</Button>
-		</Dialog.Footer>
-	</Dialog.Content>
-</Dialog.Root>
+		</Modal.Footer>
+	</Modal.Content>
+</Modal.Root>

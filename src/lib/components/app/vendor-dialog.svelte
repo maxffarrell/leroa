@@ -1,7 +1,8 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import { PhoneInput } from '#lib/components/ui/phone-input/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
@@ -94,15 +95,15 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+<Modal.Root bind:open>
+	<Modal.Content class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>{vendor ? 'Edit vendor' : 'New vendor'}</Dialog.Title>
-				<Dialog.Description
-					>Vendors get a private link for each job. They don't need an account.</Dialog.Description
+			<Modal.Header>
+				<Modal.Title>{vendor ? 'Edit vendor' : 'New vendor'}</Modal.Title>
+				<Modal.Description
+					>Vendors get a private link for each job. They don't need an account.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field>
 					<Field.Label for="vd-name">Company or name</Field.Label>
@@ -121,7 +122,7 @@
 					</Field.Field>
 					<Field.Field>
 						<Field.Label for="vd-phone">Phone</Field.Label>
-						<Input id="vd-phone" type="tel" bind:value={form.phone} />
+						<PhoneInput id="vd-phone" bind:value={form.phone} />
 					</Field.Field>
 				</div>
 				<Field.Field>
@@ -171,12 +172,12 @@
 					/>
 				</Field.Field>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
 				<Button type="submit" disabled={pending || !form.name.trim()}
 					>{pending ? 'Saving…' : vendor ? 'Save' : 'Add vendor'}</Button
 				>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

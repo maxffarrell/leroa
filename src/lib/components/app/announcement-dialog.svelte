@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -56,16 +56,16 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-lg">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-lg">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>New announcement</Dialog.Title>
-				<Dialog.Description
+			<Modal.Header>
+				<Modal.Title>New announcement</Modal.Title>
+				<Modal.Description
 					>Shown in the resident portal for residents on an active lease. Use it for building
-					notices like water shut-offs, pest control or events.</Dialog.Description
+					notices like water shut-offs, pest control or events.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Send to</Field.Label>
 				<Select.Root type="single" bind:value={propertyId}>
@@ -105,13 +105,13 @@
 				<Switch id="ann-email" bind:checked={email} />
 				<Field.Label for="ann-email" class="font-normal">Also email residents</Field.Label>
 			</Field.Field>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button
 					type="submit"
 					disabled={pending || !subject.trim() || !body.trim() || audience?.residents === 0}
 					>{pending ? 'Sending…' : 'Send announcement'}</Button
 				>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

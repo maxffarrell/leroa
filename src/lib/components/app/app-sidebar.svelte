@@ -83,6 +83,7 @@
 					onclick={onsearch}
 					tooltipContent="Search (⌘K)"
 					class="text-muted-foreground"
+					data-tour="search"
 				>
 					<Search />
 					<span>Search or jump to…</span>
@@ -101,7 +102,9 @@
 							tooltipContent={`${item.label}  G ${item.key.toUpperCase()}`}
 						>
 							{#snippet child({ props })}
-								<a href={item.href} {...props}><item.icon /><span>{item.label}</span></a>
+								<a href={item.href} data-tour={item.href} {...props}
+									><item.icon /><span>{item.label}</span></a
+								>
 							{/snippet}
 						</Sidebar.MenuButton>
 						{#if item.href === '/messages' && unread.current}
@@ -133,7 +136,9 @@
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton isActive={isActive(item.href)} tooltipContent={item.label}>
 							{#snippet child({ props })}
-								<a href={item.href} {...props}><item.icon /><span>{item.label}</span></a>
+								<a href={item.href} data-tour={item.href} {...props}
+									><item.icon /><span>{item.label}</span></a
+								>
 							{/snippet}
 						</Sidebar.MenuButton>
 					</Sidebar.MenuItem>

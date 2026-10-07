@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -38,15 +38,15 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-md">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-md">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>New listing</Dialog.Title>
-				<Dialog.Description
-					>Starts as a draft with the unit's details. Publish it when it looks right.</Dialog.Description
+			<Modal.Header>
+				<Modal.Title>New listing</Modal.Title>
+				<Modal.Description
+					>Starts as a draft with the unit's details. Publish it when it looks right.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Unit</Field.Label>
 				<Select.Root type="single" bind:value={unitId}>
@@ -65,9 +65,9 @@
 					</Select.Content>
 				</Select.Root>
 			</Field.Field>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="submit" disabled={pending || !unitId}>Create draft</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

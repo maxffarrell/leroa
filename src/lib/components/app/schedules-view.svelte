@@ -5,7 +5,7 @@
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import {
 		createSchedule,
@@ -244,12 +244,12 @@
 	</div>
 {/if}
 
-<Dialog.Root open={dialogOpen} onOpenChange={setOpen}>
-	<Dialog.Content class="sm:max-w-xl">
+<Modal.Root open={dialogOpen} onOpenChange={setOpen}>
+	<Modal.Content class="sm:max-w-xl">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header
-				><Dialog.Title>{editing ? 'Edit schedule' : 'New preventive schedule'}</Dialog.Title
-				></Dialog.Header
+			<Modal.Header
+				><Modal.Title>{editing ? 'Edit schedule' : 'New preventive schedule'}</Modal.Title
+				></Modal.Header
 			>
 			<Field.Group class="gap-4">
 				<Field.Field>
@@ -384,12 +384,12 @@
 					/>
 				</Field.Field>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => setOpen(false)}>Cancel</Button>
 				<Button type="submit" disabled={pending || !fTitle.trim() || !fProperty || !fNext}
 					>{pending ? 'Saving…' : editing ? 'Save' : 'Create schedule'}</Button
 				>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

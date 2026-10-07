@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -63,16 +63,16 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-md">
+<Modal.Root bind:open>
+	<Modal.Content class="sm:max-w-md">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>Renew lease</Dialog.Title>
-				<Dialog.Description
+			<Modal.Header>
+				<Modal.Title>Renew lease</Modal.Title>
+				<Modal.Description
 					>Creates the next lease for the same unit and tenants. The deposit carries over and the
-					current lease ends the day before.</Dialog.Description
+					current lease ends the day before.</Modal.Description
 				>
-			</Dialog.Header>
+			</Modal.Header>
 			<Field.Group class="gap-4">
 				<div class="grid grid-cols-2 gap-3">
 					<Field.Field>
@@ -102,10 +102,10 @@
 					</div>
 				</Field.Field>
 			</Field.Group>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
 				<Button type="submit" disabled={pending}>{pending ? 'Renewing…' : 'Renew lease'}</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

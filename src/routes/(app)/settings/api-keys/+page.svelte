@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -24,7 +24,8 @@
 	} from '#lib/api-permissions.ts';
 	import { formatRelative } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
-	import Copy from '@lucide/svelte/icons/copy';
+	import { CopyButton } from '#lib/components/ui/copy-button/index.js';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash from '@lucide/svelte/icons/trash-2';
@@ -93,14 +94,7 @@
 				<Alert.Description>
 					<div class="mt-2 flex w-full items-center gap-2 rounded-md bg-muted p-2">
 						<code class="min-w-0 flex-1 truncate font-mono text-xs">{created}</code>
-						<Button
-							size="icon-sm"
-							variant="ghost"
-							aria-label="Copy key"
-							onclick={() =>
-								navigator.clipboard.writeText(created!).then(() => toast.success('Copied'))}
-							><Copy /></Button
-						>
+						<CopyButton size="icon-sm" variant="ghost" aria-label="Copy key" text={created} />
 					</div>
 				</Alert.Description>
 			</Alert.Root>
@@ -143,7 +137,13 @@
 							size="icon-sm"
 							variant="ghost"
 							aria-label="Revoke"
-							onclick={() => confirm('Revoke this key?') && deleteApiKey(k.id)}><Trash /></Button
+							onclick={() =>
+								confirmDelete({
+									title: `Revoke ${k.name ?? 'this key'}?`,
+									description:
+										'Anything calling the API with this key starts getting 401s immediately.',
+									onConfirm: () => deleteApiKey(k.id)
+								})}><Trash /></Button
 						>
 					</li>
 				{/each}
@@ -154,13 +154,13 @@
 	</Card.Content>
 </Card.Root>
 
-<Dialog.Root bind:open={() => !!editing, (v) => !v && (editing = null)}>
-	<Dialog.Content class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+<Modal.Root bind:open={() => !!editing, (v) => !v && (editing = null)}>
+	<Modal.Content class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
 		<form onsubmit={save} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>{editing?.title}</Dialog.Title>
-				<Dialog.Description>Requests outside these permissions return 403.</Dialog.Description>
-			</Dialog.Header>
+			<Modal.Header>
+				<Modal.Title>{editing?.title}</Modal.Title>
+				<Modal.Description>Requests outside these permissions return 403.</Modal.Description>
+			</Modal.Header>
 			{#if !editing?.id}
 				<Field.Field>
 					<Field.Label for="key-name">Name</Field.Label>
@@ -168,9 +168,9 @@
 				</Field.Field>
 			{/if}
 			<ApiPermissionsEditor bind:value={permissions} />
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="submit" disabled={pending}>{editing?.id ? 'Save' : 'Create key'}</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

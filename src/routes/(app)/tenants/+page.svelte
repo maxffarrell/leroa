@@ -10,14 +10,29 @@
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as Empty from '#lib/components/ui/empty/index.js';
+	import {
+		createSvelteTable,
+		FlexRender,
+		renderSnippet
+	} from '#lib/components/ui/data-table/index.js';
+	import SortHead from '#lib/components/app/sort-head.svelte';
+	import {
+		getCoreRowModel,
+		getSortedRowModel,
+		type ColumnDef,
+		type SortingState
+	} from '@tanstack/table-core';
 	import { getTenants } from '#lib/remote/portfolio.remote.ts';
 	import { initials, tenantName } from '#lib/format.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Users from '@lucide/svelte/icons/users';
 
+	type Row = Awaited<ReturnType<typeof getTenants>>[number];
+
 	const tenants = $derived(await getTenants());
 	let filter = $state('');
 	let creating = $state(page.url.searchParams.has('new'));
+	let sorting = $state<SortingState>([]);
 	const rows = $derived(
 		filter
 			? tenants.filter((t) =>
@@ -27,9 +42,58 @@
 				)
 			: tenants
 	);
+
+	const colClass: Record<string, string> = {
+		email: 'hidden md:table-cell',
+		phone: 'hidden lg:table-cell'
+	};
+
+	const columns: ColumnDef<Row>[] = [
+		{
+			id: 'name',
+			accessorFn: (t) => tenantName(t),
+			header: 'Name',
+			cell: (c) => renderSnippet(nameCell, c.row.original)
+		},
+		{
+			id: 'residence',
+			accessorFn: (t) => (t.propertyName ? `${t.propertyName} ${t.unitName}` : ''),
+			header: 'Residence',
+			cell: (c) => renderSnippet(residenceCell, c.row.original)
+		},
+		{
+			accessorKey: 'email',
+			header: 'Email',
+			cell: (c) => c.getValue() ?? ''
+		},
+		{
+			accessorKey: 'phone',
+			header: 'Phone',
+			cell: (c) => c.getValue() ?? ''
+		}
+	];
+
+	const table = createSvelteTable<Row>({
+		get data() {
+			return rows;
+		},
+		columns,
+		state: {
+			get sorting() {
+				return sorting;
+			}
+		},
+		onSortingChange: (u) => (sorting = typeof u === 'function' ? u(sorting) : u),
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel()
+	});
+
 	const nav = new RowNav({
-		count: () => rows.length,
-		open: (i) => openHref(`/tenants/${rows[i]!.id}`),
+		count: () => table.getRowModel().rows.length,
+		open: (i) => {
+			const t = table.getRowModel().rows[i]?.original;
+			if (t) openHref(`/tenants/${t.id}`);
+		},
 		create: () => (creating = true)
 	});
 </script>
@@ -70,45 +134,37 @@
 		<div class="overflow-hidden rounded-lg border">
 			<Table.Root>
 				<Table.Header>
-					<Table.Row>
-						<Table.Head>Name</Table.Head>
-						<Table.Head>Residence</Table.Head>
-						<Table.Head class="hidden md:table-cell">Email</Table.Head>
-						<Table.Head class="hidden lg:table-cell">Phone</Table.Head>
-					</Table.Row>
+					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+						<Table.Row>
+							{#each headerGroup.headers as header (header.id)}
+								<Table.Head class={colClass[header.column.id]}>
+									{#if header.column.getCanSort()}
+										<SortHead
+											column={header.column}
+											label={String(header.column.columnDef.header)}
+										/>
+									{:else}
+										{header.column.columnDef.header}
+									{/if}
+								</Table.Head>
+							{/each}
+						</Table.Row>
+					{/each}
 				</Table.Header>
 				<Table.Body>
-					{#each rows as t, i (t.id)}
+					{#each table.getRowModel().rows as row, i (row.original.id)}
 						<Table.Row
 							data-row={i}
 							data-state={nav.index === i ? 'selected' : undefined}
 							class="cursor-pointer"
-							onclick={() => openHref(`/tenants/${t.id}`)}
+							onclick={() => openHref(`/tenants/${row.original.id}`)}
 							onmouseenter={() => (nav.index = i)}
 						>
-							<Table.Cell>
-								<a
-									href="/tenants/{t.id}"
-									class="flex items-center gap-2.5 font-medium outline-none"
-								>
-									<Avatar.Root class="size-7"
-										><Avatar.Fallback class="text-xs">{initials(tenantName(t))}</Avatar.Fallback
-										></Avatar.Root
-									>
-									{tenantName(t)}
-								</a>
-							</Table.Cell>
-							<Table.Cell class="text-muted-foreground"
-								>{t.propertyName
-									? `${t.propertyName} · ${t.unitName}`
-									: 'No active lease'}</Table.Cell
-							>
-							<Table.Cell class="hidden text-muted-foreground md:table-cell"
-								>{t.email ?? ''}</Table.Cell
-							>
-							<Table.Cell class="hidden text-muted-foreground tabular-nums lg:table-cell"
-								>{t.phone ?? ''}</Table.Cell
-							>
+							{#each row.getVisibleCells() as cell (cell.id)}
+								<Table.Cell class={colClass[cell.column.id]}>
+									<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+								</Table.Cell>
+							{/each}
 						</Table.Row>
 					{/each}
 				</Table.Body>
@@ -118,3 +174,18 @@
 </main>
 
 <TenantForm bind:open={creating} oncreated={(t) => goto(`/tenants/${t.id}`)} />
+
+{#snippet nameCell(t: Row)}
+	<a href="/tenants/{t.id}" class="flex items-center gap-2.5 font-medium outline-none">
+		<Avatar.Root class="size-7"
+			><Avatar.Fallback class="text-xs">{initials(tenantName(t))}</Avatar.Fallback></Avatar.Root
+		>
+		{tenantName(t)}
+	</a>
+{/snippet}
+
+{#snippet residenceCell(t: Row)}
+	<span class="text-muted-foreground"
+		>{t.propertyName ? `${t.propertyName} · ${t.unitName}` : 'No active lease'}</span
+	>
+{/snippet}

@@ -30,6 +30,7 @@
 		"@sveltejs/kit": "^3.0.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.3.3",
+		"@tanstack/table-core": "^8.21.3",
 		"@types/node": "^26.6.4",
 		"@types/nodemailer": "^8.0.2",
 		"auth": "^1.7.7",
@@ -73,11 +74,15 @@
 		"@leroa/integration-sdk": "workspace:*",
 		"@sveltejs/adapter-vercel": "^7.0.0",
 		"better-auth": "^1.7.7",
+		"country-flag-icons": "^1.6.20",
 		"drizzle-orm": "^0.45.3",
 		"nodemailer": "^10.0.14",
 		"pdf-lib": "1.17.1",
 		"postgres": "^3.4.9",
+		"runed": "^0.37.1",
 		"stripe": "~23.0.0",
+		"svelte-tel-input": "^4.3.3",
+		"svelte-toolbelt": "^0.10.6",
 		"valibot": "^1.5.0"
 	}
 }

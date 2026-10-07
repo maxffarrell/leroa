@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -70,13 +70,13 @@
 	}
 </script>
 
-<Dialog.Root bind:open={() => !!target, (v) => !v && (target = null)}>
-	<Dialog.Content class="sm:max-w-sm">
+<Modal.Root bind:open={() => !!target, (v) => !v && (target = null)}>
+	<Modal.Content class="sm:max-w-sm">
 		<form onsubmit={submit} class="space-y-5">
-			<Dialog.Header>
-				<Dialog.Title>Record payment</Dialog.Title>
-				<Dialog.Description>{target?.label}</Dialog.Description>
-			</Dialog.Header>
+			<Modal.Header>
+				<Modal.Title>Record payment</Modal.Title>
+				<Modal.Description>{target?.label}</Modal.Description>
+			</Modal.Header>
 			<Field.Group class="gap-4">
 				{#key key}
 					<Field.Field
@@ -116,11 +116,11 @@
 					/></Field.Field
 				>
 			</Field.Group>
-			<Dialog.Footer
+			<Modal.Footer
 				><Button type="submit" class="w-full" disabled={pending || !amount}
 					>{pending ? 'Saving…' : 'Record payment'}</Button
-				></Dialog.Footer
+				></Modal.Footer
 			>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

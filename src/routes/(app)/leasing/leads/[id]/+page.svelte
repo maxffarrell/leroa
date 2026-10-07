@@ -10,7 +10,7 @@
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
@@ -546,13 +546,13 @@
 	listingId={l.listingId}
 />
 
-<Dialog.Root bind:open={losing}>
-	<Dialog.Content class="sm:max-w-sm">
+<Modal.Root bind:open={losing}>
+	<Modal.Content class="sm:max-w-sm">
 		<form onsubmit={markLost} class="space-y-4">
-			<Dialog.Header>
-				<Dialog.Title>Mark {name} lost</Dialog.Title>
-				<Dialog.Description>They'll leave the pipeline and any waitlist.</Dialog.Description>
-			</Dialog.Header>
+			<Modal.Header>
+				<Modal.Title>Mark {name} lost</Modal.Title>
+				<Modal.Description>They'll leave the pipeline and any waitlist.</Modal.Description>
+			</Modal.Header>
 			<Field.Field>
 				<Field.Label for="lost-reason">Reason (optional)</Field.Label>
 				<Input
@@ -561,7 +561,7 @@
 					bind:value={lostReason}
 				/>
 			</Field.Field>
-			<Dialog.Footer><Button type="submit" variant="destructive">Mark lost</Button></Dialog.Footer>
+			<Modal.Footer><Button type="submit" variant="destructive">Mark lost</Button></Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

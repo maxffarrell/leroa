@@ -10,16 +10,31 @@
 	import { Progress } from '#lib/components/ui/progress/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import {
+		createSvelteTable,
+		FlexRender,
+		renderSnippet
+	} from '#lib/components/ui/data-table/index.js';
+	import SortHead from '#lib/components/app/sort-head.svelte';
+	import {
+		getCoreRowModel,
+		getSortedRowModel,
+		type ColumnDef,
+		type SortingState
+	} from '@tanstack/table-core';
 	import { getRentRoll } from '#lib/remote/leasing.remote.ts';
 	import { formatDate, formatMoney, monthKey } from '#lib/format.ts';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 
 	type Filter = 'all' | 'unpaid' | 'overdue' | 'paid';
+	type Row = Awaited<ReturnType<typeof getRentRoll>>[number];
+
 	let month = $state(monthKey());
 	let filter = $state<Filter>((page.url.searchParams.get('filter') as Filter) ?? 'all');
 	let search = $state('');
 	let payment = $state<PaymentTarget | null>(null);
+	let sorting = $state<SortingState>([]);
 
 	const roll = $derived(await getRentRoll(month));
 	const rows = $derived(
@@ -56,9 +71,8 @@
 		month = monthKey(new Date(Date.UTC(y, m - 1 + by, 1)));
 	}
 
-	function pay(i: number) {
-		const r = rows[i];
-		if (r && r.balance > 0)
+	function pay(r: Row) {
+		if (r.balance > 0)
 			payment = {
 				leaseId: r.leaseId,
 				chargeId: r.id,
@@ -68,7 +82,85 @@
 			};
 	}
 
-	const nav = new RowNav({ count: () => rows.length, open: pay });
+	const colClass: Record<string, string> = {
+		charge: 'hidden md:table-cell',
+		dueDate: 'hidden sm:table-cell',
+		amount: 'text-right',
+		paid: 'hidden text-right sm:table-cell',
+		actions: 'w-24'
+	};
+
+	const columns: ColumnDef<Row>[] = [
+		{
+			accessorKey: 'tenants',
+			header: 'Tenant',
+			cell: (c) => renderSnippet(tenantCell, c.row.original)
+		},
+		{
+			id: 'unit',
+			accessorFn: (r) => `${r.propertyName} ${r.unitName}`,
+			header: 'Unit',
+			cell: (c) => c.getValue()
+		},
+		{
+			id: 'charge',
+			accessorFn: (r) => r.description ?? r.kind,
+			header: 'Charge',
+			cell: (c) => c.getValue()
+		},
+		{
+			accessorKey: 'dueDate',
+			header: 'Due',
+			cell: (c) => formatDate(c.getValue<string>(), true)
+		},
+		{
+			accessorKey: 'amount',
+			header: 'Amount',
+			cell: (c) => formatMoney(c.getValue<number>(), c.row.original.currency)
+		},
+		{
+			accessorKey: 'paid',
+			header: 'Paid',
+			cell: (c) => {
+				const v = c.getValue<number>();
+				return v ? formatMoney(v, c.row.original.currency) : '—';
+			}
+		},
+		{
+			accessorKey: 'status',
+			header: 'Status',
+			cell: (c) => renderSnippet(statusCell, c.row.original)
+		},
+		{
+			id: 'actions',
+			header: '',
+			enableSorting: false,
+			cell: (c) => renderSnippet(actionCell, c.row.original)
+		}
+	];
+
+	const table = createSvelteTable<Row>({
+		get data() {
+			return rows;
+		},
+		columns,
+		state: {
+			get sorting() {
+				return sorting;
+			}
+		},
+		onSortingChange: (u) => (sorting = typeof u === 'function' ? u(sorting) : u),
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel()
+	});
+
+	const nav = new RowNav({
+		count: () => table.getRowModel().rows.length,
+		open: (i) => {
+			const r = table.getRowModel().rows[i]?.original;
+			if (r) pay(r);
+		}
+	});
 	function onkeydown(e: KeyboardEvent) {
 		if (!(e.target instanceof HTMLInputElement) && !payment) {
 			if (e.key === '[') return shift(-1);
@@ -126,53 +218,36 @@
 	<div class="overflow-hidden rounded-lg border">
 		<Table.Root>
 			<Table.Header>
-				<Table.Row>
-					<Table.Head>Tenant</Table.Head>
-					<Table.Head>Unit</Table.Head>
-					<Table.Head class="hidden md:table-cell">Charge</Table.Head>
-					<Table.Head class="hidden sm:table-cell">Due</Table.Head>
-					<Table.Head class="text-right">Amount</Table.Head>
-					<Table.Head class="hidden text-right sm:table-cell">Paid</Table.Head>
-					<Table.Head>Status</Table.Head>
-					<Table.Head class="w-24"></Table.Head>
-				</Table.Row>
+				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+					<Table.Row>
+						{#each headerGroup.headers as header (header.id)}
+							<Table.Head class={colClass[header.column.id]}>
+								{#if header.column.getCanSort()}
+									<SortHead column={header.column} label={String(header.column.columnDef.header)} />
+								{:else}
+									{header.column.columnDef.header}
+								{/if}
+							</Table.Head>
+						{/each}
+					</Table.Row>
+				{/each}
 			</Table.Header>
 			<Table.Body>
-				{#each rows as r, i (r.id)}
+				{#each table.getRowModel().rows as row, i (row.original.id)}
 					<Table.Row
 						data-row={i}
 						data-state={nav.index === i ? 'selected' : undefined}
 						onmouseenter={() => (nav.index = i)}
 					>
-						<Table.Cell class="max-w-48 truncate font-medium"
-							><a href="/leases/{r.leaseId}" class="hover:underline">{r.tenants || '—'}</a
-							></Table.Cell
-						>
-						<Table.Cell class="text-muted-foreground">{r.propertyName} · {r.unitName}</Table.Cell>
-						<Table.Cell class="hidden text-muted-foreground md:table-cell"
-							>{r.description ?? r.kind}</Table.Cell
-						>
-						<Table.Cell class="hidden tabular-nums sm:table-cell"
-							>{formatDate(r.dueDate, true)}</Table.Cell
-						>
-						<Table.Cell class="text-right tabular-nums"
-							>{formatMoney(r.amount, r.currency)}</Table.Cell
-						>
-						<Table.Cell class="hidden text-right text-muted-foreground tabular-nums sm:table-cell"
-							>{r.paid ? formatMoney(r.paid, r.currency) : '—'}</Table.Cell
-						>
-						<Table.Cell><StatusBadge status={r.status} /></Table.Cell>
-						<Table.Cell class="text-right">
-							{#if r.balance > 0}<Button
-									size="sm"
-									variant={r.status === 'overdue' ? 'default' : 'outline'}
-									onclick={() => pay(i)}>Record</Button
-								>{/if}
-						</Table.Cell>
+						{#each row.getVisibleCells() as cell (cell.id)}
+							<Table.Cell class={colClass[cell.column.id]}>
+								<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+							</Table.Cell>
+						{/each}
 					</Table.Row>
 				{:else}
 					<Table.Row
-						><Table.Cell colspan={8} class="py-10 text-center text-muted-foreground"
+						><Table.Cell colspan={columns.length} class="py-10 text-center text-muted-foreground"
 							>{roll.length
 								? 'Nothing matches this filter.'
 								: 'No charges this month. Active leases generate rent automatically.'}</Table.Cell
@@ -185,3 +260,25 @@
 </main>
 
 <PaymentDialog bind:target={payment} />
+
+{#snippet tenantCell(r: Row)}
+	<a href="/leases/{r.leaseId}" class="block max-w-48 truncate font-medium hover:underline"
+		>{r.tenants || '—'}</a
+	>
+{/snippet}
+
+{#snippet statusCell(r: Row)}
+	<StatusBadge status={r.status} />
+{/snippet}
+
+{#snippet actionCell(r: Row)}
+	{#if r.balance > 0}
+		<div class="text-right">
+			<Button
+				size="sm"
+				variant={r.status === 'overdue' ? 'default' : 'outline'}
+				onclick={() => pay(r)}>Record</Button
+			>
+		</div>
+	{/if}
+{/snippet}

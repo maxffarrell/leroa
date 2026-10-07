@@ -5,7 +5,7 @@
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as Empty from '#lib/components/ui/empty/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { goto } from '$app/navigation';
@@ -292,13 +292,13 @@
 	{/if}
 {/if}
 
-<Dialog.Root open={losing !== null} onOpenChange={(o) => !o && (losing = null)}>
-	<Dialog.Content class="sm:max-w-sm">
+<Modal.Root open={losing !== null} onOpenChange={(o) => !o && (losing = null)}>
+	<Modal.Content class="sm:max-w-sm">
 		<form class="space-y-4" onsubmit={markLost}>
-			<Dialog.Header>
-				<Dialog.Title>Mark {losing ? leadName(losing) : ''} lost</Dialog.Title>
-				<Dialog.Description>They'll leave the pipeline and any waitlist.</Dialog.Description>
-			</Dialog.Header>
+			<Modal.Header>
+				<Modal.Title>Mark {losing ? leadName(losing) : ''} lost</Modal.Title>
+				<Modal.Description>They'll leave the pipeline and any waitlist.</Modal.Description>
+			</Modal.Header>
 			<Field.Field>
 				<Field.Label for="board-lost-reason">Reason (optional)</Field.Label>
 				<Textarea
@@ -309,10 +309,10 @@
 					bind:value={lostReason}
 				/>
 			</Field.Field>
-			<Dialog.Footer>
+			<Modal.Footer>
 				<Button type="button" variant="outline" onclick={() => (losing = null)}>Cancel</Button>
 				<Button type="submit" variant="destructive">Mark lost</Button>
-			</Dialog.Footer>
+			</Modal.Footer>
 		</form>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

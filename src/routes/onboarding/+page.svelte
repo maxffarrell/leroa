@@ -32,6 +32,11 @@
 			return toast.error(error?.message ?? 'Could not create workspace');
 		}
 		await authClient.organization.setActive({ organizationId: org.id });
+		try {
+			localStorage.setItem('leroa:tour:pending', '1');
+		} catch {
+			/* private mode */
+		}
 		await goto('/dashboard', { invalidateAll: true });
 	}
 </script>

@@ -10,6 +10,8 @@
 	import LeaseInspections from '#lib/components/app/lease-inspections.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import * as SplitButton from '#lib/components/ui/split-button/index.js';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
@@ -30,6 +32,7 @@
 	let tab = $state('charges');
 	let renewOpen = $state(false);
 	let lateFeeOpen = $state(false);
+	let recordAction = $state('payment');
 
 	let feeAmount = $state<number | null>(null);
 	let feeDesc = $state('Late fee');
@@ -65,19 +68,43 @@
 		}
 	}
 
-	async function removePayment(paymentId: string) {
-		if (!confirm('Delete this payment?')) return;
-		await deletePayment({ id: paymentId, leaseId: id }).catch((e) => fail(e, 'Could not delete'));
+	function removePayment(paymentId: string) {
+		confirmDelete({
+			title: 'Delete this payment?',
+			description: 'The charge balance goes back up by this amount.',
+			onConfirm: async () => {
+				await deletePayment({ id: paymentId, leaseId: id }).catch((e) =>
+					fail(e, 'Could not delete')
+				);
+			}
+		});
 	}
 </script>
 
 <PageHeader {title} crumbs={[{ label: 'Leases', href: '/leases' }]}>
 	{#snippet actions()}
-		<Button
-			size="sm"
-			onclick={() => (payment = { leaseId: id, balance: Math.max(0, l.balance), label: title })}
-			><Banknote /> <span class="hidden sm:inline">Record payment</span></Button
-		>
+		<SplitButton.Root value={recordAction} onActionSelect={(v) => (recordAction = v)}>
+			<SplitButton.Action
+				value="payment"
+				size="sm"
+				onclick={() => (payment = { leaseId: id, balance: Math.max(0, l.balance), label: title })}
+				><Banknote /> <span class="hidden sm:inline">Record payment</span></SplitButton.Action
+			>
+			<SplitButton.Action value="charge" size="sm" onclick={() => (feeOpen = true)}
+				><Plus /> <span class="hidden sm:inline">Add charge</span></SplitButton.Action
+			>
+			<SplitButton.Action value="late_fee" size="sm" onclick={() => (lateFeeOpen = true)}
+				><Banknote /> <span class="hidden sm:inline">Late fee…</span></SplitButton.Action
+			>
+			<SplitButton.Select>
+				<SplitButton.SelectTrigger size="icon-sm" aria-label="More record actions" />
+				<SplitButton.SelectContent>
+					<SplitButton.SelectAction value="payment">Record payment</SplitButton.SelectAction>
+					<SplitButton.SelectAction value="charge">Add charge</SplitButton.SelectAction>
+					<SplitButton.SelectAction value="late_fee">Late fee…</SplitButton.SelectAction>
+				</SplitButton.SelectContent>
+			</SplitButton.Select>
+		</SplitButton.Root>
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}<Button

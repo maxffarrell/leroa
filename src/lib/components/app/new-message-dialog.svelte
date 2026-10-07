@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as Command from '#lib/components/ui/command/index.js';
 	import { goto } from '$app/navigation';
 	import { getTenants } from '#lib/remote/portfolio.remote.ts';
@@ -15,12 +15,12 @@
 	}
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-md">
-		<Dialog.Header class="p-4 pb-2">
-			<Dialog.Title>New message</Dialog.Title>
-			<Dialog.Description>Pick a tenant to message.</Dialog.Description>
-		</Dialog.Header>
+<Modal.Root bind:open>
+	<Modal.Content class="gap-0 overflow-hidden p-0 sm:max-w-md">
+		<Modal.Header class="p-4 pb-2">
+			<Modal.Title>New message</Modal.Title>
+			<Modal.Description>Pick a tenant to message.</Modal.Description>
+		</Modal.Header>
 		<Command.Root class="border-t">
 			<Command.Input placeholder="Search tenants…" />
 			<Command.List class="max-h-80">
@@ -39,5 +39,5 @@
 				{/each}
 			</Command.List>
 		</Command.Root>
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>

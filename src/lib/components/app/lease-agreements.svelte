@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import StatusBadge from './status-badge.svelte';
-	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -190,17 +190,17 @@
 	{/if}
 </section>
 
-<Dialog.Root open={!!editing} onOpenChange={(o) => !o && (editing = null)}>
-	<Dialog.Content class="sm:max-w-3xl">
+<Modal.Root open={!!editing} onOpenChange={(o) => !o && (editing = null)}>
+	<Modal.Content class="sm:max-w-3xl">
 		{#if editing}
 			<form onsubmit={save} class="flex max-h-[80vh] flex-col gap-4">
-				<Dialog.Header>
-					<Dialog.Title>Review agreement</Dialog.Title>
-					<Dialog.Description
+				<Modal.Header>
+					<Modal.Title>Review agreement</Modal.Title>
+					<Modal.Description
 						>Lease details are filled in. Make any changes for this lease, then send it for
-						signature.</Dialog.Description
+						signature.</Modal.Description
 					>
-				</Dialog.Header>
+				</Modal.Header>
 				<Field.Field>
 					<Field.Label for="ag-title">Title</Field.Label>
 					<Input id="ag-title" required maxlength={200} bind:value={editing.title} />
@@ -214,7 +214,7 @@
 						bind:value={editing.body}
 					/>
 				</Field.Field>
-				<Dialog.Footer class="gap-2">
+				<Modal.Footer class="gap-2">
 					<Button type="button" variant="ghost" onclick={() => (editing = null)}>Cancel</Button>
 					<Button type="submit" variant="outline" disabled={busy}>Save draft</Button>
 					<Button
@@ -231,8 +231,8 @@
 							await send(id);
 						}}><Send /> Send for signature</Button
 					>
-				</Dialog.Footer>
+				</Modal.Footer>
 			</form>
 		{/if}
-	</Dialog.Content>
-</Dialog.Root>
+	</Modal.Content>
+</Modal.Root>
