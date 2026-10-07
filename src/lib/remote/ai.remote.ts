@@ -5,6 +5,7 @@ import { requireOrg } from '#lib/server/context.ts';
 import { hasFeature } from '#lib/server/ee/license.ts';
 import { idSchema } from '#lib/schemas.ts';
 import * as ai from '#lib/server/ai/index.ts';
+import { askAssistant } from '#lib/server/ai/assistant.ts';
 
 /** Enterprise-only: AI draft/triage helpers (works keyless via local heuristics). */
 async function requireEnterprise() {
@@ -34,3 +35,11 @@ export const aiListingCopy = command(idSchema, async (listingId) => {
 	const ctx = await requireEnterprise();
 	return ai.listingCopy(ctx.orgId, listingId);
 });
+
+export const aiAsk = command(
+	v.object({ question: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(2000)) }),
+	async ({ question }) => {
+		const ctx = await requireEnterprise();
+		return askAssistant(ctx.orgId, question);
+	}
+);

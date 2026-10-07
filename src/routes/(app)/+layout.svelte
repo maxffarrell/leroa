@@ -5,6 +5,7 @@
 	import CommandPalette from '#lib/components/app/command-palette.svelte';
 	import { ConfirmDeleteDialog } from '#lib/components/ui/confirm-delete-dialog/index.js';
 	import TourGuide from '#lib/components/app/tour-guide.svelte';
+	import Assistant from '#lib/components/app/assistant.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -49,3 +50,6 @@
 <CommandPalette bind:open={paletteOpen} />
 <ConfirmDeleteDialog />
 <TourGuide userId={data.user.id} />
+{#if data.enterprise}
+	<Assistant />
+{/if}
