@@ -702,3 +702,27 @@ export const passInput = v.object({
 	endsOn: v.pipe(v.string(), v.isoDate()),
 	notes: v.optional(v.nullable(shortText(300)))
 });
+
+export const eventInput = v.object({
+	propertyId: idSchema,
+	title: requiredText('Title'),
+	description: v.optional(v.nullable(shortText(2000))),
+	location: v.optional(v.nullable(shortText(120))),
+	startsAt: v.pipe(v.string(), v.isoTimestamp()),
+	endsAt: v.optional(v.nullable(v.pipe(v.string(), v.isoTimestamp()))),
+	capacity: v.optional(
+		v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100000)))
+	)
+});
+
+export const surveyInput = v.object({
+	propertyId: v.optional(v.nullable(idSchema)),
+	title: requiredText('Title'),
+	question: requiredText('Question')
+});
+
+export const surveyResponseInput = v.object({
+	surveyId: idSchema,
+	rating: v.optional(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5)))),
+	comment: v.optional(v.nullable(shortText(2000)))
+});

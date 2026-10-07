@@ -35,6 +35,8 @@
 	import PermitsView from '#lib/components/app/permits-view.svelte';
 	import KeysView from '#lib/components/app/keys-view.svelte';
 	import PassesView from '#lib/components/app/passes-view.svelte';
+	import EventsView from '#lib/components/app/events-view.svelte';
+	import SurveysView from '#lib/components/app/surveys-view.svelte';
 
 	const isAdmin = $derived(page.data.role !== 'member');
 	let restab = $state('packages');
@@ -212,6 +214,8 @@
 			<Tabs.Trigger value="parking">Parking</Tabs.Trigger>
 			<Tabs.Trigger value="keys">Keys & fobs</Tabs.Trigger>
 			<Tabs.Trigger value="guests">Guests</Tabs.Trigger>
+			<Tabs.Trigger value="events">Events</Tabs.Trigger>
+			<Tabs.Trigger value="surveys">Surveys</Tabs.Trigger>
 		</Tabs.List>
 
 		<Tabs.Content value="packages" class="mt-4 space-y-4">
@@ -425,6 +429,8 @@
 		<Tabs.Content value="parking"><PermitsView /></Tabs.Content>
 		<Tabs.Content value="keys"><KeysView /></Tabs.Content>
 		<Tabs.Content value="guests"><PassesView /></Tabs.Content>
+		<Tabs.Content value="events"><EventsView /></Tabs.Content>
+		<Tabs.Content value="surveys"><SurveysView /></Tabs.Content>
 	</Tabs.Root>
 </main>
 

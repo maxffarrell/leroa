@@ -104,6 +104,12 @@ export async function portalOverview(userId: string) {
 		.where(inArray(maintenanceTicket.tenantId, tenantIds))
 		.orderBy(desc(maintenanceTicket.createdAt))
 		.limit(20);
+	const { portalSurveys } = await import('./residents.ts');
+	const surveys = await portalSurveys(
+		tenantIds,
+		[...new Set(leases.map((l) => l.propertyId))],
+		[...new Set(tenants.map((t) => t.tenant.organizationId))]
+	);
 
 	return {
 		name: tenants[0]!.tenant.firstName || tenants[0]!.tenant.companyName || '',
@@ -119,7 +125,14 @@ export async function portalOverview(userId: string) {
 			agreements: agreements.filter((a) => a.leaseId === l.id),
 			inspections: inspections.filter((x) => x.leaseId === l.id)
 		})),
-		tickets
+		tickets,
+		surveys: surveys.map((s) => ({
+			id: s.id,
+			title: s.title,
+			question: s.question,
+			propertyName: s.propertyName,
+			answered: s.answeredId !== null
+		}))
 	};
 }
 

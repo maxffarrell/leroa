@@ -1,15 +1,20 @@
-import { and, asc, desc, eq, gt, isNull, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
 import {
 	amenity,
 	amenityBooking,
+	communityEvent,
 	guestPass,
 	keyRecord,
+	lease,
+	leaseTenant,
 	packageLog,
 	parkingPermit,
 	property,
+	survey,
+	surveyResponse,
 	tenant,
 	unit
 } from '#lib/server/db/schema.ts';
@@ -19,10 +24,13 @@ import type { OrgContext } from '#lib/server/context.ts';
 import type {
 	amenityInput,
 	bookingInput,
+	eventInput,
 	keyInput,
 	packageInput,
 	passInput,
-	permitInput
+	permitInput,
+	surveyInput,
+	surveyResponseInput
 } from '#lib/schemas.ts';
 import { emit } from './events.ts';
 
@@ -594,4 +602,258 @@ export async function closePass(ctx: OrgContext, id: string, status: 'used' | 'v
 		action: status,
 		summary: `Guest pass for ${row.guestName} ${status}`
 	});
+}
+
+// ---------- Community events ----------
+
+export async function listEvents(orgId: string, opts: { includeCancelled?: boolean } = {}) {
+	return db
+		.select({
+			id: communityEvent.id,
+			title: communityEvent.title,
+			description: communityEvent.description,
+			location: communityEvent.location,
+			startsAt: communityEvent.startsAt,
+			endsAt: communityEvent.endsAt,
+			capacity: communityEvent.capacity,
+			status: communityEvent.status,
+			propertyId: communityEvent.propertyId,
+			propertyName: property.name
+		})
+		.from(communityEvent)
+		.innerJoin(property, eq(property.id, communityEvent.propertyId))
+		.where(
+			and(
+				eq(communityEvent.organizationId, orgId),
+				opts.includeCancelled ? undefined : eq(communityEvent.status, 'scheduled')
+			)
+		)
+		.orderBy(asc(communityEvent.startsAt))
+		.limit(200);
+}
+
+export async function createEvent(ctx: OrgContext, input: Out<typeof eventInput>) {
+	const [p] = await db
+		.select({ name: property.name })
+		.from(property)
+		.where(and(eq(property.organizationId, ctx.orgId), eq(property.id, input.propertyId)));
+	if (!p) error(404, 'Property not found');
+	const startsAt = new Date(input.startsAt);
+	if (Number.isNaN(startsAt.getTime())) error(400, 'Bad start time');
+	const endsAt = input.endsAt ? new Date(input.endsAt) : null;
+	if (endsAt && (Number.isNaN(endsAt.getTime()) || endsAt <= startsAt))
+		error(400, 'End must be after the start');
+	const [row] = await db
+		.insert(communityEvent)
+		.values({ ...input, startsAt, endsAt, organizationId: ctx.orgId, createdBy: ctx.userId })
+		.returning();
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'community_event',
+		entityId: row!.id,
+		action: 'scheduled',
+		summary: `${input.title} at ${p.name} on ${startsAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric' })}`
+	});
+	return row!;
+}
+
+export async function cancelEvent(ctx: OrgContext, id: string) {
+	const [row] = await db
+		.update(communityEvent)
+		.set({ status: 'cancelled' })
+		.where(
+			and(
+				eq(communityEvent.organizationId, ctx.orgId),
+				eq(communityEvent.id, id),
+				eq(communityEvent.status, 'scheduled')
+			)
+		)
+		.returning();
+	if (!row) error(404, 'Event not found or already cancelled');
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'community_event',
+		entityId: id,
+		action: 'cancelled',
+		summary: `${row.title} cancelled`
+	});
+}
+
+// ---------- Pulse surveys ----------
+
+export async function listSurveys(orgId: string) {
+	const rows = await db
+		.select({
+			id: survey.id,
+			title: survey.title,
+			question: survey.question,
+			status: survey.status,
+			createdAt: survey.createdAt,
+			propertyName: property.name,
+			responses:
+				sql<number>`(select count(*) from survey_response r where r.survey_id = ${survey.id})`.mapWith(
+					Number
+				),
+			avgRating: sql<
+				number | null
+			>`(select avg(r.rating) from survey_response r where r.survey_id = ${survey.id} and r.rating is not null)`
+		})
+		.from(survey)
+		.leftJoin(property, eq(property.id, survey.propertyId))
+		.where(eq(survey.organizationId, orgId))
+		.orderBy(desc(survey.createdAt));
+	return rows.map((r) => ({ ...r, avgRating: r.avgRating === null ? null : Number(r.avgRating) }));
+}
+
+export async function listSurveyResponses(orgId: string, surveyId: string) {
+	return db
+		.select({
+			id: surveyResponse.id,
+			rating: surveyResponse.rating,
+			comment: surveyResponse.comment,
+			createdAt: surveyResponse.createdAt,
+			tenantFirst: tenant.firstName,
+			tenantLast: tenant.lastName,
+			tenantCompany: tenant.companyName
+		})
+		.from(surveyResponse)
+		.innerJoin(tenant, eq(tenant.id, surveyResponse.tenantId))
+		.where(and(eq(surveyResponse.organizationId, orgId), eq(surveyResponse.surveyId, surveyId)))
+		.orderBy(desc(surveyResponse.createdAt));
+}
+
+export async function createSurvey(ctx: OrgContext, input: Out<typeof surveyInput>) {
+	if (input.propertyId) {
+		const [p] = await db
+			.select({ id: property.id })
+			.from(property)
+			.where(and(eq(property.organizationId, ctx.orgId), eq(property.id, input.propertyId)));
+		if (!p) error(404, 'Property not found');
+	}
+	const [row] = await db
+		.insert(survey)
+		.values({ ...input, organizationId: ctx.orgId, createdBy: ctx.userId })
+		.returning();
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'survey',
+		entityId: row!.id,
+		action: 'opened',
+		summary: `Survey opened: ${input.title}`
+	});
+	return row!;
+}
+
+export async function closeSurvey(ctx: OrgContext, id: string) {
+	const [row] = await db
+		.update(survey)
+		.set({ status: 'closed' })
+		.where(and(eq(survey.organizationId, ctx.orgId), eq(survey.id, id), eq(survey.status, 'open')))
+		.returning();
+	if (!row) error(404, 'Survey not found or already closed');
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'survey',
+		entityId: id,
+		action: 'closed',
+		summary: `Survey closed: ${row.title}`
+	});
+}
+
+/** Open surveys a portal tenant can see (their property or org-wide), annotated with their answer. */
+export async function portalSurveys(tenantIds: string[], propertyIds: string[], orgIds: string[]) {
+	if (!tenantIds.length || !orgIds.length) return [];
+	const answeredSub = db
+		.select({ id: surveyResponse.id })
+		.from(surveyResponse)
+		.where(and(eq(surveyResponse.surveyId, survey.id), inArray(surveyResponse.tenantId, tenantIds)))
+		.limit(1)
+		.as('answered_sub');
+	return db
+		.select({
+			id: survey.id,
+			title: survey.title,
+			question: survey.question,
+			propertyName: property.name,
+			answeredId: answeredSub.id
+		})
+		.from(survey)
+		.leftJoin(property, eq(property.id, survey.propertyId))
+		.leftJoin(answeredSub, sql`true`)
+		.where(
+			and(
+				inArray(survey.organizationId, orgIds),
+				eq(survey.status, 'open'),
+				propertyIds.length
+					? or(isNull(survey.propertyId), inArray(survey.propertyId, propertyIds))
+					: isNull(survey.propertyId)
+			)
+		)
+		.orderBy(desc(survey.createdAt))
+		.limit(10);
+}
+
+/** Record (or update) a portal tenant's answer to an open survey they can see. */
+export async function answerSurvey(userId: string, input: Out<typeof surveyResponseInput>) {
+	const tenants = await db
+		.select({ id: tenant.id, orgId: tenant.organizationId })
+		.from(tenant)
+		.where(eq(tenant.portalUserId, userId));
+	if (!tenants.length) error(403, 'No tenant account');
+	const tenantIds = tenants.map((t) => t.id);
+	const [s] = await db
+		.select({
+			id: survey.id,
+			orgId: survey.organizationId,
+			propertyId: survey.propertyId,
+			status: survey.status
+		})
+		.from(survey)
+		.where(
+			and(
+				eq(survey.id, input.surveyId),
+				inArray(
+					survey.organizationId,
+					tenants.map((t) => t.orgId)
+				)
+			)
+		);
+	if (!s || s.status !== 'open') error(404, 'Survey not found');
+	if (s.propertyId) {
+		const [visible] = await db
+			.select({ id: leaseTenant.tenantId })
+			.from(leaseTenant)
+			.innerJoin(lease, eq(lease.id, leaseTenant.leaseId))
+			.innerJoin(unit, eq(unit.id, lease.unitId))
+			.where(and(inArray(leaseTenant.tenantId, tenantIds), eq(unit.propertyId, s.propertyId)))
+			.limit(1);
+		if (!visible) error(404, 'Survey not found');
+	}
+	const target = tenantIds[0]!;
+	const [existing] = await db
+		.select({ id: surveyResponse.id })
+		.from(surveyResponse)
+		.where(and(eq(surveyResponse.surveyId, s.id), eq(surveyResponse.tenantId, target)));
+	if (existing) {
+		await db
+			.update(surveyResponse)
+			.set({ rating: input.rating ?? null, comment: input.comment ?? null })
+			.where(eq(surveyResponse.id, existing.id));
+		return { id: existing.id };
+	}
+	const [row] = await db
+		.insert(surveyResponse)
+		.values({
+			organizationId: s.orgId,
+			surveyId: s.id,
+			tenantId: target,
+			rating: input.rating ?? null,
+			comment: input.comment ?? null
+		})
+		.returning();
+	return row!;
 }

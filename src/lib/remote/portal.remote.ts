@@ -40,3 +40,17 @@ export const payOnline = command(
 		return createCheckout(requireUser().user.id, leaseId, provider);
 	}
 );
+
+export const respondSurvey = command(
+	v.object({
+		surveyId: idSchema,
+		rating: v.optional(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5)))),
+		comment: v.optional(v.nullable(v.pipe(v.string(), v.maxLength(2000))))
+	}),
+	async (input) => {
+		const { answerSurvey } = await import('#lib/server/services/residents.ts');
+		const row = await answerSurvey(requireUser().user.id, input);
+		void getPortal().refresh();
+		return row;
+	}
+);

@@ -9,7 +9,9 @@ import {
 	keyInput,
 	packageInput,
 	passInput,
-	permitInput
+	permitInput,
+	surveyInput,
+	eventInput
 } from '#lib/schemas.ts';
 
 export const getAmenities = query(async () => svc.listAmenities((await requireOrg()).orgId));
@@ -126,3 +128,41 @@ export const closePass = command(
 		void getPasses(true).refresh();
 	}
 );
+
+// ---------- Events ----------
+
+export const getEvents = query(v.optional(v.boolean(), false), async (includeCancelled) =>
+	svc.listEvents((await requireOrg()).orgId, { includeCancelled })
+);
+
+export const createEvent = command(eventInput, async (input) => {
+	const row = await svc.createEvent(await requireOrg(), input);
+	void getEvents(false).refresh();
+	void getEvents(true).refresh();
+	return { id: row.id };
+});
+
+export const cancelEvent = command(idSchema, async (id) => {
+	await svc.cancelEvent(await requireOrg(), id);
+	void getEvents(false).refresh();
+	void getEvents(true).refresh();
+});
+
+// ---------- Surveys ----------
+
+export const getSurveys = query(async () => svc.listSurveys((await requireOrg()).orgId));
+
+export const getSurveyResponses = query(idSchema, async (surveyId) =>
+	svc.listSurveyResponses((await requireOrg()).orgId, surveyId)
+);
+
+export const createSurvey = command(surveyInput, async (input) => {
+	const row = await svc.createSurvey(await requireOrg(), input);
+	void getSurveys().refresh();
+	return { id: row.id };
+});
+
+export const closeSurvey = command(idSchema, async (id) => {
+	await svc.closeSurvey(await requireOrg(), id);
+	void getSurveys().refresh();
+});

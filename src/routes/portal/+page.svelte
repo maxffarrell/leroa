@@ -4,6 +4,7 @@
 	import PortalInspections from '#lib/components/app/portal-inspections.svelte';
 	import PortalMessages from '#lib/components/app/portal-messages.svelte';
 	import PortalAnnouncements from '#lib/components/app/portal-announcements.svelte';
+	import PortalSurveys from '#lib/components/app/portal-surveys.svelte';
 	import PortalProfile from '#lib/components/app/portal-profile.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
@@ -117,6 +118,9 @@
 		<p class="text-sm text-muted-foreground">Managed by {p.orgName}</p>
 	</div>
 	<PortalAnnouncements />
+	{#if p.surveys.length}
+		<PortalSurveys surveys={p.surveys} />
+	{/if}
 	{#each p.leases as l (l.id)}
 		<Card.Root>
 			<Card.Header>

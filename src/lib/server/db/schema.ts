@@ -1359,3 +1359,66 @@ export const guestPass = pgTable(
 	},
 	(t) => [index('guest_pass_org_idx').on(t.organizationId, t.status)]
 );
+
+export const eventStatus = pgEnum('community_event_status', ['scheduled', 'cancelled']);
+
+/** A community event hosted at a property. */
+export const communityEvent = pgTable(
+	'community_event',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		description: text('description'),
+		location: text('location'),
+		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+		endsAt: timestamp('ends_at', { withTimezone: true }),
+		capacity: integer('capacity'),
+		status: eventStatus('status').notNull().default('scheduled'),
+		createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+		...timestamps
+	},
+	(t) => [index('community_event_org_idx').on(t.organizationId, t.startsAt)]
+);
+
+export const surveyStatus = pgEnum('survey_status', ['open', 'closed']);
+
+/** A single-question pulse survey sent to residents of one property (or the whole org). */
+export const survey = pgTable(
+	'survey',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id').references(() => property.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		question: text('question').notNull(),
+		status: surveyStatus('status').notNull().default('open'),
+		createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+		...timestamps
+	},
+	(t) => [index('survey_org_idx').on(t.organizationId, t.status)]
+);
+
+export const surveyResponse = pgTable(
+	'survey_response',
+	{
+		id: id(),
+		organizationId: orgId(),
+		surveyId: text('survey_id')
+			.notNull()
+			.references(() => survey.id, { onDelete: 'cascade' }),
+		tenantId: text('tenant_id')
+			.notNull()
+			.references(() => tenant.id, { onDelete: 'cascade' }),
+		rating: integer('rating'),
+		comment: text('comment'),
+		...timestamps
+	},
+	(t) => [
+		index('survey_response_survey_idx').on(t.surveyId),
+		uniqueIndex('survey_response_once_idx').on(t.surveyId, t.tenantId)
+	]
+);

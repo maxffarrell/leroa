@@ -23,7 +23,9 @@ import { createOwner } from './owners.ts';
 import {
 	bookSlot,
 	createAmenity,
+	createEvent,
 	createPass,
+	createSurvey,
 	issueKey,
 	issuePermit,
 	logPackage
@@ -471,6 +473,20 @@ export async function loadDemoData(ctx: OrgContext) {
 		startsOn: t0,
 		endsOn: addDays(t0, 2),
 		notes: 'Overnight guest, parks in visitor row'
+	});
+	await createEvent(ctx, {
+		propertyId: maple.id,
+		title: 'Courtyard movie night',
+		description: 'Family-friendly screening on the big lawn. Bring a blanket; popcorn is on us.',
+		location: 'Courtyard',
+		startsAt: new Date(`${addDays(t0, 5)}T19:30:00`).toISOString(),
+		endsAt: new Date(`${addDays(t0, 5)}T22:00:00`).toISOString(),
+		capacity: 60
+	});
+	await createSurvey(ctx, {
+		propertyId: maple.id,
+		title: 'October resident pulse',
+		question: 'How would you rate maintenance response this month?'
 	});
 	return { properties: 3, leases: leases.length };
 }
