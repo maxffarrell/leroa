@@ -13,6 +13,7 @@
 		{ href: '/settings/leasing', label: 'Leasing' },
 		{ href: '/settings/import', label: 'Import' },
 		{ href: '/settings/audit', label: 'Audit log' },
+		{ href: '/settings/fields', label: 'Fields' },
 		{ href: '/settings/payments', label: 'Payments' },
 		{ href: '/settings/security', label: 'Security' },
 		{ href: '/settings/integrations', label: 'Integrations' },

@@ -16,6 +16,7 @@
 	import InsuranceBadge from '#lib/components/app/insurance-badge.svelte';
 	import VendorDialog from '#lib/components/app/vendor-dialog.svelte';
 	import TicketActivity from '#lib/components/app/ticket-activity.svelte';
+	import RecordFields from '#lib/components/app/record-fields.svelte';
 	import TurnBoard from '#lib/components/app/turn-board.svelte';
 	import SchedulesView from '#lib/components/app/schedules-view.svelte';
 	import AssetsView from '#lib/components/app/assets-view.svelte';
@@ -391,6 +392,10 @@
 						>
 					</p>
 				{/if}
+				<svelte:boundary>
+					<RecordFields entity="ticket" recordId={selected.id} />
+					{#snippet pending()}{/snippet}
+				</svelte:boundary>
 				<svelte:boundary>
 					<TicketActivity ticketId={selected.id} />
 					{#snippet pending()}<p class="text-sm text-muted-foreground">Loading notes…</p>{/snippet}

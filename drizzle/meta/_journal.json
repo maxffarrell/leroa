@@ -127,6 +127,13 @@
       "when": 1791386166373,
       "tag": "0017_saved_views",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791386600505,
+      "tag": "0018_custom_fields",
+      "breakpoints": true
     }
   ]
 }

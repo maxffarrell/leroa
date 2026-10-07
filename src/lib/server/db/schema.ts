@@ -573,6 +573,46 @@ export const savedView = pgTable(
 	]
 );
 
+/** Admin-defined extra field attached to an entity type (Twenty-style custom fields). */
+export const customField = pgTable(
+	'custom_field',
+	{
+		id: id(),
+		organizationId: orgId(),
+		/** Entity key: 'tenant' | 'property' | 'lease' | 'vendor' | 'owner' | 'ticket' */
+		entity: text('entity').notNull(),
+		name: text('name').notNull(),
+		/** 'text' | 'number' | 'date' | 'select' | 'checkbox' */
+		type: text('type').notNull().default('text'),
+		/** Choices for type='select'. */
+		options: jsonb('options').$type<string[]>(),
+		position: integer('position').notNull().default(0),
+		archivedAt: timestamp('archived_at', { withTimezone: true }),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [
+		index('custom_field_org_entity_idx').on(t.organizationId, t.entity),
+		uniqueIndex('custom_field_name_idx').on(t.organizationId, t.entity, t.name)
+	]
+);
+
+export const customFieldValue = pgTable(
+	'custom_field_value',
+	{
+		id: id(),
+		fieldId: text('field_id')
+			.notNull()
+			.references(() => customField.id, { onDelete: 'cascade' }),
+		recordId: text('record_id').notNull(),
+		value: text('value'),
+		...timestamps
+	},
+	(t) => [
+		uniqueIndex('custom_field_value_once_idx').on(t.fieldId, t.recordId),
+		index('custom_field_value_record_idx').on(t.recordId)
+	]
+);
+
 export const webhook = pgTable(
 	'webhook',
 	{

@@ -14,6 +14,7 @@
 	import Link from '@lucide/svelte/icons/link';
 	import { formatDate, formatMoney, formatRelative, initials, tenantName } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
+	import RecordFields from '#lib/components/app/record-fields.svelte';
 	import Mail from '@lucide/svelte/icons/mail';
 	import Phone from '@lucide/svelte/icons/phone';
 	import FileSignature from '@lucide/svelte/icons/file-signature';
@@ -133,6 +134,10 @@
 		<p class="text-xs text-muted-foreground">
 			Changes save when you leave a field. Added {formatRelative(t.createdAt)}.
 		</p>
+		<svelte:boundary>
+			<RecordFields entity="tenant" recordId={t.id} />
+			{#snippet pending()}{/snippet}
+		</svelte:boundary>
 		{#if t.leases.length === 0}<Button
 				variant="ghost"
 				size="sm"

@@ -4,6 +4,7 @@
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import VendorDialog from '#lib/components/app/vendor-dialog.svelte';
 	import InsuranceBadge from '#lib/components/app/insurance-badge.svelte';
+	import RecordFields from '#lib/components/app/record-fields.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
@@ -160,6 +161,11 @@
 			<p class="text-xs text-muted-foreground">Added {formatDate(v.createdAt)}</p>
 		</Card.Content>
 	</Card.Root>
+
+	<svelte:boundary>
+		<RecordFields entity="vendor" recordId={v.id} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
 </main>
 
 <VendorDialog bind:open={editing} vendor={v} />

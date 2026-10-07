@@ -3,6 +3,7 @@
 	import PageHeader from '#lib/components/app/page-header.svelte';
 	import OwnerDialog from '#lib/components/app/owner-dialog.svelte';
 	import OwnerReport from '#lib/components/app/owner-report.svelte';
+	import RecordFields from '#lib/components/app/record-fields.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
@@ -136,6 +137,11 @@
 			<p class="text-xs text-muted-foreground">Added {formatDate(o.createdAt)}</p>
 		</Card.Content>
 	</Card.Root>
+
+	<svelte:boundary>
+		<RecordFields entity="owner" recordId={o.id} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
 </main>
 
 <OwnerDialog bind:open={editing} owner={o} />

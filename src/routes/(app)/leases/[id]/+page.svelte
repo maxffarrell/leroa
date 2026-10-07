@@ -3,6 +3,7 @@
 	import PageHeader from '#lib/components/app/page-header.svelte';
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import PaymentDialog, { type PaymentTarget } from '#lib/components/app/payment-dialog.svelte';
+	import RecordFields from '#lib/components/app/record-fields.svelte';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
 	import LateFeeDialog from '#lib/components/app/late-fee-dialog.svelte';
 	import RenewLeaseDialog from '#lib/components/app/renew-lease-dialog.svelte';
@@ -214,6 +215,11 @@
 			{/each}
 		</div>
 	</section>
+
+	<svelte:boundary>
+		<RecordFields entity="lease" recordId={id} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
 
 	<LeaseAgreements leaseId={id} />
 

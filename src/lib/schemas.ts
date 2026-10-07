@@ -577,3 +577,9 @@ export const tourSlotsInput = v.object({
 	orgSlug: v.pipe(v.string(), v.nonEmpty(), v.maxLength(100)),
 	propertyId: idSchema
 });
+
+/** Entity keys custom fields can attach to (each has a record page/section). */
+export const FIELD_ENTITIES = ['tenant', 'property', 'lease', 'vendor', 'owner', 'ticket'] as const;
+export type FieldEntity = (typeof FIELD_ENTITIES)[number];
+export const FIELD_TYPES = ['text', 'number', 'date', 'select', 'checkbox'] as const;
+export type FieldType = (typeof FIELD_TYPES)[number];
