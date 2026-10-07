@@ -118,7 +118,7 @@
 				</DropdownMenu.Item>
 			{/each}
 			{#if views.length}<DropdownMenu.Separator />{/if}
-			<DropdownMenu.Item onclick={() => (naming = true)}>
+			<DropdownMenu.Item closeOnSelect={false} onclick={() => (naming = true)}>
 				<Bookmark class="size-4" /> Save current view
 			</DropdownMenu.Item>
 		{/if}
