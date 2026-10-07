@@ -9,6 +9,7 @@
 	import RenewLeaseDialog from '#lib/components/app/renew-lease-dialog.svelte';
 	import LeaseAgreements from '#lib/components/app/lease-agreements.svelte';
 	import LeaseClauses from '#lib/components/app/lease-clauses.svelte';
+	import LeaseTi from '#lib/components/app/lease-ti.svelte';
 	import LeaseInspections from '#lib/components/app/lease-inspections.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -226,6 +227,11 @@
 
 	<svelte:boundary>
 		<LeaseClauses leaseId={id} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
+
+	<svelte:boundary>
+		<LeaseTi leaseId={id} />
 		{#snippet pending()}{/snippet}
 	</svelte:boundary>
 

@@ -1475,3 +1475,25 @@ export const leaseCriticalDate = pgTable(
 		index('critical_date_org_date_idx').on(t.organizationId, t.date)
 	]
 );
+
+export const tiStatus = pgEnum('ti_status', ['planned', 'approved', 'in_progress', 'complete']);
+
+/** A tenant-improvement scope item on a lease: allowance budget vs actual spend. */
+export const leaseTiItem = pgTable(
+	'lease_ti_item',
+	{
+		id: id(),
+		organizationId: orgId(),
+		leaseId: text('lease_id')
+			.notNull()
+			.references(() => lease.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		status: tiStatus('status').notNull().default('planned'),
+		budgetAmount: integer('budget_amount').notNull().default(0),
+		actualAmount: integer('actual_amount').notNull().default(0),
+		dueDate: date('due_date', { mode: 'string' }),
+		notes: text('notes'),
+		...timestamps
+	},
+	(t) => [index('lease_ti_lease_idx').on(t.leaseId)]
+);

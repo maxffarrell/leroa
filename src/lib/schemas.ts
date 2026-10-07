@@ -777,3 +777,29 @@ export const criticalDateDoneInput = v.object({
 	done: v.boolean()
 });
 export type ClauseKind = (typeof CLAUSE_KINDS)[number];
+
+export const TI_STATUSES = ['planned', 'approved', 'in_progress', 'complete'] as const;
+export const TI_STATUS_LABELS: Record<(typeof TI_STATUSES)[number], string> = {
+	planned: 'Planned',
+	approved: 'Approved',
+	in_progress: 'In progress',
+	complete: 'Complete'
+};
+export type TiStatus = (typeof TI_STATUSES)[number];
+
+export const tiItemInput = v.object({
+	leaseId: idSchema,
+	name: requiredText('Item'),
+	budgetAmount: v.optional(v.nullable(cents)),
+	actualAmount: v.optional(v.nullable(cents)),
+	dueDate: v.optional(v.nullable(v.pipe(v.string(), v.isoDate()))),
+	notes: v.optional(v.nullable(shortText(300)))
+});
+
+export const tiItemUpdate = v.object({
+	id: idSchema,
+	status: v.optional(v.picklist(TI_STATUSES)),
+	actualAmount: v.optional(v.nullable(cents)),
+	dueDate: v.optional(v.nullable(v.pipe(v.string(), v.isoDate()))),
+	notes: v.optional(v.nullable(shortText(300)))
+});

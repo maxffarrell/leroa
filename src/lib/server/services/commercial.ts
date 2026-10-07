@@ -2,9 +2,16 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
-import { lease, leaseClause, leaseCriticalDate, property, unit } from '#lib/server/db/schema.ts';
+import {
+	lease,
+	leaseClause,
+	leaseCriticalDate,
+	leaseTiItem,
+	property,
+	unit
+} from '#lib/server/db/schema.ts';
 import type { OrgContext } from '#lib/server/context.ts';
-import type { clauseInput, criticalDateInput } from '#lib/schemas.ts';
+import type { clauseInput, criticalDateInput, tiItemInput, tiItemUpdate } from '#lib/schemas.ts';
 import { emit } from './events.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
@@ -154,3 +161,60 @@ export async function upcomingCriticalDates(orgId: string) {
 }
 
 export const criticalDateDueSql = sql<boolean>`${leaseCriticalDate.date} <= current_date + ${leaseCriticalDate.remindDays}`;
+
+export async function listTiItems(orgId: string, leaseId: string) {
+	return db
+		.select()
+		.from(leaseTiItem)
+		.where(and(eq(leaseTiItem.organizationId, orgId), eq(leaseTiItem.leaseId, leaseId)))
+		.orderBy(asc(leaseTiItem.createdAt));
+}
+
+export async function addTiItem(ctx: OrgContext, input: Out<typeof tiItemInput>) {
+	await checkLease(ctx, input.leaseId);
+	const [row] = await db
+		.insert(leaseTiItem)
+		.values({
+			organizationId: ctx.orgId,
+			leaseId: input.leaseId,
+			name: input.name,
+			budgetAmount: input.budgetAmount ?? 0,
+			actualAmount: input.actualAmount ?? 0,
+			dueDate: input.dueDate || null,
+			notes: input.notes || null
+		})
+		.returning();
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'lease',
+		entityId: input.leaseId,
+		action: 'ti_added',
+		summary: `TI item added: ${row.name}`
+	});
+	return row;
+}
+
+export async function updateTiItem(ctx: OrgContext, input: Out<typeof tiItemUpdate>) {
+	const patch: Partial<typeof leaseTiItem.$inferInsert> = {};
+	if (input.status !== undefined) patch.status = input.status;
+	if (input.actualAmount !== undefined) patch.actualAmount = input.actualAmount ?? 0;
+	if (input.dueDate !== undefined) patch.dueDate = input.dueDate;
+	if (input.notes !== undefined) patch.notes = input.notes;
+	const [row] = await db
+		.update(leaseTiItem)
+		.set(patch)
+		.where(and(eq(leaseTiItem.id, input.id), eq(leaseTiItem.organizationId, ctx.orgId)))
+		.returning();
+	if (!row) error(404, 'Item not found');
+	return row;
+}
+
+export async function deleteTiItem(ctx: OrgContext, id: string) {
+	const [row] = await db
+		.delete(leaseTiItem)
+		.where(and(eq(leaseTiItem.id, id), eq(leaseTiItem.organizationId, ctx.orgId)))
+		.returning();
+	if (!row) error(404, 'Item not found');
+	return row;
+}

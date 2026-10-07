@@ -30,7 +30,7 @@ import {
 	issuePermit,
 	logPackage
 } from './residents.ts';
-import { addClause, addCriticalDate } from './commercial.ts';
+import { addClause, addCriticalDate, addTiItem } from './commercial.ts';
 import {
 	addLeadNote,
 	createLead,
@@ -508,6 +508,20 @@ export async function loadDemoData(ctx: OrgContext) {
 		label: 'Tenant insurance certificate renewal',
 		date: addDays(t0, 45),
 		remindDays: 14
+	});
+	await addTiItem(ctx, {
+		leaseId: leases[0]!.id,
+		name: 'Lobby build-out allowance',
+		budgetAmount: 1500000,
+		dueDate: addDays(t0, 60),
+		notes: 'Landlord-funded per work letter §3'
+	});
+	await addTiItem(ctx, {
+		leaseId: leases[0]!.id,
+		name: 'Suite signage',
+		budgetAmount: 80000,
+		dueDate: null,
+		notes: null
 	});
 	return { properties: 3, leases: leases.length };
 }
