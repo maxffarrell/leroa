@@ -159,11 +159,19 @@ function snapshot(pack: Pack) {
 
 /* ---------- deterministic intent router ---------- */
 
-const SCREENING =
-	/\b(approv|deny|deni|reject|screen|qualif|should i rent|credit|background check|eviction (history|record)|evict)\b/i;
+// Screening stems are prefixes (no trailing \b) so 'approve', 'denied',
+// 'screening', 'qualify' all match. Fires on explicit screening terms, or on
+// a judgement verb aimed at an applicant-ish noun — never issues an opinion,
+// always declines to the application.
+export const SCREENING =
+	/\b(approv\w*|deny\b|deni\w*|reject\w*|screen\w*|qualif\w*|should i rent|rent to|lease to|credit (check|score|history|report)|background check|evict\w*)/i;
 const DRAFT_TICKET = /\b(work ?order|ticket|maintenance request)\b/i;
 const DRAFT_MSG = /\b(message|reply|response|text|email|note)\b/i;
-const DRAFT_VERB = /\b(draft|create|make|log|open|file|write|send|start)\b/i;
+// 'open' stays out of DRAFT_VERB — 'open tickets?' is a question, not a
+// command; it's allowed only in the explicit 'open a work order' phrasing.
+const DRAFT_VERB = /\b(draft|create|make|log|file|start|add|new)\b/i;
+const OPEN_TICKET = /\bopen (a |an |the |new )?(work ?order|ticket|maintenance request)\b/i;
+const DRAFT_MSG_VERB = /\b(draft|write|send|reply|respond|message|text|email|compose)\b/i;
 const VACANT = /\b(vacan|available|availab|unoccupied|empty|open unit|rentable)/i;
 const EXPIRING = /\b(expir|renew|end(s|ing)? (this|next|soon)|coming up)/i;
 const DELINQUENT =
@@ -181,7 +189,7 @@ async function heuristicAsk(orgId: string, pack: Pack, question: string): Promis
 	const tenant = findTenant(pack, q);
 
 	// Drafts first — they combine an intent verb with an entity.
-	if (DRAFT_VERB.test(q) && DRAFT_TICKET.test(q)) {
+	if ((DRAFT_VERB.test(q) || OPEN_TICKET.test(q)) && DRAFT_TICKET.test(q)) {
 		const target = unit ?? (pack.units.length === 1 ? pack.units[0] : null);
 		const propertyId = target?.propertyId ?? findProperty(pack, q)?.id ?? null;
 		if (!propertyId) {
@@ -196,13 +204,7 @@ async function heuristicAsk(orgId: string, pack: Pack, question: string): Promis
 				action: null
 			};
 		}
-		const title = q
-			.replace(DRAFT_VERB, '')
-			.replace(/\b(a|an|the|new|for|on|at|in|to)\b/gi, ' ')
-			.replace(/work ?order|ticket|maintenance request/gi, ' ')
-			.replace(target ? new RegExp(escapeRe(target.name), 'i') : /^$/, ' ')
-			.replace(/\s+/g, ' ')
-			.trim();
+		const title = draftTicketTitle(q, target?.name ?? null);
 		const triage = heuristicTriage({ title: title || q, description: q });
 		return {
 			reply: `Here's a work order draft for ${[target?.propertyName ?? 'the property', target?.name].filter(Boolean).join(' · ')} — review and confirm:`,
@@ -221,7 +223,7 @@ async function heuristicAsk(orgId: string, pack: Pack, question: string): Promis
 		};
 	}
 
-	if (DRAFT_VERB.test(q) && DRAFT_MSG.test(q)) {
+	if (DRAFT_MSG_VERB.test(q) && DRAFT_MSG.test(q)) {
 		if (!tenant) {
 			return {
 				reply:
@@ -442,17 +444,40 @@ function escapeRe(s: string) {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function findUnit(pack: Pack, q: string) {
-	const lower = q.toLowerCase();
+/** Strips the command phrasing from a draft-work-order question into a title. */
+export function draftTicketTitle(q: string, unitName: string | null) {
 	return (
-		pack.units.find((u) => new RegExp(`\\b${escapeRe(u.name.toLowerCase())}\\b`).test(lower)) ??
-		pack.units.find(
-			(u) =>
-				u.name.length > 1 &&
-				lower.includes(`${u.propertyName.toLowerCase()} ${u.name.toLowerCase()}`)
-		) ??
-		null
+		q
+			.replace(DRAFT_VERB, '')
+			.replace(/\bopen\b/i, ' ')
+			.replace(/work ?order|ticket|maintenance request/gi, ' ')
+			// unit names get word boundaries so 'A' can't eat the 'a' in 'leaking'
+			.replace(unitName ? new RegExp(`\\b${escapeRe(unitName)}\\b`, 'gi') : /^$/, ' ')
+			.replace(/\b(a|an|the|new|for|on|at|in|to|of|unit|apt)\b/gi, ' ')
+			.replace(/\s+/g, ' ')
+			.trim()
 	);
+}
+
+export function findUnit(pack: Pack, q: string) {
+	const lower = q.toLowerCase();
+	for (const u of pack.units) {
+		const name = u.name.toLowerCase();
+		if (name.length <= 2) {
+			// Short names only count with an explicit unit-ish anchor — otherwise
+			// 'A' matches the article 'a' and binds the wrong unit.
+			if (
+				new RegExp(`\\b(unit|apt|apartment|suite|ste|room|#)\\s*${escapeRe(name)}\\b`).test(
+					lower
+				) ||
+				lower.includes(`${u.propertyName.toLowerCase()} ${name}`)
+			)
+				return u;
+		} else if (new RegExp(`\\b${escapeRe(name)}\\b`).test(lower)) {
+			return u;
+		}
+	}
+	return null;
 }
 
 function findProperty(pack: Pack, q: string) {
