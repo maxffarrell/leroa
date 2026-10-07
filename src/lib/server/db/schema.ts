@@ -632,6 +632,25 @@ export const webhook = pgTable(
 	(t) => [index('webhook_org_idx').on(t.organizationId)]
 );
 
+/** A "when event, do action" automation rule built in Settings → Workflows. */
+export const workflow = pgTable(
+	'workflow',
+	{
+		id: id(),
+		organizationId: orgId(),
+		name: text('name').notNull(),
+		/** Event type to match ('maintenance.created') or '*' for everything. */
+		eventType: text('event_type').notNull(),
+		action: text('action').notNull(),
+		config: jsonb('config').$type<Record<string, string | null>>().notNull().default({}),
+		enabled: boolean('enabled').notNull().default(true),
+		lastRunAt: timestamp('last_run_at', { withTimezone: true }),
+		runCount: integer('run_count').notNull().default(0),
+		...timestamps
+	},
+	(t) => [index('workflow_org_idx').on(t.organizationId, t.enabled)]
+);
+
 export const integrationInstall = pgTable(
 	'integration_install',
 	{

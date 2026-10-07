@@ -583,3 +583,55 @@ export const FIELD_ENTITIES = ['tenant', 'property', 'lease', 'vendor', 'owner',
 export type FieldEntity = (typeof FIELD_ENTITIES)[number];
 export const FIELD_TYPES = ['text', 'number', 'date', 'select', 'checkbox'] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
+
+/** Actions a workflow rule can take when its event fires. */
+export const WORKFLOW_ACTIONS = ['notify', 'create_ticket'] as const;
+export type WorkflowAction = (typeof WORKFLOW_ACTIONS)[number];
+
+/** Suggested event types for the rule form; any `entity.action` string is accepted. */
+export const WORKFLOW_EVENT_SUGGESTIONS = [
+	'*',
+	'lead.created',
+	'lead.stage_changed',
+	'tour.tour_scheduled',
+	'application.submitted',
+	'lease.created',
+	'lease.updated',
+	'lease.renewed',
+	'maintenance.created',
+	'maintenance.updated',
+	'inspection.completed',
+	'payment.recorded',
+	'document.created',
+	'announcement.sent',
+	'vendor.created',
+	'owner.created',
+	'tenant.created',
+	'turn.updated'
+] as const;
+
+export const workflowInput = v.object({
+	name: v.pipe(v.string(), v.trim(), v.nonEmpty('Name the rule'), v.maxLength(80)),
+	eventType: v.pipe(
+		v.string(),
+		v.trim(),
+		v.nonEmpty('Pick an event'),
+		v.regex(/^(\*|[a-z_]+\.[a-z_]+)$/, 'Use entity.action, e.g. maintenance.created')
+	),
+	action: v.picklist(WORKFLOW_ACTIONS),
+	/** notify: optional custom note. create_ticket: title/priority/propertyId. */
+	config: v.optional(
+		v.object({
+			message: v.optional(v.nullable(v.pipe(v.string(), v.maxLength(300)))),
+			title: v.optional(v.nullable(v.pipe(v.string(), v.maxLength(120)))),
+			priority: v.optional(v.nullable(v.picklist(ticketPriorities))),
+			propertyId: v.optional(v.nullable(idSchema))
+		}),
+		{}
+	)
+});
+export const workflowUpdate = v.object({
+	id: idSchema,
+	...v.partial(workflowInput).entries,
+	enabled: v.optional(v.boolean())
+});

@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
 import { activity, webhook } from '#lib/server/db/schema.ts';
 import { dispatchToIntegrations } from '#lib/server/integrations/runtime.ts';
+import { runWorkflows } from '#lib/server/services/workflows.ts';
 
 export type EventInput = {
 	orgId: string;
@@ -43,6 +44,7 @@ export async function emit(e: EventInput) {
 	void dispatchToIntegrations(event).catch((err) =>
 		console.error('integration dispatch failed', err)
 	);
+	void runWorkflows(event).catch((err) => console.error('workflow run failed', err));
 }
 
 export type LeroaEvent = {
