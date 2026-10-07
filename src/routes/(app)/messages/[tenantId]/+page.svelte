@@ -12,6 +12,7 @@
 		getUnreadCount,
 		sendMessage
 	} from '#lib/remote/messaging.remote.ts';
+	import { aiDraftReply } from '#lib/remote/ai.remote.ts';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import UserRound from '@lucide/svelte/icons/user-round';
 	import Info from '@lucide/svelte/icons/info';
@@ -100,6 +101,7 @@
 		otherReadAt={th.residentReadAt}
 		placeholder="Message {th.tenant.name.split(' ')[0]}…"
 		onsend={(body) => sendMessage({ tenantId: tid, body })}
+		ondraft={page.data.enterprise ? () => aiDraftReply(tid) : undefined}
 	>
 		{#snippet empty()}
 			<p class="py-10 text-center text-sm text-muted-foreground">

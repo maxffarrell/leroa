@@ -7,7 +7,12 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import StatusBadge from './status-badge.svelte';
 	import { toast } from 'svelte-sonner';
+	import { page } from '$app/state';
 	import { getProperties, getUnits } from '#lib/remote/portfolio.remote.ts';
+	import { aiTriageTicket } from '#lib/remote/ai.remote.ts';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import X from '@lucide/svelte/icons/x';
+	import type { Triage } from '#lib/ai/heuristics.ts';
 	import { createTicket } from '#lib/remote/maintenance.remote.ts';
 	import { getAssets } from '#lib/remote/operations.remote.ts';
 	import { ticketPriorities } from '#lib/schemas.ts';
@@ -36,6 +41,26 @@
 	let description = $state('');
 	let priority = $state<(typeof ticketPriorities)[number]>('normal');
 	let pending = $state(false);
+	let suggestion = $state<Triage | null>(null);
+	let suggesting = $state(false);
+
+	async function suggest() {
+		if (!title.trim() || suggesting) return;
+		suggesting = true;
+		try {
+			suggestion = await aiTriageTicket({
+				title,
+				description: description || null,
+				propertyName: propertyName ?? null,
+				unitName: unitName ?? null
+			});
+			priority = suggestion.priority;
+		} catch (err) {
+			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Could not triage');
+		} finally {
+			suggesting = false;
+		}
+	}
 
 	$effect(() => {
 		if (open) {
@@ -134,7 +159,18 @@
 					</Field.Field>
 				{/if}
 				<Field.Field>
-					<Field.Label>Priority</Field.Label>
+					<div class="flex items-center justify-between">
+						<Field.Label>Priority</Field.Label>
+						{#if page.data.enterprise}
+							<Button
+								type="button"
+								size="xs"
+								variant="ghost"
+								disabled={suggesting || !title.trim()}
+								onclick={suggest}><Sparkles /> {suggesting ? 'Suggesting…' : 'Suggest'}</Button
+							>
+						{/if}
+					</div>
 					<div class="flex gap-1.5">
 						{#each ticketPriorities as p (p)}
 							<button
@@ -148,6 +184,21 @@
 							</button>
 						{/each}
 					</div>
+					{#if suggestion}
+						<p class="flex items-start gap-2 text-xs text-muted-foreground">
+							<Sparkles class="mt-px size-3.5 shrink-0" />
+							<span class="min-w-0 flex-1"
+								>Suggested <strong class="font-medium">{suggestion.priority}</strong
+								>{suggestion.trade ? ` · ${suggestion.trade}` : ''} — {suggestion.reason}</span
+							>
+							<button
+								type="button"
+								aria-label="Dismiss suggestion"
+								class="text-muted-foreground hover:text-foreground"
+								onclick={() => (suggestion = null)}><X class="size-3.5" /></button
+							>
+						</p>
+					{/if}
 				</Field.Field>
 				<Field.Field
 					><Field.Label for="tk-desc">Details</Field.Label><Textarea

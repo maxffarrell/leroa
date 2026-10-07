@@ -197,5 +197,18 @@ export const variables = defineEnvVars({
 		description:
 			'Set to `true` on Leroa Cloud. Enables enterprise features and cloud-only behaviour.',
 		schema: (value) => value === 'true'
+	},
+	AI_API_KEY: {
+		description:
+			'API key for an OpenAI-compatible chat-completions endpoint powering AI triage and draft features (enterprise tier). Unset, the features use deterministic local fallbacks.',
+		schema: (value) => value || undefined
+	},
+	AI_BASE_URL: {
+		description: 'OpenAI-compatible API base URL. Defaults to `https://api.openai.com/v1`.',
+		schema: (value) => value?.replace(/\/+$/, '') || 'https://api.openai.com/v1'
+	},
+	AI_MODEL: {
+		description: 'Model name used for AI features. Defaults to `gpt-4o-mini`.',
+		schema: (value) => value || 'gpt-4o-mini'
 	}
 });

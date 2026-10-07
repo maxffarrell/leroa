@@ -4,6 +4,7 @@ import { getOrg } from '#lib/server/context.ts';
 import { portalTenants } from '#lib/server/services/portal.ts';
 import { ownerAccounts } from '#lib/server/services/owners.ts';
 import { isDemo } from '#lib/server/demo-mode.ts';
+import { isEnterpriseEnabled } from '#lib/server/ee/license.ts';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	if (!locals.user) redirect(303, `/login?next=${encodeURIComponent(url.pathname + url.search)}`);
@@ -22,6 +23,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		},
 		org: ctx.org,
 		role: ctx.role,
-		demo: isDemo()
+		demo: isDemo(),
+		enterprise: isEnterpriseEnabled()
 	};
 };

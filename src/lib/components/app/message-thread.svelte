@@ -6,6 +6,8 @@
 	import { cn } from '#lib/utils.js';
 	import { toast } from 'svelte-sonner';
 	import SendHorizontal from '@lucide/svelte/icons/send-horizontal';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import type { Snippet } from 'svelte';
 
 	type Side = 'staff' | 'tenant';
@@ -17,6 +19,7 @@
 		lastReadAt = null,
 		otherReadAt = null,
 		onsend,
+		ondraft,
 		placeholder = 'Write a message…',
 		empty,
 		class: className
@@ -26,6 +29,7 @@
 		lastReadAt?: Date | null;
 		otherReadAt?: Date | null;
 		onsend: (body: string) => Promise<unknown>;
+		ondraft?: () => Promise<string>;
 		placeholder?: string;
 		empty?: Snippet;
 		class?: string;
@@ -33,7 +37,22 @@
 
 	let body = $state('');
 	let sending = $state(false);
+	let drafting = $state(false);
 	let scroller = $state<HTMLDivElement | null>(null);
+
+	async function draft() {
+		if (!ondraft || drafting) return;
+		drafting = true;
+		try {
+			body = await ondraft();
+		} catch (err) {
+			toast.error(
+				(err as { body?: { message?: string } })?.body?.message ?? 'Could not draft a reply'
+			);
+		} finally {
+			drafting = false;
+		}
+	}
 
 	const GROUP_MS = 5 * 60_000;
 	const time = (d: Date) => new Date(d).getTime();
@@ -148,6 +167,18 @@
 			aria-label="Message"
 			{onkeydown}
 		/>
+		{#if ondraft}
+			<Button
+				type="button"
+				size="icon"
+				variant="ghost"
+				disabled={drafting}
+				aria-label="Draft a reply"
+				title="Draft a reply"
+				onclick={draft}
+				>{#if drafting}<Spinner />{:else}<Sparkles />{/if}</Button
+			>
+		{/if}
 		<Button type="submit" size="icon" disabled={sending || !body.trim()} aria-label="Send"
 			><SendHorizontal /></Button
 		>

@@ -21,7 +21,10 @@
 		updateListing
 	} from '#lib/remote/listings.remote.ts';
 	import { AMENITY_SUGGESTIONS, unitFacts } from '#lib/listings.ts';
+	import { aiListingCopy } from '#lib/remote/ai.remote.ts';
 	import { toast } from 'svelte-sonner';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import Link from '@lucide/svelte/icons/link';
@@ -45,6 +48,23 @@
 	let saving = $state(false);
 	let uploading = $state(false);
 	let dirty = $state(false);
+	let generating = $state(false);
+
+	async function generateCopy() {
+		if (generating) return;
+		generating = true;
+		try {
+			const copy = await aiListingCopy(listing.id);
+			title = copy.title;
+			description = copy.description;
+			dirty = true;
+			toast.success('Draft written — review and tweak before publishing');
+		} catch (err) {
+			fail(err, 'Could not generate copy');
+		} finally {
+			generating = false;
+		}
+	}
 
 	const publicUrl = $derived(`/l/${page.data.org?.slug}/${listing.id}`);
 	const facts = $derived(unitFacts(listing));
@@ -262,7 +282,20 @@
 			<Card.Content>
 				<Field.Group class="gap-4">
 					<Field.Field>
-						<Field.Label for="l-title">Title</Field.Label>
+						<div class="flex items-center justify-between">
+							<Field.Label for="l-title">Title</Field.Label>
+							{#if page.data.enterprise}
+								<Button
+									type="button"
+									size="xs"
+									variant="ghost"
+									disabled={generating}
+									onclick={generateCopy}
+									>{#if generating}<Spinner />{:else}<Sparkles />{/if}
+									{generating ? 'Writing…' : 'Write copy'}</Button
+								>
+							{/if}
+						</div>
 						<Input id="l-title" required maxlength={200} bind:value={title} />
 					</Field.Field>
 					<div class="grid gap-4 sm:grid-cols-2">
