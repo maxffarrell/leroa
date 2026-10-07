@@ -13,7 +13,8 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
 	import { toast } from 'svelte-sonner';
-	import { formatDate, formatRelative, todayISO } from '#lib/format.ts';
+	import { addDays, formatDate, formatRelative, todayISO } from '#lib/format.ts';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 	import { getProperties, getUnits, getTenants } from '#lib/remote/portfolio.remote.ts';
 	import {
 		bookSlot,
@@ -82,7 +83,11 @@
 		if (!amenityId && amenities.length) amenityId = amenities[0]!.id;
 	});
 	let day = $state(todayISO());
-	const dayStart = $derived(new Date(`${day}T00:00:00`));
+	// Mid-typing the native date input yields a partial value → Invalid Date; fall back to today.
+	const dayStart = $derived.by(() => {
+		const d = new Date(`${day}T00:00:00`);
+		return Number.isNaN(d.getTime()) ? new Date(`${todayISO()}T00:00:00`) : d;
+	});
 	const dayEnd = $derived(new Date(dayStart.getTime() + 86_400_000));
 	const bookings = $derived(
 		amenity
@@ -311,7 +316,13 @@
 											aria-label="Delete {a.name}"
 											onclick={(e) => {
 												e.stopPropagation();
-												deleteAmenity(a.id);
+												confirmDelete({
+													title: `Delete ${a.name}?`,
+													description: 'Its bookings are removed too.',
+													onConfirm: async () => {
+														await deleteAmenity(a.id).catch(() => toast.error('Could not delete'));
+													}
+												});
 											}}><Trash2 class="size-4 text-muted-foreground" /></Button
 										>
 									{/if}
@@ -347,6 +358,8 @@
 											type="date"
 											class="ml-auto h-8 w-40"
 											bind:value={day}
+											min={todayISO()}
+											max={addDays(todayISO(), amenity.maxDaysAhead)}
 											aria-label="Booking date"
 										/>
 									</div>
@@ -465,7 +478,15 @@
 	</Modal.Content>
 </Modal.Root>
 
-<Modal.Root open={bookingSlot !== null} onOpenChange={(o) => !o && (bookingSlot = null)}>
+<Modal.Root
+	open={bookingSlot !== null}
+	onOpenChange={(o) => {
+		if (!o) {
+			bookingSlot = null;
+			bookingTenant = bookingNotes = '';
+		}
+	}}
+>
 	<Modal.Content class="sm:max-w-sm">
 		<Modal.Header>
 			<Modal.Title
@@ -494,7 +515,13 @@
 			</Field.Field>
 		</div>
 		<Modal.Footer>
-			<Button variant="outline" onclick={() => (bookingSlot = null)}>Cancel</Button>
+			<Button
+				variant="outline"
+				onclick={() => {
+					bookingSlot = null;
+					bookingTenant = bookingNotes = '';
+				}}>Cancel</Button
+			>
 			<Button onclick={confirmBooking}>Book</Button>
 		</Modal.Footer>
 	</Modal.Content>
