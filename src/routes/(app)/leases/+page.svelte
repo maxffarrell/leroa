@@ -9,13 +9,18 @@
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as Empty from '#lib/components/ui/empty/index.js';
+	import ViewSwitcher, { type ViewKind } from '#lib/components/app/view-switcher.svelte';
+	import KanbanBoard from '#lib/components/app/kanban-board.svelte';
+	import CalendarGrid from '#lib/components/app/calendar-grid.svelte';
 	import { getLeases } from '#lib/remote/leasing.remote.ts';
-	import { formatDate, formatMoney } from '#lib/format.ts';
+	import { formatDate, formatMoney, monthKey } from '#lib/format.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import FileSignature from '@lucide/svelte/icons/file-signature';
 
 	const leases = $derived(await getLeases());
 	let tab = $state<'active' | 'draft' | 'past' | 'all'>('active');
+	let view = $state<ViewKind>('table');
+	let month = $state(monthKey());
 	let creating = $state(page.url.searchParams.has('new'));
 	const params = page.url.searchParams;
 
@@ -35,6 +40,38 @@
 		past: leases.filter((l) => l.status === 'ended' || l.status === 'terminated').length,
 		all: leases.length
 	});
+	type Lease = (typeof leases)[number];
+	const kanbanColumns = $derived(
+		(['draft', 'active', 'ended', 'terminated'] as const).map((status) => ({
+			key: status,
+			label: status,
+			items: leases.filter((l) => l.status === status)
+		}))
+	);
+	const calItems = $derived(
+		leases.flatMap((l) => [
+			{
+				id: `${l.id}-start`,
+				date: l.startDate,
+				title: `${l.tenants || l.unitName} starts`,
+				sub: `${l.propertyName} · ${l.unitName}`,
+				href: `/leases/${l.id}`,
+				tone: 'green' as const
+			},
+			...(l.endDate
+				? [
+						{
+							id: `${l.id}-end`,
+							date: l.endDate,
+							title: `${l.tenants || l.unitName} ends`,
+							sub: `${l.propertyName} · ${l.unitName}`,
+							href: `/leases/${l.id}`,
+							tone: (l.endDate <= soon ? 'red' : 'amber') as 'red' | 'amber'
+						}
+					]
+				: [])
+		])
+	);
 	const nav = new RowNav({
 		count: () => rows.length,
 		open: (i) => openHref(`/leases/${rows[i]!.id}`),
@@ -65,68 +102,104 @@
 			>
 		</Empty.Root>
 	{:else}
-		<Tabs.Root bind:value={tab} class="mb-4">
-			<Tabs.List>
-				{#each ['active', 'draft', 'past', 'all'] as const as t (t)}
-					<Tabs.Trigger value={t} class="capitalize"
-						>{t}
-						<span class="ml-1 text-xs text-muted-foreground tabular-nums">{counts[t]}</span
-						></Tabs.Trigger
-					>
-				{/each}
-			</Tabs.List>
-		</Tabs.Root>
-		<div class="overflow-hidden rounded-lg border">
-			<Table.Root>
-				<Table.Header>
-					<Table.Row>
-						<Table.Head>Tenants</Table.Head>
-						<Table.Head>Unit</Table.Head>
-						<Table.Head class="hidden md:table-cell">Term</Table.Head>
-						<Table.Head class="text-right">Rent</Table.Head>
-						<Table.Head class="text-right">Balance</Table.Head>
-						<Table.Head class="hidden sm:table-cell">Status</Table.Head>
-					</Table.Row>
-				</Table.Header>
-				<Table.Body>
-					{#each rows as l, i (l.id)}
-						<Table.Row
-							data-row={i}
-							data-state={nav.index === i ? 'selected' : undefined}
-							class="cursor-pointer"
-							onclick={() => openHref(`/leases/${l.id}`)}
-							onmouseenter={() => (nav.index = i)}
-						>
-							<Table.Cell class="max-w-56 truncate font-medium"
-								><a href="/leases/{l.id}" class="outline-none">{l.tenants || '—'}</a></Table.Cell
+		<div class="mb-4 flex items-center justify-between gap-3">
+			{#if view === 'table'}
+				<Tabs.Root bind:value={tab}>
+					<Tabs.List>
+						{#each ['active', 'draft', 'past', 'all'] as const as t (t)}
+							<Tabs.Trigger value={t} class="capitalize"
+								>{t}
+								<span class="ml-1 text-xs text-muted-foreground tabular-nums">{counts[t]}</span
+								></Tabs.Trigger
 							>
-							<Table.Cell class="text-muted-foreground">{l.propertyName} · {l.unitName}</Table.Cell>
-							<Table.Cell class="hidden md:table-cell">
-								<span class="text-muted-foreground"
-									>{formatDate(l.startDate, true)} – {l.endDate
-										? formatDate(l.endDate, true)
-										: 'Month-to-month'}</span
-								>
-								{#if l.status === 'active' && l.endDate && l.endDate <= soon}<span
-										class="ml-2 text-xs text-amber-600">ending soon</span
-									>{/if}
-							</Table.Cell>
-							<Table.Cell class="text-right tabular-nums"
-								>{formatMoney(l.rentAmount, l.currency)}</Table.Cell
-							>
-							<Table.Cell
-								class="text-right tabular-nums {l.balance > 0
-									? 'font-medium text-red-600 dark:text-red-400'
-									: 'text-muted-foreground'}"
-								>{l.balance ? formatMoney(l.balance, l.currency) : '—'}</Table.Cell
-							>
-							<Table.Cell class="hidden sm:table-cell"><StatusBadge status={l.status} /></Table.Cell
-							>
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			</Table.Root>
+						{/each}
+					</Tabs.List>
+				</Tabs.Root>
+			{:else}
+				<p class="text-sm text-muted-foreground">
+					{view === 'kanban' ? 'Leases grouped by status' : 'Move-ins and move-outs'}
+				</p>
+			{/if}
+			<ViewSwitcher views={['table', 'kanban', 'calendar']} bind:value={view} />
 		</div>
+		{#if view === 'kanban'}
+			<KanbanBoard columns={kanbanColumns}>
+				{#snippet card(l: Lease)}
+					<a
+						href="/leases/{l.id}"
+						class="block rounded-md border bg-card p-2.5 text-sm shadow-xs hover:bg-accent"
+					>
+						<span class="block truncate font-medium">{l.tenants || '—'}</span>
+						<span class="block truncate text-xs text-muted-foreground"
+							>{l.propertyName} · {l.unitName}</span
+						>
+						<span class="mt-1 flex items-center justify-between text-xs"
+							><span class="tabular-nums">{formatMoney(l.rentAmount, l.currency)}/mo</span
+							>{#if l.balance > 0}<span class="text-red-600 dark:text-red-400"
+									>owes {formatMoney(l.balance, l.currency)}</span
+								>{/if}</span
+						>
+					</a>
+				{/snippet}
+			</KanbanBoard>
+		{:else if view === 'calendar'}
+			<CalendarGrid bind:month items={calItems} />
+		{:else}
+			<div class="overflow-hidden rounded-lg border">
+				<Table.Root>
+					<Table.Header>
+						<Table.Row>
+							<Table.Head>Tenants</Table.Head>
+							<Table.Head>Unit</Table.Head>
+							<Table.Head class="hidden md:table-cell">Term</Table.Head>
+							<Table.Head class="text-right">Rent</Table.Head>
+							<Table.Head class="text-right">Balance</Table.Head>
+							<Table.Head class="hidden sm:table-cell">Status</Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each rows as l, i (l.id)}
+							<Table.Row
+								data-row={i}
+								data-state={nav.index === i ? 'selected' : undefined}
+								class="cursor-pointer"
+								onclick={() => openHref(`/leases/${l.id}`)}
+								onmouseenter={() => (nav.index = i)}
+							>
+								<Table.Cell class="max-w-56 truncate font-medium"
+									><a href="/leases/{l.id}" class="outline-none">{l.tenants || '—'}</a></Table.Cell
+								>
+								<Table.Cell class="text-muted-foreground"
+									>{l.propertyName} · {l.unitName}</Table.Cell
+								>
+								<Table.Cell class="hidden md:table-cell">
+									<span class="text-muted-foreground"
+										>{formatDate(l.startDate, true)} – {l.endDate
+											? formatDate(l.endDate, true)
+											: 'Month-to-month'}</span
+									>
+									{#if l.status === 'active' && l.endDate && l.endDate <= soon}<span
+											class="ml-2 text-xs text-amber-600">ending soon</span
+										>{/if}
+								</Table.Cell>
+								<Table.Cell class="text-right tabular-nums"
+									>{formatMoney(l.rentAmount, l.currency)}</Table.Cell
+								>
+								<Table.Cell
+									class="text-right tabular-nums {l.balance > 0
+										? 'font-medium text-red-600 dark:text-red-400'
+										: 'text-muted-foreground'}"
+									>{l.balance ? formatMoney(l.balance, l.currency) : '—'}</Table.Cell
+								>
+								<Table.Cell class="hidden sm:table-cell"
+									><StatusBadge status={l.status} /></Table.Cell
+								>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+			</div>
+		{/if}
 	{/if}
 </main>
 
