@@ -18,9 +18,16 @@ function conditions(orgId: string, f: AuditFilter): SQL[] {
 	if (f.entityType) conds.push(eq(activity.entityType, f.entityType));
 	if (f.action) conds.push(eq(activity.action, f.action));
 	if (f.actorId) conds.push(eq(activity.actorId, f.actorId));
-	if (f.from) conds.push(gte(activity.createdAt, new Date(`${f.from}T00:00:00Z`)));
-	if (f.to) conds.push(lte(activity.createdAt, new Date(`${f.to}T23:59:59.999Z`)));
-	if (f.before) conds.push(lt(activity.createdAt, new Date(f.before)));
+	const day = (s: string, t: string) => {
+		const d = new Date(`${s}T${t}`);
+		return Number.isNaN(d.getTime()) ? null : d;
+	};
+	const from = f.from ? day(f.from, '00:00:00Z') : null;
+	const to = f.to ? day(f.to, '23:59:59.999Z') : null;
+	const before = f.before ? new Date(f.before) : null;
+	if (from) conds.push(gte(activity.createdAt, from));
+	if (to) conds.push(lte(activity.createdAt, to));
+	if (before && !Number.isNaN(before.getTime())) conds.push(lt(activity.createdAt, before));
 	const q = f.q?.trim();
 	if (q)
 		conds.push(

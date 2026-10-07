@@ -10,6 +10,11 @@ export const GET: RequestHandler = async ({ url }) => {
 	if (!hasFeature('audit_export')) error(403, 'Audit log export is part of the enterprise tier');
 	const ctx = await requireOrg('admin');
 	const q = url.searchParams;
+	const DAY = /^\d{4}-\d{2}-\d{2}$/;
+	for (const p of ['from', 'to']) {
+		const s = q.get(p);
+		if (s && !DAY.test(s)) error(400, `Invalid ${p} date`);
+	}
 	const rows = await exportAudit(ctx.orgId, {
 		entityType: q.get('entityType') || undefined,
 		action: q.get('action') || undefined,

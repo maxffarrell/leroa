@@ -712,8 +712,16 @@ export async function updatePropertyMarketing(
 		.update(property)
 		.set(input)
 		.where(and(eq(property.organizationId, ctx.orgId), eq(property.id, id)))
-		.returning({ id: property.id });
+		.returning({ id: property.id, name: property.name });
 	if (!row) error(404, 'Property not found');
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'property',
+		entityId: id,
+		action: 'updated',
+		summary: `Updated marketing info for ${row.name}`
+	});
 }
 
 // ── Waitlist ────────────────────────────────────────────────────────────────
