@@ -767,23 +767,15 @@ export async function closeSurvey(ctx: OrgContext, id: string) {
 /** Open surveys a portal tenant can see (their property or org-wide), annotated with their answer. */
 export async function portalSurveys(tenantIds: string[], propertyIds: string[], orgIds: string[]) {
 	if (!tenantIds.length || !orgIds.length) return [];
-	const answeredSub = db
-		.select({ id: surveyResponse.id })
-		.from(surveyResponse)
-		.where(and(eq(surveyResponse.surveyId, survey.id), inArray(surveyResponse.tenantId, tenantIds)))
-		.limit(1)
-		.as('answered_sub');
-	return db
+	const rows = await db
 		.select({
 			id: survey.id,
 			title: survey.title,
 			question: survey.question,
-			propertyName: property.name,
-			answeredId: answeredSub.id
+			propertyName: property.name
 		})
 		.from(survey)
 		.leftJoin(property, eq(property.id, survey.propertyId))
-		.leftJoin(answeredSub, sql`true`)
 		.where(
 			and(
 				inArray(survey.organizationId, orgIds),
@@ -795,6 +787,18 @@ export async function portalSurveys(tenantIds: string[], propertyIds: string[], 
 		)
 		.orderBy(desc(survey.createdAt))
 		.limit(10);
+	if (!rows.length) return [];
+	const answered = await db
+		.select({ surveyId: surveyResponse.surveyId })
+		.from(surveyResponse)
+		.where(
+			and(
+				inArray(surveyResponse.surveyId, rows.map((r) => r.id)),
+				inArray(surveyResponse.tenantId, tenantIds)
+			)
+		);
+	const answeredIds = new Set(answered.map((a) => a.surveyId));
+	return rows.map((r) => ({ ...r, answeredId: answeredIds.has(r.id) ? r.id : null }));
 }
 
 /** Record (or update) a portal tenant's answer to an open survey they can see. */
