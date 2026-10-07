@@ -43,7 +43,10 @@ export const saveField = command(
 			if (id) await updateField(orgId, id, { name, options });
 			else await createField(orgId, { entity: e, name, type, options });
 		} catch (err) {
-			if ((err as { code?: string }).code === '23505')
+			// Drizzle wraps PostgresError: the code sits on `cause`.
+			const code = (err as { code?: string; cause?: { code?: string } }).code;
+			const causeCode = (err as { cause?: { code?: string } }).cause?.code;
+			if (code === '23505' || causeCode === '23505')
 				error(409, `A field named “${name}” already exists on ${e}s`);
 			throw err;
 		}
