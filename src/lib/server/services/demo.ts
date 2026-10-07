@@ -30,6 +30,7 @@ import {
 	issuePermit,
 	logPackage
 } from './residents.ts';
+import { addClause, addCriticalDate } from './commercial.ts';
 import {
 	addLeadNote,
 	createLead,
@@ -487,6 +488,26 @@ export async function loadDemoData(ctx: OrgContext) {
 		propertyId: maple.id,
 		title: 'October resident pulse',
 		question: 'How would you rate maintenance response this month?'
+	});
+	const clause = await addClause(ctx, {
+		leaseId: leases[0]!.id,
+		kind: 'option_to_renew',
+		title: 'One 3-year renewal option',
+		body: 'Tenant may renew once for three years at market rent by written notice no later than 90 days before expiry.'
+	});
+	await addCriticalDate(ctx, {
+		leaseId: leases[0]!.id,
+		clauseId: clause.id,
+		label: 'Renewal option exercise deadline',
+		date: addDays(t0, 21),
+		remindDays: 30
+	});
+	await addCriticalDate(ctx, {
+		leaseId: leases[0]!.id,
+		clauseId: null,
+		label: 'Tenant insurance certificate renewal',
+		date: addDays(t0, 45),
+		remindDays: 14
 	});
 	return { properties: 3, leases: leases.length };
 }

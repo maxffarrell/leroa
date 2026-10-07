@@ -726,3 +726,54 @@ export const surveyResponseInput = v.object({
 	rating: v.optional(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5)))),
 	comment: v.optional(v.nullable(shortText(2000)))
 });
+
+export const CLAUSE_KINDS = [
+	'option_to_renew',
+	'option_to_expand',
+	'option_to_purchase',
+	'right_of_first_refusal',
+	'exclusivity',
+	'termination_option',
+	'escalation',
+	'percentage_rent',
+	'subletting',
+	'insurance',
+	'other'
+] as const;
+
+export const CLAUSE_KIND_LABELS: Record<(typeof CLAUSE_KINDS)[number], string> = {
+	option_to_renew: 'Renewal option',
+	option_to_expand: 'Expansion option',
+	option_to_purchase: 'Purchase option',
+	right_of_first_refusal: 'Right of first refusal',
+	exclusivity: 'Exclusivity',
+	termination_option: 'Termination option',
+	escalation: 'Escalation',
+	percentage_rent: 'Percentage rent',
+	subletting: 'Subletting',
+	insurance: 'Insurance',
+	other: 'Other'
+};
+
+export const clauseInput = v.object({
+	leaseId: idSchema,
+	kind: v.picklist(CLAUSE_KINDS),
+	title: requiredText('Title'),
+	body: v.optional(v.nullable(shortText(2000)))
+});
+
+export const criticalDateInput = v.object({
+	leaseId: idSchema,
+	clauseId: v.optional(v.nullable(idSchema)),
+	label: requiredText('Label'),
+	date: v.pipe(v.string(), v.isoDate()),
+	remindDays: v.optional(
+		v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(365)))
+	)
+});
+
+export const criticalDateDoneInput = v.object({
+	id: idSchema,
+	done: v.boolean()
+});
+export type ClauseKind = (typeof CLAUSE_KINDS)[number];

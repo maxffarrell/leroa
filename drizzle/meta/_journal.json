@@ -162,6 +162,13 @@
       "when": 1791398463856,
       "tag": "0022_events-surveys",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791400727114,
+      "tag": "0023_lease-clauses",
+      "breakpoints": true
     }
   ]
 }

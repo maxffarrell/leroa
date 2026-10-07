@@ -8,6 +8,7 @@
 	import LateFeeDialog from '#lib/components/app/late-fee-dialog.svelte';
 	import RenewLeaseDialog from '#lib/components/app/renew-lease-dialog.svelte';
 	import LeaseAgreements from '#lib/components/app/lease-agreements.svelte';
+	import LeaseClauses from '#lib/components/app/lease-clauses.svelte';
 	import LeaseInspections from '#lib/components/app/lease-inspections.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -222,6 +223,11 @@
 	</svelte:boundary>
 
 	<LeaseAgreements leaseId={id} />
+
+	<svelte:boundary>
+		<LeaseClauses leaseId={id} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
 
 	<LeaseInspections leaseId={id} unitId={l.unitId} status={l.status} />
 

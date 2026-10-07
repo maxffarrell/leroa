@@ -1422,3 +1422,56 @@ export const surveyResponse = pgTable(
 		uniqueIndex('survey_response_once_idx').on(t.surveyId, t.tenantId)
 	]
 );
+
+export const clauseKind = pgEnum('clause_kind', [
+	'option_to_renew',
+	'option_to_expand',
+	'option_to_purchase',
+	'right_of_first_refusal',
+	'exclusivity',
+	'termination_option',
+	'escalation',
+	'percentage_rent',
+	'subletting',
+	'insurance',
+	'other'
+]);
+
+/** A named provision on a lease (options, escalations, exclusivity…), surfaced for commercial leases. */
+export const leaseClause = pgTable(
+	'lease_clause',
+	{
+		id: id(),
+		organizationId: orgId(),
+		leaseId: text('lease_id')
+			.notNull()
+			.references(() => lease.id, { onDelete: 'cascade' }),
+		kind: clauseKind('kind').notNull().default('other'),
+		title: text('title').notNull(),
+		body: text('body'),
+		...timestamps
+	},
+	(t) => [index('lease_clause_lease_idx').on(t.leaseId)]
+);
+
+/** A date the team must act on (option exercise windows, escalations, insurance renewals…). */
+export const leaseCriticalDate = pgTable(
+	'lease_critical_date',
+	{
+		id: id(),
+		organizationId: orgId(),
+		leaseId: text('lease_id')
+			.notNull()
+			.references(() => lease.id, { onDelete: 'cascade' }),
+		clauseId: text('clause_id').references(() => leaseClause.id, { onDelete: 'set null' }),
+		label: text('label').notNull(),
+		date: date('date', { mode: 'string' }).notNull(),
+		remindDays: integer('remind_days').notNull().default(30),
+		doneAt: timestamp('done_at'),
+		...timestamps
+	},
+	(t) => [
+		index('critical_date_lease_idx').on(t.leaseId),
+		index('critical_date_org_date_idx').on(t.organizationId, t.date)
+	]
+);

@@ -4,6 +4,8 @@ import { db } from '#lib/server/db/index.ts';
 import {
 	charge,
 	lease,
+	leaseClause,
+	leaseCriticalDate,
 	leaseTenant,
 	maintenanceTicket,
 	member,
@@ -318,6 +320,66 @@ export async function sendVendorInsuranceAlerts(orgId: string) {
 					})
 				}
 			);
+			if (ok) sent++;
+		}
+	}
+	return sent;
+}
+
+/** Daily reminder for open lease critical dates inside their remind window (commercial leases). */
+export async function sendCriticalDateAlerts(orgId: string): Promise<number> {
+	const rows = await db
+		.select({
+			id: leaseCriticalDate.id,
+			label: leaseCriticalDate.label,
+			date: leaseCriticalDate.date,
+			leaseId: leaseCriticalDate.leaseId,
+			clauseTitle: leaseClause.title,
+			unitName: unit.name,
+			propertyName: property.name
+		})
+		.from(leaseCriticalDate)
+		.innerJoin(lease, eq(lease.id, leaseCriticalDate.leaseId))
+		.innerJoin(unit, eq(unit.id, lease.unitId))
+		.innerJoin(property, eq(property.id, unit.propertyId))
+		.leftJoin(leaseClause, eq(leaseClause.id, leaseCriticalDate.clauseId))
+		.where(
+			and(
+				eq(leaseCriticalDate.organizationId, orgId),
+				isNull(leaseCriticalDate.doneAt),
+				sql`${leaseCriticalDate.date} <= current_date + ${leaseCriticalDate.remindDays}`
+			)
+		);
+	if (!rows.length) return 0;
+	const org = await orgName(orgId);
+	const managers = await managerEmails(orgId);
+	const today = todayISO();
+	let sent = 0;
+	for (const d of rows) {
+		const due = d.date <= today;
+		const kind = due ? 'lease.critical_date.due' : 'lease.critical_date';
+		const where = `${d.propertyName} · ${d.unitName}`;
+		await inboxForManagers(orgId, kind, `${d.id}:${d.date}`, {
+			title: due
+				? `Critical date due: ${d.label}`
+				: `Critical date ${formatDate(d.date)}: ${d.label}`,
+			body: `${where}${d.clauseTitle ? ` · ${d.clauseTitle}` : ''}`,
+			href: `/leases/${d.leaseId}`
+		});
+		for (const to of managers) {
+			const ok = await notifyOnce(orgId, kind, `${d.id}:${d.date}`, {
+				to,
+				subject: `${due ? 'Critical date due' : 'Lease critical date'} ${formatDate(d.date)}: ${d.label}`,
+				...renderEmail({
+					orgName: org,
+					heading: due ? 'A lease critical date is due' : 'A lease critical date is coming up',
+					lines: [
+						`${d.label} — ${formatDate(d.date)}.`,
+						`${where}${d.clauseTitle ? ` · from clause "${d.clauseTitle}"` : ''}.`
+					],
+					action: { label: 'Open lease', url: `${appOrigin()}/leases/${d.leaseId}` }
+				})
+			});
 			if (ok) sent++;
 		}
 	}

@@ -13,11 +13,14 @@
 	import KanbanBoard from '#lib/components/app/kanban-board.svelte';
 	import CalendarGrid from '#lib/components/app/calendar-grid.svelte';
 	import { getLeases } from '#lib/remote/leasing.remote.ts';
+	import { getUpcomingDates } from '#lib/remote/commercial.remote.ts';
 	import { formatDate, formatMoney, monthKey } from '#lib/format.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import FileSignature from '@lucide/svelte/icons/file-signature';
+	import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 
 	const leases = $derived(await getLeases());
+	const upcoming = $derived(await getUpcomingDates());
 	let tab = $state<'active' | 'draft' | 'past' | 'all'>('active');
 	let view = $state<ViewKind>('table');
 	let month = $state(monthKey());
@@ -102,6 +105,22 @@
 			>
 		</Empty.Root>
 	{:else}
+		{#if upcoming.length}
+			<div
+				class="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2"
+			>
+				<CalendarClock class="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+				<span class="text-xs font-medium">Critical dates</span>
+				{#each upcoming as d (d.id)}
+					<a
+						href="/leases/{d.leaseId}"
+						class="rounded-full border bg-background px-2.5 py-0.5 text-xs hover:bg-muted"
+						><span class="tabular-nums">{formatDate(d.date, true)}</span> · {d.label}
+						<span class="text-muted-foreground">{d.unitName}</span></a
+					>
+				{/each}
+			</div>
+		{/if}
 		<div class="mb-4 flex items-center justify-between gap-3">
 			{#if view === 'table'}
 				<Tabs.Root bind:value={tab}>
