@@ -30,6 +30,11 @@
 		updateTicket
 	} from '#lib/remote/maintenance.remote.ts';
 	import { getVendors } from '#lib/remote/vendors.remote.ts';
+	import { bulkUpdateTickets } from '#lib/remote/bulk.remote.ts';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
+	import BulkBar from '#lib/components/app/bulk-bar.svelte';
 	import { untrack } from 'svelte';
 	import Mail from '@lucide/svelte/icons/mail';
 	import LinkIcon from '@lucide/svelte/icons/link';
@@ -80,6 +85,22 @@
 	const tableRows = $derived(
 		columns.flatMap((c) => c.items).sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
 	);
+
+	const picked = new SvelteSet<string>();
+	const togglePick = (id: string, on: boolean) => (on ? picked.add(id) : picked.delete(id));
+	const bulkApply = async (data: {
+		status?: (typeof ticketStatuses)[number];
+		priority?: (typeof ticketPriorities)[number];
+		vendorId?: string | null;
+	}) => {
+		const ids = [...picked];
+		if (!ids.length || !Object.values(data).some((x) => x !== undefined)) return;
+		await bulkUpdateTickets({ ids, ...data }).catch((err) =>
+			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Update failed')
+		);
+		picked.clear();
+		toast.success(`Updated ${ids.length} request${ids.length === 1 ? '' : 's'}`);
+	};
 
 	const selectedId = $derived(page.url.searchParams.get('ticket'));
 	const selected = $derived(tickets.find((t) => t.id === selectedId) ?? null);
@@ -189,6 +210,7 @@
 					<Table.Root>
 						<Table.Header>
 							<Table.Row>
+								<Table.Head class="w-8"></Table.Head>
 								<Table.Head class="w-16">#</Table.Head>
 								<Table.Head>Request</Table.Head>
 								<Table.Head class="hidden md:table-cell">Where</Table.Head>
@@ -201,6 +223,16 @@
 						<Table.Body>
 							{#each tableRows as t (t.id)}
 								<Table.Row class="cursor-pointer" onclick={() => select(t)}>
+									<Table.Cell class="w-8">
+										<!-- Row click opens the ticket; the checkbox must not. -->
+										<span role="presentation" onclick={(e) => e.stopPropagation()}>
+											<Checkbox
+												aria-label="Select #{t.number}"
+												checked={picked.has(t.id)}
+												onCheckedChange={(c) => togglePick(t.id, c === true)}
+											/>
+										</span>
+									</Table.Cell>
 									<Table.Cell class="text-xs text-muted-foreground tabular-nums"
 										>{t.number}</Table.Cell
 									>
@@ -223,7 +255,7 @@
 								</Table.Row>
 							{:else}
 								<Table.Row
-									><Table.Cell colspan={7} class="py-8 text-center text-muted-foreground"
+									><Table.Cell colspan={8} class="py-8 text-center text-muted-foreground"
 										>No requests.</Table.Cell
 									></Table.Row
 								>
@@ -305,6 +337,56 @@
 		</Tabs.Content>
 	</Tabs.Root>
 </main>
+
+<BulkBar
+	count={picked.size}
+	total={tableRows.length}
+	onselectall={() => {
+		if (picked.size === tableRows.length) picked.clear();
+		else for (const t of tableRows) picked.add(t.id);
+	}}
+	onclear={() => picked.clear()}
+>
+	{#snippet actions()}
+		<NativeSelect.Root
+			aria-label="Set status"
+			size="sm"
+			value=""
+			onchange={(e) =>
+				bulkApply({ status: e.currentTarget.value as (typeof ticketStatuses)[number] })}
+		>
+			<NativeSelect.Option value="" disabled>Status…</NativeSelect.Option>
+			{#each ticketStatuses as s (s)}
+				<NativeSelect.Option value={s}>{label(s)}</NativeSelect.Option>
+			{/each}
+		</NativeSelect.Root>
+		<NativeSelect.Root
+			aria-label="Set priority"
+			size="sm"
+			value=""
+			onchange={(e) =>
+				bulkApply({ priority: e.currentTarget.value as (typeof ticketPriorities)[number] })}
+		>
+			<NativeSelect.Option value="" disabled>Priority…</NativeSelect.Option>
+			{#each ticketPriorities as p (p)}
+				<NativeSelect.Option value={p}>{p}</NativeSelect.Option>
+			{/each}
+		</NativeSelect.Root>
+		<NativeSelect.Root
+			aria-label="Assign vendor"
+			size="sm"
+			value=""
+			onchange={(e) =>
+				bulkApply({ vendorId: e.currentTarget.value === '__none' ? null : e.currentTarget.value })}
+		>
+			<NativeSelect.Option value="" disabled>Vendor…</NativeSelect.Option>
+			<NativeSelect.Option value="__none">No vendor</NativeSelect.Option>
+			{#each vendors as v (v.id)}
+				<NativeSelect.Option value={v.id}>{v.name}</NativeSelect.Option>
+			{/each}
+		</NativeSelect.Root>
+	{/snippet}
+</BulkBar>
 
 <Sheet.Root open={!!selected} onOpenChange={(o) => !o && select(null)}>
 	<Sheet.Content class="w-full gap-0 sm:max-w-md">

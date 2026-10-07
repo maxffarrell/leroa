@@ -11,6 +11,11 @@
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { getLeads, updateLead } from '#lib/remote/crm.remote.ts';
+	import { bulkSetLeadStage } from '#lib/remote/bulk.remote.ts';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
+	import BulkBar from '#lib/components/app/bulk-bar.svelte';
 	import {
 		followUpState,
 		LEAD_SOURCE_LABELS,
@@ -42,6 +47,15 @@
 	let moved = $state<Record<string, LeadStage>>({});
 	let losing = $state<(typeof leads)[number] | null>(null);
 	let lostReason = $state('');
+	const picked = new SvelteSet<string>();
+	const bulkStage = async (stage: string) => {
+		const ids = [...picked];
+		if (!ids.length) return;
+		await bulkSetLeadStage({ ids, stage: stage as LeadStage });
+		for (const id of ids) moved[id] = stage as LeadStage;
+		picked.clear();
+		toast.success(`Moved ${ids.length} lead${ids.length === 1 ? '' : 's'} to ${stage}`);
+	};
 
 	const stageOf = (l: { id: string; stage: LeadStage }) => moved[l.id] ?? l.stage;
 	const filtered = $derived.by(() => {
@@ -248,6 +262,7 @@
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
+						<Table.Head class="w-8"></Table.Head>
 						<Table.Head>Name</Table.Head>
 						<Table.Head>Stage</Table.Head>
 						<Table.Head class="hidden md:table-cell">Interested in</Table.Head>
@@ -259,6 +274,16 @@
 				<Table.Body>
 					{#each rows as l (l.id)}
 						<Table.Row class="cursor-pointer" onclick={() => goto(`/leasing/leads/${l.id}`)}>
+							<Table.Cell class="w-8">
+								<!-- Row click navigates; the checkbox must not. -->
+								<span role="presentation" onclick={(e) => e.stopPropagation()}>
+									<Checkbox
+										aria-label="Select {leadName(l)}"
+										checked={picked.has(l.id)}
+										onCheckedChange={(c) => (c === true ? picked.add(l.id) : picked.delete(l.id))}
+									/>
+								</span>
+							</Table.Cell>
 							<Table.Cell class="max-w-48">
 								<a href="/leasing/leads/{l.id}" class="block truncate font-medium">{leadName(l)}</a>
 								<span class="block truncate text-xs text-muted-foreground"
@@ -281,7 +306,7 @@
 						</Table.Row>
 					{:else}
 						<Table.Row
-							><Table.Cell colspan={6} class="py-8 text-center text-muted-foreground"
+							><Table.Cell colspan={7} class="py-8 text-center text-muted-foreground"
 								>No leads match.</Table.Cell
 							></Table.Row
 						>
@@ -291,6 +316,30 @@
 		</div>
 	{/if}
 {/if}
+
+<BulkBar
+	count={picked.size}
+	total={rows.length}
+	onselectall={() => {
+		if (picked.size === rows.length) picked.clear();
+		else for (const l of rows) picked.add(l.id);
+	}}
+	onclear={() => picked.clear()}
+>
+	{#snippet actions()}
+		<NativeSelect.Root
+			aria-label="Move to stage"
+			size="sm"
+			value=""
+			onchange={(e) => bulkStage(e.currentTarget.value)}
+		>
+			<NativeSelect.Option value="" disabled>Move to…</NativeSelect.Option>
+			{#each LEAD_STAGES as s (s)}
+				<NativeSelect.Option value={s}>{LEAD_STAGE_LABELS[s]}</NativeSelect.Option>
+			{/each}
+		</NativeSelect.Root>
+	{/snippet}
+</BulkBar>
 
 <Modal.Root open={losing !== null} onOpenChange={(o) => !o && (losing = null)}>
 	<Modal.Content class="sm:max-w-sm">

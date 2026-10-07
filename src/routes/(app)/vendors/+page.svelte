@@ -23,7 +23,12 @@
 		type SortingState
 	} from '@tanstack/table-core';
 	import { getVendors } from '#lib/remote/vendors.remote.ts';
+	import { bulkSetVendorsArchived } from '#lib/remote/bulk.remote.ts';
 	import { formatMoney } from '#lib/format.ts';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { toast } from 'svelte-sonner';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import BulkBar from '#lib/components/app/bulk-bar.svelte';
 	import Plus from '@lucide/svelte/icons/plus';
 	import HardHat from '@lucide/svelte/icons/hard-hat';
 
@@ -34,6 +39,22 @@
 	let search = $state('');
 	let creating = $state(page.url.searchParams.has('new'));
 	let sorting = $state<SortingState>([]);
+	const selected = new SvelteSet<string>();
+	const isAdmin = $derived(page.data.role !== 'member');
+
+	const toggle = (id: string, on: boolean) => (on ? selected.add(id) : selected.delete(id));
+	const selectAll = () => {
+		if (selected.size === rows.length) selected.clear();
+		else for (const v of rows) selected.add(v.id);
+	};
+	const setArchived = async (archived: boolean) => {
+		const ids = [...selected];
+		await bulkSetVendorsArchived({ ids, archived });
+		selected.clear();
+		toast.success(
+			`${ids.length} vendor${ids.length === 1 ? '' : 's'} ${archived ? 'archived' : 'restored'}`
+		);
+	};
 
 	const rows = $derived(
 		vendors.filter(
@@ -46,6 +67,7 @@
 	);
 
 	const colClass: Record<string, string> = {
+		sel: 'w-8',
 		contact: 'hidden md:table-cell',
 		openCount: 'text-right',
 		spendYtd: 'hidden text-right lg:table-cell',
@@ -53,6 +75,12 @@
 	};
 
 	const columns: ColumnDef<Row>[] = [
+		{
+			id: 'sel',
+			enableSorting: false,
+			header: '',
+			cell: (c) => renderSnippet(selCell, c.row.original)
+		},
 		{
 			accessorKey: 'name',
 			header: 'Vendor',
@@ -202,7 +230,34 @@
 	{/if}
 </main>
 
+<BulkBar
+	count={selected.size}
+	total={rows.length}
+	onselectall={selectAll}
+	onclear={() => selected.clear()}
+>
+	{#snippet actions()}
+		{#if isAdmin}
+			<Button size="sm" variant="outline" onclick={() => setArchived(true)}>Archive</Button>
+			<Button size="sm" variant="outline" onclick={() => setArchived(false)}>Restore</Button>
+		{:else}
+			<span class="text-xs text-muted-foreground">Only admins can archive vendors.</span>
+		{/if}
+	{/snippet}
+</BulkBar>
+
 <VendorDialog bind:open={creating} onsaved={(v) => openHref(`/vendors/${v.id}`)} />
+
+{#snippet selCell(v: Row)}
+	<!-- Row click navigates; the checkbox must not. -->
+	<span role="presentation" onclick={(e) => e.stopPropagation()}>
+		<Checkbox
+			aria-label="Select {v.name}"
+			checked={selected.has(v.id)}
+			onCheckedChange={(c) => toggle(v.id, c === true)}
+		/>
+	</span>
+{/snippet}
 
 {#snippet vendorCell(v: Row)}
 	<div class="max-w-56">
