@@ -457,10 +457,10 @@ export async function loadDemoData(ctx: OrgContext) {
 	});
 	await issueKey(ctx, {
 		propertyId: harbor.id,
-		unitId: leases[1]!.unitId,
-		tenantId: tenants[1]!.id,
+		unitId: leases[8]!.unitId,
+		tenantId: tenants[8]!.id,
 		kind: 'key',
-		label: 'Unit 2B front door',
+		label: 'Unit A front door',
 		notes: null
 	});
 	await createPass(ctx, {
