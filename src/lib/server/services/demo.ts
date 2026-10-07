@@ -10,7 +10,7 @@ import {
 	user
 } from '#lib/server/db/schema.ts';
 import { completeInspection, createInspection } from './inspections.ts';
-import { addDays, monthKey, todayISO } from '#lib/format.ts';
+import { addDays, addYears, monthKey, todayISO } from '#lib/format.ts';
 import { createProperty, createTenant, getProperty, updateUnit } from './portfolio.ts';
 import { createListing, setListingStatus, updateListing } from './listings.ts';
 import { createLease, recordPayment, rentRoll } from './leasing.ts';
@@ -20,7 +20,14 @@ import { createSchedule } from './schedules.ts';
 import { startTurn, updateTurn } from './turns.ts';
 import { createAnnouncement, postMessage } from './messaging.ts';
 import { createOwner } from './owners.ts';
-import { bookSlot, createAmenity, logPackage } from './residents.ts';
+import {
+	bookSlot,
+	createAmenity,
+	createPass,
+	issueKey,
+	issuePermit,
+	logPackage
+} from './residents.ts';
 import {
 	addLeadNote,
 	createLead,
@@ -430,6 +437,40 @@ export async function loadDemoData(ctx: OrgContext) {
 		carrier: 'USPS',
 		tracking: null,
 		description: 'Padded envelope'
+	});
+	await issuePermit(ctx, {
+		propertyId: maple.id,
+		unitId: leases[0]!.unitId,
+		tenantId: tenants[0]!.id,
+		permitNumber: 'MC-0142',
+		vehicle: 'Blue Honda Civic · MZX 7841',
+		expiresOn: addYears(t0, 1),
+		notes: null
+	});
+	await issueKey(ctx, {
+		propertyId: maple.id,
+		unitId: leases[0]!.unitId,
+		tenantId: tenants[0]!.id,
+		kind: 'fob',
+		label: 'Building entry fob #4471',
+		notes: null
+	});
+	await issueKey(ctx, {
+		propertyId: harbor.id,
+		unitId: leases[1]!.unitId,
+		tenantId: tenants[1]!.id,
+		kind: 'key',
+		label: 'Unit 2B front door',
+		notes: null
+	});
+	await createPass(ctx, {
+		propertyId: maple.id,
+		unitId: leases[0]!.unitId,
+		tenantId: tenants[0]!.id,
+		guestName: 'Sam Rivera',
+		startsOn: t0,
+		endsOn: addDays(t0, 2),
+		notes: 'Overnight guest, parks in visitor row'
 	});
 	return { properties: 3, leases: leases.length };
 }

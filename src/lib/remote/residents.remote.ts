@@ -2,7 +2,15 @@ import * as v from 'valibot';
 import { command, query } from '$app/server';
 import { requireOrg } from '#lib/server/context.ts';
 import * as svc from '#lib/server/services/residents.ts';
-import { amenityInput, bookingInput, idSchema, packageInput } from '#lib/schemas.ts';
+import {
+	amenityInput,
+	bookingInput,
+	idSchema,
+	keyInput,
+	packageInput,
+	passInput,
+	permitInput
+} from '#lib/schemas.ts';
 
 export const getAmenities = query(async () => svc.listAmenities((await requireOrg()).orgId));
 
@@ -55,3 +63,66 @@ export const markPickedUp = command(idSchema, async (id) => {
 	void getPackages(false).refresh();
 	void getPackages(true).refresh();
 });
+
+// ---------- Parking ----------
+
+export const getPermits = query(v.optional(v.boolean(), false), async (includeRevoked) =>
+	svc.listPermits((await requireOrg()).orgId, { includeRevoked })
+);
+
+export const issuePermit = command(permitInput, async (input) => {
+	const row = await svc.issuePermit(await requireOrg(), input);
+	void getPermits(false).refresh();
+	void getPermits(true).refresh();
+	return { id: row.id };
+});
+
+export const revokePermit = command(idSchema, async (id) => {
+	await svc.revokePermit(await requireOrg(), id);
+	void getPermits(false).refresh();
+	void getPermits(true).refresh();
+});
+
+// ---------- Keys ----------
+
+export const getKeys = query(v.optional(v.boolean(), false), async (includeClosed) =>
+	svc.listKeys((await requireOrg()).orgId, { includeClosed })
+);
+
+export const issueKey = command(keyInput, async (input) => {
+	const row = await svc.issueKey(await requireOrg(), input);
+	void getKeys(false).refresh();
+	void getKeys(true).refresh();
+	return { id: row.id };
+});
+
+export const closeKey = command(
+	v.object({ id: idSchema, status: v.picklist(['returned', 'lost']) }),
+	async ({ id, status }) => {
+		await svc.closeKey(await requireOrg(), id, status);
+		void getKeys(false).refresh();
+		void getKeys(true).refresh();
+	}
+);
+
+// ---------- Guest passes ----------
+
+export const getPasses = query(v.optional(v.boolean(), false), async (includeVoid) =>
+	svc.listPasses((await requireOrg()).orgId, { includeVoid })
+);
+
+export const createPass = command(passInput, async (input) => {
+	const row = await svc.createPass(await requireOrg(), input);
+	void getPasses(false).refresh();
+	void getPasses(true).refresh();
+	return { id: row.id };
+});
+
+export const closePass = command(
+	v.object({ id: idSchema, status: v.picklist(['used', 'void']) }),
+	async ({ id, status }) => {
+		await svc.closePass(await requireOrg(), id, status);
+		void getPasses(false).refresh();
+		void getPasses(true).refresh();
+	}
+);

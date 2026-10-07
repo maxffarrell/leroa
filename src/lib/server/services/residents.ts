@@ -5,7 +5,10 @@ import { db } from '#lib/server/db/index.ts';
 import {
 	amenity,
 	amenityBooking,
+	guestPass,
+	keyRecord,
 	packageLog,
+	parkingPermit,
 	property,
 	tenant,
 	unit
@@ -13,7 +16,14 @@ import {
 import { appOrigin, sendEmail } from '#lib/server/email.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
 import type { OrgContext } from '#lib/server/context.ts';
-import type { amenityInput, bookingInput, packageInput } from '#lib/schemas.ts';
+import type {
+	amenityInput,
+	bookingInput,
+	keyInput,
+	packageInput,
+	passInput,
+	permitInput
+} from '#lib/schemas.ts';
 import { emit } from './events.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
@@ -314,4 +324,274 @@ export async function pendingPackageCount(orgId: string) {
 		.from(packageLog)
 		.where(and(eq(packageLog.organizationId, orgId), eq(packageLog.status, 'awaiting_pickup')));
 	return r?.n ?? 0;
+}
+
+/** Shared property/unit/tenant validation for resident-life records. */
+async function checkResidentPlace(
+	orgId: string,
+	propertyId: string,
+	unitId: string | null | undefined,
+	tenantId: string | null | undefined
+) {
+	const [p] = await db
+		.select({ name: property.name })
+		.from(property)
+		.where(and(eq(property.organizationId, orgId), eq(property.id, propertyId)));
+	if (!p) error(404, 'Property not found');
+	if (unitId) {
+		const [u] = await db
+			.select({ id: unit.id })
+			.from(unit)
+			.where(and(eq(unit.propertyId, propertyId), eq(unit.id, unitId)));
+		if (!u) error(404, 'Unit not found');
+	}
+	let resident: { name: string } | null = null;
+	if (tenantId) {
+		const [t] = await db
+			.select()
+			.from(tenant)
+			.where(and(eq(tenant.organizationId, orgId), eq(tenant.id, tenantId)));
+		if (!t) error(404, 'Tenant not found');
+		resident = { name: fullName(t) };
+	}
+	return { propertyName: p.name, residentName: resident?.name ?? null };
+}
+
+// ---------- Parking permits ----------
+
+const PERMIT_SELECT = {
+	id: parkingPermit.id,
+	status: parkingPermit.status,
+	permitNumber: parkingPermit.permitNumber,
+	vehicle: parkingPermit.vehicle,
+	expiresOn: parkingPermit.expiresOn,
+	notes: parkingPermit.notes,
+	createdAt: parkingPermit.createdAt,
+	propertyName: property.name,
+	unitName: unit.name,
+	tenantId: parkingPermit.tenantId,
+	tenantFirst: tenant.firstName,
+	tenantLast: tenant.lastName,
+	tenantCompany: tenant.companyName
+} as const;
+
+export async function listPermits(orgId: string, opts: { includeRevoked?: boolean } = {}) {
+	return db
+		.select(PERMIT_SELECT)
+		.from(parkingPermit)
+		.innerJoin(property, eq(property.id, parkingPermit.propertyId))
+		.leftJoin(unit, eq(unit.id, parkingPermit.unitId))
+		.leftJoin(tenant, eq(tenant.id, parkingPermit.tenantId))
+		.where(
+			and(
+				eq(parkingPermit.organizationId, orgId),
+				opts.includeRevoked ? undefined : eq(parkingPermit.status, 'active')
+			)
+		)
+		.orderBy(desc(parkingPermit.createdAt))
+		.limit(200);
+}
+
+export async function issuePermit(ctx: OrgContext, input: Out<typeof permitInput>) {
+	const { residentName } = await checkResidentPlace(
+		ctx.orgId,
+		input.propertyId,
+		input.unitId,
+		input.tenantId
+	);
+	const [row] = await db
+		.insert(parkingPermit)
+		.values({ ...input, organizationId: ctx.orgId })
+		.returning()
+		.catch((e) => {
+			if ((e as { cause?: { code?: string } })?.cause?.code === '23505')
+				error(409, 'That permit number is already in use at this property');
+			throw e;
+		});
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'permit',
+		entityId: row!.id,
+		action: 'issued',
+		summary: `Permit ${row!.permitNumber} issued${residentName ? ` to ${residentName}` : ''}`
+	});
+	return row!;
+}
+
+export async function revokePermit(ctx: OrgContext, id: string) {
+	const [row] = await db
+		.update(parkingPermit)
+		.set({ status: 'revoked' })
+		.where(
+			and(
+				eq(parkingPermit.organizationId, ctx.orgId),
+				eq(parkingPermit.id, id),
+				eq(parkingPermit.status, 'active')
+			)
+		)
+		.returning();
+	if (!row) error(404, 'Permit not found or already revoked');
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'permit',
+		entityId: id,
+		action: 'revoked',
+		summary: `Permit ${row.permitNumber} revoked`
+	});
+}
+
+// ---------- Keys & fobs ----------
+
+export async function listKeys(orgId: string, opts: { includeClosed?: boolean } = {}) {
+	return db
+		.select({
+			id: keyRecord.id,
+			status: keyRecord.status,
+			kind: keyRecord.kind,
+			label: keyRecord.label,
+			issuedAt: keyRecord.issuedAt,
+			closedAt: keyRecord.closedAt,
+			notes: keyRecord.notes,
+			propertyName: property.name,
+			unitName: unit.name,
+			tenantFirst: tenant.firstName,
+			tenantLast: tenant.lastName,
+			tenantCompany: tenant.companyName
+		})
+		.from(keyRecord)
+		.innerJoin(property, eq(property.id, keyRecord.propertyId))
+		.leftJoin(unit, eq(unit.id, keyRecord.unitId))
+		.leftJoin(tenant, eq(tenant.id, keyRecord.tenantId))
+		.where(
+			and(
+				eq(keyRecord.organizationId, orgId),
+				opts.includeClosed ? undefined : eq(keyRecord.status, 'issued')
+			)
+		)
+		.orderBy(desc(keyRecord.createdAt))
+		.limit(200);
+}
+
+export async function issueKey(ctx: OrgContext, input: Out<typeof keyInput>) {
+	const { residentName } = await checkResidentPlace(
+		ctx.orgId,
+		input.propertyId,
+		input.unitId,
+		input.tenantId
+	);
+	const [row] = await db
+		.insert(keyRecord)
+		.values({ ...input, organizationId: ctx.orgId, issuedAt: new Date() })
+		.returning();
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'key_record',
+		entityId: row!.id,
+		action: 'issued',
+		summary: `${input.kind} ${input.label} issued${residentName ? ` to ${residentName}` : ''}`
+	});
+	return row!;
+}
+
+export async function closeKey(ctx: OrgContext, id: string, status: 'returned' | 'lost') {
+	const [row] = await db
+		.update(keyRecord)
+		.set({ status, closedAt: new Date() })
+		.where(
+			and(
+				eq(keyRecord.organizationId, ctx.orgId),
+				eq(keyRecord.id, id),
+				eq(keyRecord.status, 'issued')
+			)
+		)
+		.returning();
+	if (!row) error(404, 'Key not found or already closed');
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'key_record',
+		entityId: id,
+		action: status,
+		summary: `${row.kind} ${row.label} ${status}`
+	});
+}
+
+// ---------- Guest passes ----------
+
+export async function listPasses(orgId: string, opts: { includeVoid?: boolean } = {}) {
+	return db
+		.select({
+			id: guestPass.id,
+			status: guestPass.status,
+			guestName: guestPass.guestName,
+			startsOn: guestPass.startsOn,
+			endsOn: guestPass.endsOn,
+			notes: guestPass.notes,
+			propertyName: property.name,
+			unitName: unit.name,
+			tenantFirst: tenant.firstName,
+			tenantLast: tenant.lastName,
+			tenantCompany: tenant.companyName
+		})
+		.from(guestPass)
+		.innerJoin(property, eq(property.id, guestPass.propertyId))
+		.leftJoin(unit, eq(unit.id, guestPass.unitId))
+		.leftJoin(tenant, eq(tenant.id, guestPass.tenantId))
+		.where(
+			and(
+				eq(guestPass.organizationId, orgId),
+				opts.includeVoid ? undefined : eq(guestPass.status, 'active')
+			)
+		)
+		.orderBy(asc(guestPass.endsOn))
+		.limit(200);
+}
+
+export async function createPass(ctx: OrgContext, input: Out<typeof passInput>) {
+	if (input.endsOn < input.startsOn) error(400, 'Ends before it starts');
+	const { propertyName, residentName } = await checkResidentPlace(
+		ctx.orgId,
+		input.propertyId,
+		input.unitId,
+		input.tenantId
+	);
+	const [row] = await db
+		.insert(guestPass)
+		.values({ ...input, organizationId: ctx.orgId })
+		.returning();
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'guest_pass',
+		entityId: row!.id,
+		action: 'issued',
+		summary: `Guest pass for ${input.guestName} at ${propertyName}${residentName ? ` (host ${residentName})` : ''}`
+	});
+	return row!;
+}
+
+export async function closePass(ctx: OrgContext, id: string, status: 'used' | 'void') {
+	const [row] = await db
+		.update(guestPass)
+		.set({ status })
+		.where(
+			and(
+				eq(guestPass.organizationId, ctx.orgId),
+				eq(guestPass.id, id),
+				eq(guestPass.status, 'active')
+			)
+		)
+		.returning();
+	if (!row) error(404, 'Pass not found or already closed');
+	await emit({
+		orgId: ctx.orgId,
+		actorId: ctx.userId,
+		entityType: 'guest_pass',
+		entityId: id,
+		action: status,
+		summary: `Guest pass for ${row.guestName} ${status}`
+	});
 }

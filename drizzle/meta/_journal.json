@@ -148,6 +148,13 @@
       "when": 1791392947061,
       "tag": "0020_residents",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791396239385,
+      "tag": "0021_resident-records",
+      "breakpoints": true
     }
   ]
 }

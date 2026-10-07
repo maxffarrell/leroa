@@ -32,6 +32,9 @@
 	import CheckCheck from '@lucide/svelte/icons/check-check';
 	import Armchair from '@lucide/svelte/icons/armchair';
 	import Bell from '@lucide/svelte/icons/bell';
+	import PermitsView from '#lib/components/app/permits-view.svelte';
+	import KeysView from '#lib/components/app/keys-view.svelte';
+	import PassesView from '#lib/components/app/passes-view.svelte';
 
 	const isAdmin = $derived(page.data.role !== 'member');
 	let restab = $state('packages');
@@ -206,6 +209,9 @@
 		<Tabs.List>
 			<Tabs.Trigger value="packages">Packages</Tabs.Trigger>
 			<Tabs.Trigger value="amenities">Amenities</Tabs.Trigger>
+			<Tabs.Trigger value="parking">Parking</Tabs.Trigger>
+			<Tabs.Trigger value="keys">Keys & fobs</Tabs.Trigger>
+			<Tabs.Trigger value="guests">Guests</Tabs.Trigger>
 		</Tabs.List>
 
 		<Tabs.Content value="packages" class="mt-4 space-y-4">
@@ -415,6 +421,10 @@
 				</div>
 			{/if}
 		</Tabs.Content>
+
+		<Tabs.Content value="parking"><PermitsView /></Tabs.Content>
+		<Tabs.Content value="keys"><KeysView /></Tabs.Content>
+		<Tabs.Content value="guests"><PassesView /></Tabs.Content>
 	</Tabs.Root>
 </main>
 

@@ -663,3 +663,42 @@ export const packageInput = v.object({
 	tracking: v.optional(v.nullable(shortText(80))),
 	description: v.optional(v.nullable(shortText(300)))
 });
+
+export const KEY_KINDS = ['key', 'fob', 'remote', 'card', 'other'] as const;
+export type KeyKind = (typeof KEY_KINDS)[number];
+export const KEY_KIND_LABELS: Record<KeyKind, string> = {
+	key: 'Key',
+	fob: 'Fob',
+	remote: 'Gate remote',
+	card: 'Access card',
+	other: 'Other'
+};
+
+export const permitInput = v.object({
+	propertyId: idSchema,
+	unitId: v.optional(v.nullable(idSchema)),
+	tenantId: v.optional(v.nullable(idSchema)),
+	permitNumber: requiredText('Permit #'),
+	vehicle: v.optional(v.nullable(shortText(120))),
+	expiresOn: v.optional(v.nullable(v.pipe(v.string(), v.isoDate()))),
+	notes: v.optional(v.nullable(shortText(300)))
+});
+
+export const keyInput = v.object({
+	propertyId: idSchema,
+	unitId: v.optional(v.nullable(idSchema)),
+	tenantId: v.optional(v.nullable(idSchema)),
+	kind: v.picklist(KEY_KINDS),
+	label: requiredText('Label'),
+	notes: v.optional(v.nullable(shortText(300)))
+});
+
+export const passInput = v.object({
+	propertyId: idSchema,
+	unitId: v.optional(v.nullable(idSchema)),
+	tenantId: v.optional(v.nullable(idSchema)),
+	guestName: requiredText('Guest name'),
+	startsOn: v.pipe(v.string(), v.isoDate()),
+	endsOn: v.pipe(v.string(), v.isoDate()),
+	notes: v.optional(v.nullable(shortText(300)))
+});

@@ -1285,3 +1285,77 @@ export const packageLog = pgTable(
 	},
 	(t) => [index('package_log_org_idx').on(t.organizationId, t.status, t.createdAt)]
 );
+
+export const permitStatus = pgEnum('parking_permit_status', ['active', 'revoked']);
+
+/** A parking permit issued to a resident, tied to a vehicle description. */
+export const parkingPermit = pgTable(
+	'parking_permit',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		unitId: text('unit_id').references(() => unit.id, { onDelete: 'set null' }),
+		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
+		permitNumber: text('permit_number').notNull(),
+		vehicle: text('vehicle'),
+		status: permitStatus('status').notNull().default('active'),
+		expiresOn: date('expires_on', { mode: 'string' }),
+		notes: text('notes'),
+		...timestamps
+	},
+	(t) => [
+		index('parking_permit_org_idx').on(t.organizationId, t.status),
+		uniqueIndex('parking_permit_number_idx').on(t.propertyId, t.permitNumber)
+	]
+);
+
+export const keyKind = pgEnum('key_kind', ['key', 'fob', 'remote', 'card', 'other']);
+export const keyStatus = pgEnum('key_status', ['issued', 'returned', 'lost']);
+
+/** A physical key/fob/remote issued to a resident. */
+export const keyRecord = pgTable(
+	'key_record',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		unitId: text('unit_id').references(() => unit.id, { onDelete: 'set null' }),
+		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
+		kind: keyKind('kind').notNull().default('key'),
+		label: text('label').notNull(),
+		status: keyStatus('status').notNull().default('issued'),
+		issuedAt: timestamp('issued_at', { withTimezone: true }),
+		closedAt: timestamp('closed_at', { withTimezone: true }),
+		notes: text('notes'),
+		...timestamps
+	},
+	(t) => [index('key_record_org_idx').on(t.organizationId, t.status)]
+);
+
+export const guestPassStatus = pgEnum('guest_pass_status', ['active', 'used', 'void']);
+
+/** A guest pass a resident requests for a visitor. */
+export const guestPass = pgTable(
+	'guest_pass',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		unitId: text('unit_id').references(() => unit.id, { onDelete: 'set null' }),
+		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
+		guestName: text('guest_name').notNull(),
+		startsOn: date('starts_on', { mode: 'string' }).notNull(),
+		endsOn: date('ends_on', { mode: 'string' }).notNull(),
+		status: guestPassStatus('status').notNull().default('active'),
+		notes: text('notes'),
+		...timestamps
+	},
+	(t) => [index('guest_pass_org_idx').on(t.organizationId, t.status)]
+);
