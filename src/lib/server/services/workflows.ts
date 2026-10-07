@@ -79,6 +79,9 @@ async function managerEmails(orgId: string) {
 	return rows.map((r) => r.email);
 }
 
+/** True while a create_ticket action is executing; suppresses nested create_ticket runs. */
+let creatingTicket = false;
+
 /** Runs every enabled rule matching the event; called from emit() (fire-and-forget). */
 export async function runWorkflows(event: LeroaEvent) {
 	const rules = await db
@@ -110,20 +113,28 @@ export async function runWorkflows(event: LeroaEvent) {
 					});
 				}
 			} else if (rule.action === 'create_ticket') {
+				// A workflow-created ticket re-emits maintenance.created; skip nested
+				// create_ticket runs so a rule on that event can't amplify itself.
+				if (creatingTicket) continue;
 				const propertyId =
 					(event.data.propertyId as string | undefined) ?? rule.config.propertyId ?? null;
 				if (!propertyId) continue; // nothing to attach the ticket to
-				await createTicket(
-					{ orgId: event.organizationId, userId: null },
-					{
-						propertyId,
-						title: rule.config.title ? render(rule.config.title, event) : event.summary,
-						priority:
-							(rule.config.priority as 'low' | 'normal' | 'high' | 'urgent' | undefined) ??
-							'normal',
-						status: 'open'
-					}
-				);
+				creatingTicket = true;
+				try {
+					await createTicket(
+						{ orgId: event.organizationId, userId: null },
+						{
+							propertyId,
+							title: rule.config.title ? render(rule.config.title, event) : event.summary,
+							priority:
+								(rule.config.priority as 'low' | 'normal' | 'high' | 'urgent' | undefined) ??
+								'normal',
+							status: 'open'
+						}
+					);
+				} finally {
+					creatingTicket = false;
+				}
 			}
 			await db
 				.update(workflow)
