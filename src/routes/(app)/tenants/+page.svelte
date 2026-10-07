@@ -16,6 +16,7 @@
 		renderSnippet
 	} from '#lib/components/ui/data-table/index.js';
 	import SortHead from '#lib/components/app/sort-head.svelte';
+	import SavedViewsMenu from '#lib/components/app/saved-views-menu.svelte';
 	import {
 		getCoreRowModel,
 		getSortedRowModel,
@@ -126,6 +127,14 @@
 				placeholder="Filter by name, email, phone or property…"
 				class="max-w-sm"
 				bind:value={filter}
+			/>
+			<SavedViewsMenu
+				page="tenants"
+				current={() => ({ search: filter, sorting })}
+				onapply={(s) => {
+					filter = (s.search as string) ?? '';
+					sorting = (s.sorting as SortingState) ?? [];
+				}}
 			/>
 			<p class="ml-auto hidden text-xs text-muted-foreground md:block">
 				{rows.length} of {tenants.length}

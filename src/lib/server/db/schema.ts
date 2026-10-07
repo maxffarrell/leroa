@@ -554,6 +554,25 @@ export const inboxItem = pgTable(
 	]
 );
 
+/** A named, workspace-shared list configuration (filters + sort) a member can apply later. */
+export const savedView = pgTable(
+	'saved_view',
+	{
+		id: id(),
+		organizationId: orgId(),
+		/** List key the view belongs to: 'tenants', 'vendors', 'rent', … */
+		page: text('page').notNull(),
+		name: text('name').notNull(),
+		state: jsonb('state').$type<Record<string, unknown>>().notNull(),
+		createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+		...timestamps
+	},
+	(t) => [
+		index('saved_view_org_page_idx').on(t.organizationId, t.page),
+		uniqueIndex('saved_view_name_idx').on(t.organizationId, t.page, t.name)
+	]
+);
+
 export const webhook = pgTable(
 	'webhook',
 	{

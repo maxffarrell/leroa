@@ -10,6 +10,7 @@
 	import { Progress } from '#lib/components/ui/progress/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import SavedViewsMenu from '#lib/components/app/saved-views-menu.svelte';
 	import {
 		createSvelteTable,
 		FlexRender,
@@ -208,6 +209,15 @@
 			<ToggleGroup.Item value="paid">Paid</ToggleGroup.Item>
 		</ToggleGroup.Root>
 		<Input placeholder="Filter…" class="h-8 max-w-56" bind:value={search} />
+		<SavedViewsMenu
+			page="rent"
+			current={() => ({ filter, search, sorting })}
+			onapply={(s) => {
+				filter = (s.filter as Filter) ?? 'all';
+				search = (s.search as string) ?? '';
+				sorting = (s.sorting as SortingState) ?? [];
+			}}
+		/>
 		<p class="ml-auto hidden text-xs text-muted-foreground lg:block">
 			<Kbd>[</Kbd>
 			<Kbd>]</Kbd> change month · <Kbd>J</Kbd>

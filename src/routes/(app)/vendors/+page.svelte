@@ -15,6 +15,7 @@
 		renderSnippet
 	} from '#lib/components/ui/data-table/index.js';
 	import SortHead from '#lib/components/app/sort-head.svelte';
+	import SavedViewsMenu from '#lib/components/app/saved-views-menu.svelte';
 	import {
 		getCoreRowModel,
 		getSortedRowModel,
@@ -143,6 +144,15 @@
 			<label class="flex items-center gap-2 text-sm text-muted-foreground"
 				><input type="checkbox" bind:checked={showArchived} class="accent-primary" /> Show archived</label
 			>
+			<SavedViewsMenu
+				page="vendors"
+				current={() => ({ search, showArchived, sorting })}
+				onapply={(s) => {
+					search = (s.search as string) ?? '';
+					showArchived = (s.showArchived as boolean) ?? false;
+					sorting = (s.sorting as SortingState) ?? [];
+				}}
+			/>
 		</div>
 		<div class="overflow-hidden rounded-lg border">
 			<Table.Root>
