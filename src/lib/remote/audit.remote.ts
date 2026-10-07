@@ -9,8 +9,8 @@ const auditFilter = v.object({
 	action: v.optional(v.string()),
 	actorId: v.optional(v.string()),
 	q: v.optional(v.string()),
-	from: v.optional(v.isoDate()),
-	to: v.optional(v.isoDate()),
+	from: v.optional(v.pipe(v.string(), v.isoDate())),
+	to: v.optional(v.pipe(v.string(), v.isoDate())),
 	before: v.optional(v.string())
 });
 
