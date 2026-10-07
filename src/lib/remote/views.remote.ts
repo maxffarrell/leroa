@@ -12,6 +12,11 @@ export const getSavedViews = query(pageKey, async (page) => {
 	return listSavedViews(orgId, page);
 });
 
+// Drizzle wraps PostgresError: the code sits on `cause`, not the thrown error.
+const isUniqueViolation = (e: unknown) =>
+	(e as { code?: string; cause?: { code?: string } }).code === '23505' ||
+	(e as { cause?: { code?: string } }).cause?.code === '23505';
+
 export const saveViewAs = command(
 	v.object({
 		page: pageKey,
@@ -21,8 +26,7 @@ export const saveViewAs = command(
 	async ({ page, name, state }) => {
 		const { orgId, userId } = await requireOrg();
 		const row = await saveView(orgId, userId, page, name, state).catch((e) => {
-			if ((e as { code?: string }).code === '23505')
-				error(409, `A view named “${name}” already exists`);
+			if (isUniqueViolation(e)) error(409, `A view named “${name}” already exists`);
 			throw e;
 		});
 		void getSavedViews(page).refresh();
