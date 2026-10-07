@@ -16,7 +16,6 @@
 	} from '#lib/remote/residents.remote.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Star from '@lucide/svelte/icons/star';
-	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const properties = $derived(await getProperties());
 	const surveys = $derived(await getSurveys());
@@ -27,8 +26,15 @@
 	let fProperty = $state('');
 
 	let viewing = $state('');
+	let closing = $state(false);
 	const responses = $derived(viewing ? await getSurveyResponses(viewing) : []);
 	const viewingSurvey = $derived(surveys.find((s) => s.id === viewing));
+
+	async function doClose(id: string) {
+		await closeSurvey(id).catch(() => toast.error('Could not close'));
+		viewing = '';
+		closing = false;
+	}
 
 	async function save(e: SubmitEvent) {
 		e.preventDefault();
@@ -123,7 +129,15 @@
 	</Modal.Content>
 </Modal.Root>
 
-<Modal.Root open={viewing !== ''} onOpenChange={(o) => !o && (viewing = '')}>
+<Modal.Root
+	open={viewing !== ''}
+	onOpenChange={(o) => {
+		if (!o) {
+			viewing = '';
+			closing = false;
+		}
+	}}
+>
 	<Modal.Content class="sm:max-w-lg">
 		<Modal.Header>
 			<Modal.Title>{viewingSurvey?.title}</Modal.Title>
@@ -162,20 +176,20 @@
 		</div>
 		<Modal.Footer>
 			{#if viewingSurvey?.status === 'open'}
-				<Button
-					variant="outline"
-					onclick={() =>
-						confirmDelete({
-							title: `Close ${viewingSurvey.title}?`,
-							description: 'Residents can no longer answer it.',
-							onConfirm: async () => {
-								await closeSurvey(viewing).catch(() => toast.error('Could not close'));
-								viewing = '';
-							}
-						})}>Close survey</Button
-				>
+				{#if closing}
+					<span class="text-xs text-muted-foreground">Residents can't answer after.</span>
+					<Button variant="destructive" onclick={() => doClose(viewing)}>Confirm close</Button>
+				{:else}
+					<Button variant="outline" onclick={() => (closing = true)}>Close survey</Button>
+				{/if}
 			{/if}
-			<Button variant="outline" onclick={() => (viewing = '')}>Done</Button>
+			<Button
+				variant="outline"
+				onclick={() => {
+					viewing = '';
+					closing = false;
+				}}>Done</Button
+			>
 		</Modal.Footer>
 	</Modal.Content>
 </Modal.Root>

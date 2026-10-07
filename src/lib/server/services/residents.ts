@@ -793,7 +793,10 @@ export async function portalSurveys(tenantIds: string[], propertyIds: string[], 
 		.from(surveyResponse)
 		.where(
 			and(
-				inArray(surveyResponse.surveyId, rows.map((r) => r.id)),
+				inArray(
+					surveyResponse.surveyId,
+					rows.map((r) => r.id)
+				),
 				inArray(surveyResponse.tenantId, tenantIds)
 			)
 		);
