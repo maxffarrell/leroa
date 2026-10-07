@@ -1,10 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { and, desc, eq, inArray, max, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, max, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { BETTER_AUTH_SECRET } from '$app/env/private';
 import { db } from '#lib/server/db/index.ts';
 import {
 	lease,
+	leaseClause,
+	leaseCriticalDate,
 	leaseTenant,
 	maintenanceTicket,
 	organization,
@@ -13,6 +15,12 @@ import {
 	unit
 } from '#lib/server/db/schema.ts';
 import { emit } from './events.ts';
+
+type ClauseRow = Pick<
+	typeof leaseClause.$inferSelect,
+	'leaseId' | 'id' | 'kind' | 'title' | 'body'
+>;
+type DateRow = Pick<typeof leaseCriticalDate.$inferSelect, 'leaseId' | 'id' | 'label' | 'date'>;
 import { notifyPortalRequest } from './notifications.ts';
 
 const TTL_MS = 14 * 86400_000;
@@ -61,6 +69,7 @@ export async function portalOverview(userId: string) {
 	const tenantIds = tenants.map((t) => t.tenant.id);
 	const leases = await db
 		.select({
+			tenantId: leaseTenant.tenantId,
 			id: lease.id,
 			organizationId: lease.organizationId,
 			status: lease.status,
@@ -111,11 +120,55 @@ export async function portalOverview(userId: string) {
 		[...new Set(tenants.map((t) => t.tenant.organizationId))]
 	);
 
+	// Company-kind tenants get their lease provisions (clauses + open critical dates) — the
+	// commercial tenant portal surface.
+	const companyIds = new Set(
+		tenants.filter((t) => t.tenant.kind === 'company').map((t) => t.tenant.id)
+	);
+	const commercialIds = leases.filter((l) => companyIds.has(l.tenantId)).map((l) => l.id);
+	const provisions = new Map<string, { clauses: ClauseRow[]; dates: DateRow[] }>();
+	if (commercialIds.length) {
+		const cls = await db
+			.select({
+				leaseId: leaseClause.leaseId,
+				id: leaseClause.id,
+				kind: leaseClause.kind,
+				title: leaseClause.title,
+				body: leaseClause.body
+			})
+			.from(leaseClause)
+			.where(inArray(leaseClause.leaseId, commercialIds))
+			.orderBy(asc(leaseClause.createdAt));
+		const dts = await db
+			.select({
+				leaseId: leaseCriticalDate.leaseId,
+				id: leaseCriticalDate.id,
+				label: leaseCriticalDate.label,
+				date: leaseCriticalDate.date
+			})
+			.from(leaseCriticalDate)
+			.where(
+				and(inArray(leaseCriticalDate.leaseId, commercialIds), isNull(leaseCriticalDate.doneAt))
+			)
+			.orderBy(asc(leaseCriticalDate.date));
+		for (const c of cls) {
+			const p = provisions.get(c.leaseId) ?? { clauses: [], dates: [] };
+			p.clauses.push(c);
+			provisions.set(c.leaseId, p);
+		}
+		for (const d of dts) {
+			const p = provisions.get(d.leaseId) ?? { clauses: [], dates: [] };
+			p.dates.push(d);
+			provisions.set(d.leaseId, p);
+		}
+	}
+
 	return {
 		name: tenants[0]!.tenant.firstName || tenants[0]!.tenant.companyName || '',
 		orgName: tenants[0]!.orgName,
 		leases: leases.map((l, i) => ({
 			...l,
+			provisions: provisions.get(l.id),
 			balance: details[i]!.balance,
 			payWith: (payable.get(l.organizationId) ?? [])
 				.filter((p) => p.supportsCurrency(l.currency))

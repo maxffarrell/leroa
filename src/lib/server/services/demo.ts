@@ -134,6 +134,34 @@ export async function loadDemoData(ctx: OrgContext) {
 		);
 	}
 
+	// A commercial tenant: Bluebird Bakery leases Harbor unit C, with lease provisions.
+	const bakery = await createTenant(ctx, {
+		kind: 'company',
+		firstName: '',
+		lastName: '',
+		companyName: 'Bluebird Bakery LLC',
+		email: 'ops@bluebirdbakery.example',
+		phone: '(512) 555-0187'
+	});
+	tenants.push(bakery);
+	const bakeryLease = await createLease(ctx, {
+		unitId: units[10]!.id,
+		tenantIds: [bakery.id],
+		status: 'active',
+		startDate: start,
+		endDate: new Date(Date.UTC(today.getUTCFullYear() + 1, today.getUTCMonth() + 4, 0))
+			.toISOString()
+			.slice(0, 10),
+		rentAmount: 325000,
+		depositAmount: 325000,
+		rentDueDay: 1,
+		frequency: 'monthly',
+		lateFeeAmount: 0,
+		lateFeeGraceDays: 5,
+		currency: 'USD'
+	});
+	leases.push(bakeryLease);
+
 	for (let m = 5; m >= 0; m--) {
 		const key = monthKey(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - m, 1)));
 		const roll = await rentRoll(ctx.orgId, key);
@@ -508,6 +536,19 @@ export async function loadDemoData(ctx: OrgContext) {
 		label: 'Tenant insurance certificate renewal',
 		date: addDays(t0, 45),
 		remindDays: 14
+	});
+	await addClause(ctx, {
+		leaseId: bakeryLease.id,
+		kind: 'percentage_rent',
+		title: 'Percentage rent over breakpoint',
+		body: 'Tenant pays 6% of gross sales above the natural breakpoint, reported quarterly.'
+	});
+	await addCriticalDate(ctx, {
+		leaseId: bakeryLease.id,
+		clauseId: null,
+		label: 'Quarterly sales report due',
+		date: addDays(t0, 24),
+		remindDays: 21
 	});
 	await addTiItem(ctx, {
 		leaseId: leases[0]!.id,

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import PortalAgreements from '#lib/components/app/portal-agreements.svelte';
+	import PortalProvisions from '#lib/components/app/portal-provisions.svelte';
 	import PortalInspections from '#lib/components/app/portal-inspections.svelte';
 	import PortalMessages from '#lib/components/app/portal-messages.svelte';
 	import PortalAnnouncements from '#lib/components/app/portal-announcements.svelte';
@@ -168,6 +169,11 @@
 					</p>
 				</div>
 			</Card.Content>
+			{#if l.provisions?.clauses.length || l.provisions?.dates.length}
+				<Card.Content>
+					<PortalProvisions provisions={l.provisions} />
+				</Card.Content>
+			{/if}
 			{#if l.agreements.length}
 				<Card.Content class="space-y-4">
 					<PortalAgreements agreements={l.agreements} />
