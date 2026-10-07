@@ -1216,3 +1216,72 @@ export const profileLink = pgTable('profile_link', {
 	syncedAt: timestamp('synced_at', { withTimezone: true }).notNull().defaultNow(),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+/** A bookable amenity (clubhouse, gym, rooftop) attached to a property. */
+export const amenity = pgTable(
+	'amenity',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		description: text('description'),
+		openHour: integer('open_hour').notNull().default(8),
+		closeHour: integer('close_hour').notNull().default(21),
+		slotMinutes: integer('slot_minutes').notNull().default(120),
+		maxDaysAhead: integer('max_days_ahead').notNull().default(14),
+		...timestamps
+	},
+	(t) => [index('amenity_property_idx').on(t.propertyId)]
+);
+
+export const bookingStatus = pgEnum('booking_status', ['confirmed', 'cancelled']);
+
+export const amenityBooking = pgTable(
+	'amenity_booking',
+	{
+		id: id(),
+		organizationId: orgId(),
+		amenityId: text('amenity_id')
+			.notNull()
+			.references(() => amenity.id, { onDelete: 'cascade' }),
+		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
+		startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+		endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+		status: bookingStatus('status').notNull().default('confirmed'),
+		notes: text('notes'),
+		createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+		...timestamps
+	},
+	(t) => [
+		index('amenity_booking_amenity_idx').on(t.amenityId, t.startsAt),
+		index('amenity_booking_org_idx').on(t.organizationId, t.startsAt)
+	]
+);
+
+export const packageStatus = pgEnum('package_status', ['awaiting_pickup', 'picked_up']);
+
+/** A parcel received at the office for a resident. */
+export const packageLog = pgTable(
+	'package_log',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		unitId: text('unit_id').references(() => unit.id, { onDelete: 'set null' }),
+		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
+		carrier: text('carrier'),
+		tracking: text('tracking'),
+		description: text('description'),
+		status: packageStatus('status').notNull().default('awaiting_pickup'),
+		receivedBy: text('received_by').references(() => user.id, { onDelete: 'set null' }),
+		pickedUpAt: timestamp('picked_up_at', { withTimezone: true }),
+		notifiedAt: timestamp('notified_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [index('package_log_org_idx').on(t.organizationId, t.status, t.createdAt)]
+);

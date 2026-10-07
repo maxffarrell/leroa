@@ -141,6 +141,13 @@
       "when": 1791391961800,
       "tag": "0019_workflows",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791392947061,
+      "tag": "0020_residents",
+      "breakpoints": true
     }
   ]
 }

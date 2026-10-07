@@ -10,6 +10,7 @@ import Puzzle from '@lucide/svelte/icons/puzzle';
 import Megaphone from '@lucide/svelte/icons/megaphone';
 import HardHat from '@lucide/svelte/icons/hard-hat';
 import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
+import Handshake from '@lucide/svelte/icons/handshake';
 import MessagesSquare from '@lucide/svelte/icons/messages-square';
 import Landmark from '@lucide/svelte/icons/landmark';
 import ChartColumn from '@lucide/svelte/icons/chart-column';
@@ -27,6 +28,7 @@ export const mainNav = [
 	{ href: '/maintenance', label: 'Maintenance', icon: Wrench, key: 'm' },
 	{ href: '/vendors', label: 'Vendors', icon: HardHat, key: 'v' },
 	{ href: '/inspections', label: 'Inspections', icon: ClipboardCheck, key: 'n' },
+	{ href: '/residents', label: 'Residents', icon: Handshake, key: 'u' },
 	{ href: '/documents', label: 'Documents', icon: FolderOpen, key: 'o' },
 	{ href: '/reports', label: 'Reports', icon: ChartColumn, key: 'x' }
 ] as const;

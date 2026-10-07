@@ -635,3 +635,31 @@ export const workflowUpdate = v.object({
 	...v.partial(workflowInput).entries,
 	enabled: v.optional(v.boolean())
 });
+
+/** A bookable amenity and its hours/slot policy. */
+export const amenityInput = v.object({
+	propertyId: idSchema,
+	name: requiredText('Name'),
+	description: optionalText,
+	openHour: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(23)), 8),
+	closeHour: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(24)), 21),
+	slotMinutes: v.optional(v.pipe(v.number(), v.integer(), v.minValue(15), v.maxValue(720)), 120),
+	maxDaysAhead: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(365)), 14)
+});
+
+/** Book a slot on an amenity; `startsAt` is an ISO timestamp. */
+export const bookingInput = v.object({
+	amenityId: idSchema,
+	tenantId: v.optional(v.nullable(idSchema)),
+	startsAt: v.pipe(v.string(), v.isoTimestamp()),
+	notes: v.optional(v.nullable(shortText(300)))
+});
+
+export const packageInput = v.object({
+	propertyId: idSchema,
+	unitId: v.optional(v.nullable(idSchema)),
+	tenantId: v.optional(v.nullable(idSchema)),
+	carrier: v.optional(v.nullable(shortText(40))),
+	tracking: v.optional(v.nullable(shortText(80))),
+	description: v.optional(v.nullable(shortText(300)))
+});

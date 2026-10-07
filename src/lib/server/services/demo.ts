@@ -20,6 +20,7 @@ import { createSchedule } from './schedules.ts';
 import { startTurn, updateTurn } from './turns.ts';
 import { createAnnouncement, postMessage } from './messaging.ts';
 import { createOwner } from './owners.ts';
+import { bookSlot, createAmenity, logPackage } from './residents.ts';
 import {
 	addLeadNote,
 	createLead,
@@ -381,6 +382,54 @@ export async function loadDemoData(ctx: OrgContext) {
 		name: 'Harbor Lofts LLC',
 		email: 'ops@harborlofts.example',
 		propertyIds: [harbor.id]
+	});
+
+	// Resident life: bookable amenities and a front-desk package shelf.
+	const clubhouse = await createAmenity(ctx, {
+		propertyId: maple.id,
+		name: 'Clubhouse lounge',
+		description: 'Reservable lounge with a kitchenette and patio access.',
+		openHour: 8,
+		closeHour: 22,
+		slotMinutes: 120,
+		maxDaysAhead: 14
+	});
+	await createAmenity(ctx, {
+		propertyId: harbor.id,
+		name: 'Rooftop deck',
+		description: null,
+		openHour: 9,
+		closeHour: 21,
+		slotMinutes: 60,
+		maxDaysAhead: 7
+	});
+	await bookSlot(ctx, {
+		amenityId: clubhouse.id,
+		tenantId: tenants[0]!.id,
+		startsAt: new Date(`${addDays(t0, 1)}T18:00:00`).toISOString(),
+		notes: 'Birthday dinner prep'
+	});
+	await bookSlot(ctx, {
+		amenityId: clubhouse.id,
+		tenantId: tenants[1]!.id,
+		startsAt: new Date(`${addDays(t0, 2)}T10:00:00`).toISOString(),
+		notes: null
+	});
+	await logPackage(ctx, {
+		propertyId: maple.id,
+		unitId: leases[0]!.unitId,
+		tenantId: tenants[0]!.id,
+		carrier: 'UPS',
+		tracking: '1Z999AA10123456784',
+		description: 'Medium box'
+	});
+	await logPackage(ctx, {
+		propertyId: harbor.id,
+		unitId: null,
+		tenantId: tenants[1]!.id,
+		carrier: 'USPS',
+		tracking: null,
+		description: 'Padded envelope'
 	});
 	return { properties: 3, leases: leases.length };
 }
