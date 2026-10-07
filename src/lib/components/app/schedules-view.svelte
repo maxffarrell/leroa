@@ -83,7 +83,10 @@
 
 	const propUnits = $derived(units.filter((u) => u.propertyId === fProperty));
 	const propAssets = $derived(
-		assets.filter((a) => a.propertyId === fProperty && (!fUnit || !a.unitId || a.unitId === fUnit))
+		assets.filter(
+			(a) =>
+				!a.archivedAt && a.propertyId === fProperty && (!fUnit || !a.unitId || a.unitId === fUnit)
+		)
 	);
 	const selName = <T extends { id: string; name?: string | null }>(list: T[], id: string) =>
 		list.find((x) => x.id === id)?.name;

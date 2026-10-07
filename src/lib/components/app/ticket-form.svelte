@@ -49,7 +49,9 @@
 	const propertyName = $derived(properties.find((p) => p.id === property)?.name);
 	const unitName = $derived(units.find((u) => u.id === unit)?.name);
 	const propertyAssets = $derived(
-		assets.filter((a) => a.propertyId === property && (!unit || !a.unitId || a.unitId === unit))
+		assets.filter(
+			(a) => !a.archivedAt && a.propertyId === property && (!unit || !a.unitId || a.unitId === unit)
+		)
 	);
 	const assetName = $derived(assets.find((a) => a.id === asset)?.name);
 

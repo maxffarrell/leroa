@@ -6,7 +6,10 @@ import * as turns from '#lib/server/services/turns.ts';
 import { assetInput, assetUpdate, idSchema, scheduleInput, scheduleUpdate } from '#lib/schemas.ts';
 import { turnInput, turnUpdate } from '#lib/schemas.ts';
 
-export const getAssets = query(async () => assets.listAssets((await requireOrg()).orgId));
+// Archived rows are returned too — views and pickers filter them client-side.
+export const getAssets = query(async () =>
+	assets.listAssets((await requireOrg()).orgId, { includeArchived: true })
+);
 export const getAsset = query(idSchema, async (id) =>
 	assets.getAsset((await requireOrg()).orgId, id)
 );
