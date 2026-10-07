@@ -66,6 +66,8 @@
 			toast.info('Your Leroa profile had nothing to fill in yet.');
 		} else if (page.url.searchParams.get('profile') === 'failed') {
 			toast.error('Could not read your Leroa profile. Fill in the form instead.');
+		} else if (page.url.searchParams.get('profile') === 'declined') {
+			toast.info('Nothing was shared');
 		}
 		if (page.url.searchParams.has('profile')) {
 			const u = new URL(page.url.href);

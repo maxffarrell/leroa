@@ -25,7 +25,7 @@ const PREFILL_COOKIE = 'leroa_profile_prefill';
 const TTL_MS = 10 * 60 * 1000;
 const SYNC_EVERY_MS = 24 * 60 * 60 * 1000;
 
-type Flow = { s: string; v: string; n: string; u: string | null; e: number };
+type Flow = { s: string; v: string; n: string; u: string | null; k: boolean; e: number };
 
 const secure = () => appOrigin().startsWith('https:');
 
@@ -50,6 +50,7 @@ export function startConnect(event: RequestEvent): never {
 		v: verifier,
 		n: safeNext(event.url.searchParams.get('next')),
 		u: event.locals.user?.id ?? null,
+		k: event.url.searchParams.get('keep') === '1',
 		e: Date.now() + TTL_MS
 	};
 	event.cookies.set(FLOW_COOKIE, seal(BETTER_AUTH_SECRET, JSON.stringify(flow)), {
@@ -111,8 +112,9 @@ function withParam(path: string, key: string, value: string) {
 }
 
 /**
- * Finishes the consent redirect. Signed-in residents keep the connection; for anyone else
- * the profile is read once (to prefill a form) and the token is revoked straight away.
+ * Finishes the consent redirect. A signed-in resident keeps the connection only when the
+ * flow was started with ?keep=1 (the portal's Connect button). Every other flow — like a
+ * listing's one-time fill — reads the profile once and revokes the token straight away.
  */
 export async function finishConnect(event: RequestEvent): Promise<never> {
 	const { url, cookies } = event;
@@ -142,7 +144,7 @@ export async function finishConnect(event: RequestEvent): Promise<never> {
 	if (!shared) redirect(303, withParam(flow.n, 'profile', 'failed'));
 
 	const userId = event.locals.user?.id;
-	if (userId && flow.u === userId) {
+	if (flow.k && userId && flow.u === userId) {
 		const old = await db.query.profileLink.findFirst({
 			where: (l, { eq }) => eq(l.userId, userId)
 		});

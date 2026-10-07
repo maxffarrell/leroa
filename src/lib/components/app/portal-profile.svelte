@@ -128,7 +128,7 @@
 					onclick={() => run(disconnectProfile, 'Disconnected')}>Disconnect</Button
 				>
 			{:else if p.hub}
-				<Button class="w-full sm:w-auto" href="/api/profile/connect?next=/portal"
+				<Button class="w-full sm:w-auto" href="/api/profile/connect?next=/portal&keep=1"
 					>Connect your Leroa profile</Button
 				>
 			{/if}
