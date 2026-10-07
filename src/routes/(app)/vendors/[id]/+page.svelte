@@ -86,7 +86,7 @@
 			<h2 class="text-sm font-medium">Work orders</h2>
 			<Button size="sm" variant="ghost" href="/maintenance?new"><Plus /> New request</Button>
 		</div>
-		<div class="overflow-hidden rounded-lg border">
+		<div class="overflow-x-auto rounded-lg border">
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>

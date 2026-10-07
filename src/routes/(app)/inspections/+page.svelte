@@ -108,7 +108,7 @@
 		{#if view === 'calendar'}
 			<CalendarGrid bind:month items={calItems} />
 		{:else}
-			<div class="overflow-hidden rounded-lg border">
+			<div class="overflow-x-auto rounded-lg border">
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>

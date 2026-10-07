@@ -208,7 +208,7 @@
 
 <main class="p-4 md:p-6">
 	<Tabs.Root bind:value={restab}>
-		<Tabs.List>
+		<Tabs.List class="max-w-full justify-start overflow-x-auto">
 			<Tabs.Trigger value="packages">Packages</Tabs.Trigger>
 			<Tabs.Trigger value="amenities">Amenities</Tabs.Trigger>
 			<Tabs.Trigger value="parking">Parking</Tabs.Trigger>
@@ -224,7 +224,7 @@
 					><input type="checkbox" bind:checked={showPickedUp} class="accent-primary" /> Show picked up</label
 				>
 			</div>
-			<div class="overflow-hidden rounded-lg border">
+			<div class="overflow-x-auto rounded-lg border">
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>

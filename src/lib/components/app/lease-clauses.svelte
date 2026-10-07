@@ -127,7 +127,7 @@
 		</div>
 	{/if}
 	{#if dates.length}
-		<div class="overflow-hidden rounded-lg border">
+		<div class="overflow-x-auto rounded-lg border">
 			<table class="w-full text-sm">
 				<tbody>
 					{#each dates as d (d.id)}

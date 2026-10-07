@@ -65,7 +65,7 @@
 				<Kbd>K</Kbd> to move, <Kbd>↵</Kbd> to open
 			</p>
 		</div>
-		<div class="overflow-hidden rounded-lg border">
+		<div class="overflow-x-auto rounded-lg border">
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>

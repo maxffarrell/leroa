@@ -284,26 +284,29 @@
 				</Popover.Content>
 			</Popover.Root>
 		</div>
-		<Tabs.Content value="charges" class="mt-2 overflow-hidden rounded-lg border">
+		<Tabs.Content value="charges" class="mt-2 overflow-x-auto rounded-lg border">
 			<Table.Root>
 				<Table.Header
 					><Table.Row
-						><Table.Head>Due</Table.Head><Table.Head>Description</Table.Head><Table.Head
-							class="text-right">Amount</Table.Head
-						><Table.Head class="text-right">Paid</Table.Head><Table.Head class="w-28"
-						></Table.Head></Table.Row
+						><Table.Head class="hidden sm:table-cell">Due</Table.Head><Table.Head
+							>Description</Table.Head
+						><Table.Head class="text-right">Amount</Table.Head><Table.Head
+							class="hidden text-right sm:table-cell">Paid</Table.Head
+						><Table.Head class="w-28"></Table.Head></Table.Row
 					></Table.Header
 				>
 				<Table.Body>
 					{#each l.charges as c (c.id)}
 						{@const open = c.amount - c.paid}
 						<Table.Row>
-							<Table.Cell class="tabular-nums">{formatDate(c.dueDate, true)}</Table.Cell>
+							<Table.Cell class="hidden tabular-nums sm:table-cell"
+								>{formatDate(c.dueDate, true)}</Table.Cell
+							>
 							<Table.Cell>{c.description ?? c.kind}</Table.Cell>
 							<Table.Cell class="text-right tabular-nums"
 								>{formatMoney(c.amount, l.currency)}</Table.Cell
 							>
-							<Table.Cell class="text-right text-muted-foreground tabular-nums"
+							<Table.Cell class="hidden text-right text-muted-foreground tabular-nums sm:table-cell"
 								>{c.paid ? formatMoney(c.paid, l.currency) : '—'}</Table.Cell
 							>
 							<Table.Cell class="text-right">
@@ -332,7 +335,7 @@
 				</Table.Body>
 			</Table.Root>
 		</Tabs.Content>
-		<Tabs.Content value="payments" class="mt-2 overflow-hidden rounded-lg border">
+		<Tabs.Content value="payments" class="mt-2 overflow-x-auto rounded-lg border">
 			<Table.Root>
 				<Table.Header
 					><Table.Row

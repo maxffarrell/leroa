@@ -142,7 +142,7 @@
 						>
 					{/each}
 				</div>
-				<div class="overflow-hidden rounded-lg border">
+				<div class="overflow-x-auto rounded-lg border">
 					<Table.Root>
 						<Table.Header>
 							<Table.Row>
@@ -221,7 +221,7 @@
 								href="/leasing/listings/{l.id}"
 								data-row={i}
 								onmouseenter={() => (nav.index = i)}
-								class="group block overflow-hidden rounded-lg border transition-colors hover:bg-muted/40 {nav.index ===
+								class="group block overflow-x-auto rounded-lg border transition-colors hover:bg-muted/40 {nav.index ===
 									i && tab === 'listings'
 									? 'ring-2 ring-ring'
 									: ''}"

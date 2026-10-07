@@ -89,7 +89,7 @@
 </script>
 
 <Button
-	class="fixed right-4 bottom-4 z-40 size-11 rounded-full shadow-lg"
+	class="fixed right-4 bottom-20 z-40 size-11 rounded-full shadow-lg sm:bottom-4"
 	size="icon"
 	aria-label="Open assistant"
 	onclick={() => (open = true)}

@@ -180,7 +180,7 @@
 	{#if unitView === 'plan'}
 		<StackingPlan units={p.units} />
 	{:else}
-		<div class="overflow-hidden rounded-lg border">
+		<div class="overflow-x-auto rounded-lg border">
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>

@@ -64,7 +64,7 @@
 			><input type="checkbox" bind:checked={showClosed} class="accent-primary" /> Show returned/lost</label
 		>
 	</div>
-	<div class="overflow-hidden rounded-lg border">
+	<div class="overflow-x-auto rounded-lg border">
 		<Table.Root>
 			<Table.Header>
 				<Table.Row>

@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import PageHeader from '#lib/components/app/page-header.svelte';
+	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
 	import { cn } from '#lib/utils.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 
@@ -33,7 +35,22 @@
 <PageHeader title={current.label} crumbs={[{ label: 'Settings', href: '/settings' }]} />
 
 <div class="flex flex-col gap-6 p-4 md:flex-row md:p-6">
-	<nav class="flex shrink-0 gap-1 overflow-x-auto md:w-44 md:flex-col" aria-label="Settings">
+	<div class="md:hidden">
+		<NativeSelect.Root
+			value={current.href}
+			onchange={(e) => goto(e.currentTarget.value)}
+			class="w-full"
+			aria-label="Settings section"
+		>
+			{#each tabs as t (t.href)}
+				<NativeSelect.Option value={t.href}>{t.label}</NativeSelect.Option>
+			{/each}
+		</NativeSelect.Root>
+	</div>
+	<nav
+		class="hidden shrink-0 gap-1 overflow-x-auto md:flex md:w-44 md:flex-col"
+		aria-label="Settings"
+	>
 		{#each tabs as t (t.href)}
 			<a
 				href={t.href}

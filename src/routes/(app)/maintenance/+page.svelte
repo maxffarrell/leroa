@@ -206,7 +206,7 @@
 				<ViewSwitcher views={['kanban', 'table']} bind:value={reqView} />
 			</div>
 			{#if reqView === 'table'}
-				<div class="overflow-hidden rounded-lg border">
+				<div class="overflow-x-auto rounded-lg border">
 					<Table.Root>
 						<Table.Header>
 							<Table.Row>

@@ -94,7 +94,7 @@
 			</FileDropZone.Trigger>
 		{:else}
 			<Input placeholder="Filter files…" class="mb-4 max-w-xs" bind:value={filter} />
-			<div class="overflow-hidden rounded-lg border">
+			<div class="overflow-x-auto rounded-lg border">
 				<Table.Root>
 					<Table.Header
 						><Table.Row

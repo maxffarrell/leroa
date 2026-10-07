@@ -61,7 +61,7 @@
 			><ChevronRight /></Button
 		>
 	</div>
-	<div class="overflow-hidden rounded-lg border">
+	<div class="overflow-x-auto rounded-lg border">
 		<div class="grid grid-cols-7 border-b bg-muted/40 text-center text-xs text-muted-foreground">
 			{#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as d (d)}
 				<span class="py-1.5">{d}</span>

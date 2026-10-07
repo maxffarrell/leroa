@@ -140,7 +140,7 @@
 				{rows.length} of {tenants.length}
 			</p>
 		</div>
-		<div class="overflow-hidden rounded-lg border">
+		<div class="overflow-x-auto rounded-lg border">
 			<Table.Root>
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}

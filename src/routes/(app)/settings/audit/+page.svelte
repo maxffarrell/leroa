@@ -125,8 +125,8 @@
 					<Table.Header>
 						<Table.Row>
 							<Table.Head class="w-36">When</Table.Head>
-							<Table.Head class="w-40">Actor</Table.Head>
-							<Table.Head class="w-32">Type</Table.Head>
+							<Table.Head class="hidden w-40 sm:table-cell">Actor</Table.Head>
+							<Table.Head class="hidden w-32 sm:table-cell">Type</Table.Head>
 							<Table.Head class="w-32">Action</Table.Head>
 							<Table.Head>Summary</Table.Head>
 						</Table.Row>
@@ -138,8 +138,12 @@
 									class="text-xs whitespace-nowrap text-muted-foreground"
 									title={row.createdAt.toISOString()}>{formatRelative(row.createdAt)}</Table.Cell
 								>
-								<Table.Cell class="text-sm">{row.actorName ?? 'System'}</Table.Cell>
-								<Table.Cell class="text-xs">{actLabel(row.entityType)}</Table.Cell>
+								<Table.Cell class="hidden text-sm sm:table-cell"
+									>{row.actorName ?? 'System'}</Table.Cell
+								>
+								<Table.Cell class="hidden text-xs sm:table-cell"
+									>{actLabel(row.entityType)}</Table.Cell
+								>
 								<Table.Cell
 									><Badge variant="outline" class="font-normal">{actLabel(row.action)}</Badge
 									></Table.Cell
