@@ -5,6 +5,8 @@
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
 	import PropertyMarketing from '#lib/components/app/property-marketing.svelte';
+	import StackingPlan from '#lib/components/app/stacking-plan.svelte';
+	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import RecordFields from '#lib/components/app/record-fields.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -35,6 +37,7 @@
 	const occupied = $derived(p.units.filter((u) => u.status === 'occupied').length);
 	const scheduled = $derived(p.units.reduce((s, u) => s + (u.leaseRent ?? 0), 0));
 	const highlighted = $derived(page.url.searchParams.get('unit'));
+	let unitView = $state<'table' | 'plan'>('table');
 
 	let newUnit = $state('');
 	let adding = $state(false);
@@ -166,104 +169,117 @@
 		>
 	</div>
 
-	<div class="overflow-hidden rounded-lg border">
-		<Table.Root>
-			<Table.Header>
-				<Table.Row>
-					<Table.Head>Unit</Table.Head>
-					<Table.Head>Status</Table.Head>
-					<Table.Head class="text-right">Market rent</Table.Head>
-					<Table.Head class="hidden text-right sm:table-cell">Lease rent</Table.Head>
-					<Table.Head class="hidden md:table-cell">Lease ends</Table.Head>
-					<Table.Head class="w-10"></Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
-				{#each p.units as u (u.id)}
-					<Table.Row data-state={highlighted === u.id ? 'selected' : undefined}>
-						<Table.Cell class="font-medium">{u.name}</Table.Cell>
-						<Table.Cell>
-							<DropdownMenu.Root>
-								<DropdownMenu.Trigger
-									class="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-								>
-									<StatusBadge status={u.status} />
-								</DropdownMenu.Trigger>
-								<DropdownMenu.Content align="start">
-									{#each unitStatuses as s (s)}
-										<DropdownMenu.Item onclick={() => setStatus(u.id, s)}
-											><StatusBadge status={s} /></DropdownMenu.Item
+	<div class="flex items-center justify-between gap-2">
+		<h2 class="text-sm font-medium">Units</h2>
+		<ToggleGroup.Root type="single" bind:value={unitView} variant="outline" size="sm">
+			<ToggleGroup.Item value="table" aria-label="Table view">Table</ToggleGroup.Item>
+			<ToggleGroup.Item value="plan" aria-label="Stacking plan">Stacking plan</ToggleGroup.Item>
+		</ToggleGroup.Root>
+	</div>
+
+	{#if unitView === 'plan'}
+		<StackingPlan units={p.units} />
+	{:else}
+		<div class="overflow-hidden rounded-lg border">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Unit</Table.Head>
+						<Table.Head>Status</Table.Head>
+						<Table.Head class="text-right">Market rent</Table.Head>
+						<Table.Head class="hidden text-right sm:table-cell">Lease rent</Table.Head>
+						<Table.Head class="hidden md:table-cell">Lease ends</Table.Head>
+						<Table.Head class="w-10"></Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each p.units as u (u.id)}
+						<Table.Row data-state={highlighted === u.id ? 'selected' : undefined}>
+							<Table.Cell class="font-medium">{u.name}</Table.Cell>
+							<Table.Cell>
+								<DropdownMenu.Root>
+									<DropdownMenu.Trigger
+										class="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+									>
+										<StatusBadge status={u.status} />
+									</DropdownMenu.Trigger>
+									<DropdownMenu.Content align="start">
+										{#each unitStatuses as s (s)}
+											<DropdownMenu.Item onclick={() => setStatus(u.id, s)}
+												><StatusBadge status={s} /></DropdownMenu.Item
+											>
+										{/each}
+									</DropdownMenu.Content>
+								</DropdownMenu.Root>
+							</Table.Cell>
+							<Table.Cell class="text-right">
+								<Popover.Root>
+									<Popover.Trigger class="rounded px-1 tabular-nums hover:bg-muted"
+										>{u.marketRent != null ? formatMoney(u.marketRent) : '—'}</Popover.Trigger
+									>
+									<Popover.Content class="w-48" align="end">
+										<form onsubmit={(e) => e.preventDefault()}>
+											<MoneyInput bind:value={() => u.marketRent, (v) => setRent(u.id, v)} />
+										</form>
+									</Popover.Content>
+								</Popover.Root>
+							</Table.Cell>
+							<Table.Cell class="hidden text-right tabular-nums sm:table-cell">
+								{#if u.leaseId}<a class="hover:underline" href="/leases/{u.leaseId}"
+										>{formatMoney(u.leaseRent)}</a
+									>{:else}—{/if}
+							</Table.Cell>
+							<Table.Cell class="hidden text-muted-foreground md:table-cell"
+								>{u.leaseId
+									? u.leaseEnd
+										? formatDate(u.leaseEnd)
+										: 'Month-to-month'
+									: ''}</Table.Cell
+							>
+							<Table.Cell>
+								<DropdownMenu.Root>
+									<DropdownMenu.Trigger>
+										{#snippet child({ props })}<Button
+												size="icon-sm"
+												variant="ghost"
+												aria-label="Unit actions"
+												{...props}><Ellipsis /></Button
+											>{/snippet}
+									</DropdownMenu.Trigger>
+									<DropdownMenu.Content align="end">
+										<DropdownMenu.Item onclick={() => goto(`/leases?new=1&unit=${u.id}`)}
+											>New lease</DropdownMenu.Item
 										>
-									{/each}
-								</DropdownMenu.Content>
-							</DropdownMenu.Root>
-						</Table.Cell>
-						<Table.Cell class="text-right">
-							<Popover.Root>
-								<Popover.Trigger class="rounded px-1 tabular-nums hover:bg-muted"
-									>{u.marketRent != null ? formatMoney(u.marketRent) : '—'}</Popover.Trigger
+										<DropdownMenu.Item
+											onclick={() => goto(`/maintenance?new=1&property=${id}&unit=${u.id}`)}
+											>New request</DropdownMenu.Item
+										>
+										<DropdownMenu.Item onclick={() => listUnit(u.id)}
+											>List for rent</DropdownMenu.Item
+										>
+										<DropdownMenu.Separator />
+										<DropdownMenu.Item variant="destructive" onclick={() => removeUnit(u.id)}
+											>Remove unit</DropdownMenu.Item
+										>
+									</DropdownMenu.Content>
+								</DropdownMenu.Root>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+					<Table.Row class="hover:bg-transparent">
+						<Table.Cell colspan={6}>
+							<form class="flex items-center gap-2" onsubmit={addUnit}>
+								<Input class="h-8 max-w-48" placeholder="Add unit, e.g. 204" bind:value={newUnit} />
+								<Button type="submit" size="sm" variant="ghost" disabled={adding || !newUnit.trim()}
+									><Plus /> Add</Button
 								>
-								<Popover.Content class="w-48" align="end">
-									<form onsubmit={(e) => e.preventDefault()}>
-										<MoneyInput bind:value={() => u.marketRent, (v) => setRent(u.id, v)} />
-									</form>
-								</Popover.Content>
-							</Popover.Root>
-						</Table.Cell>
-						<Table.Cell class="hidden text-right tabular-nums sm:table-cell">
-							{#if u.leaseId}<a class="hover:underline" href="/leases/{u.leaseId}"
-									>{formatMoney(u.leaseRent)}</a
-								>{:else}—{/if}
-						</Table.Cell>
-						<Table.Cell class="hidden text-muted-foreground md:table-cell"
-							>{u.leaseId
-								? u.leaseEnd
-									? formatDate(u.leaseEnd)
-									: 'Month-to-month'
-								: ''}</Table.Cell
-						>
-						<Table.Cell>
-							<DropdownMenu.Root>
-								<DropdownMenu.Trigger>
-									{#snippet child({ props })}<Button
-											size="icon-sm"
-											variant="ghost"
-											aria-label="Unit actions"
-											{...props}><Ellipsis /></Button
-										>{/snippet}
-								</DropdownMenu.Trigger>
-								<DropdownMenu.Content align="end">
-									<DropdownMenu.Item onclick={() => goto(`/leases?new=1&unit=${u.id}`)}
-										>New lease</DropdownMenu.Item
-									>
-									<DropdownMenu.Item
-										onclick={() => goto(`/maintenance?new=1&property=${id}&unit=${u.id}`)}
-										>New request</DropdownMenu.Item
-									>
-									<DropdownMenu.Item onclick={() => listUnit(u.id)}>List for rent</DropdownMenu.Item
-									>
-									<DropdownMenu.Separator />
-									<DropdownMenu.Item variant="destructive" onclick={() => removeUnit(u.id)}
-										>Remove unit</DropdownMenu.Item
-									>
-								</DropdownMenu.Content>
-							</DropdownMenu.Root>
+							</form>
 						</Table.Cell>
 					</Table.Row>
-				{/each}
-				<Table.Row class="hover:bg-transparent">
-					<Table.Cell colspan={6}>
-						<form class="flex items-center gap-2" onsubmit={addUnit}>
-							<Input class="h-8 max-w-48" placeholder="Add unit, e.g. 204" bind:value={newUnit} />
-							<Button type="submit" size="sm" variant="ghost" disabled={adding || !newUnit.trim()}
-								><Plus /> Add</Button
-							>
-						</form>
-					</Table.Cell>
-				</Table.Row>
-			</Table.Body>
-		</Table.Root>
-	</div>
+				</Table.Body>
+			</Table.Root>
+		</div>
+	{/if}
 
 	<svelte:boundary>
 		<RecordFields entity="property" recordId={id} />
