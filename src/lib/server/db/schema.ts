@@ -273,6 +273,85 @@ export const vendor = pgTable(
 	(t) => [index('vendor_org_idx').on(t.organizationId, t.name)]
 );
 
+export const assetKind = pgEnum('asset_kind', [
+	'appliance',
+	'boiler',
+	'electrical',
+	'elevator',
+	'hvac',
+	'laundry',
+	'plumbing',
+	'pool',
+	'roof',
+	'safety',
+	'water_heater',
+	'other'
+]);
+
+/** Equipment worth tracking — tied to a property or a unit. */
+export const asset = pgTable(
+	'asset',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		unitId: text('unit_id').references(() => unit.id, { onDelete: 'set null' }),
+		vendorId: text('vendor_id').references(() => vendor.id, { onDelete: 'set null' }),
+		name: text('name').notNull(),
+		kind: assetKind('kind').notNull().default('other'),
+		make: text('make'),
+		model: text('model'),
+		serialNumber: text('serial_number'),
+		installedOn: date('installed_on', { mode: 'string' }),
+		warrantyExpiresOn: date('warranty_expires_on', { mode: 'string' }),
+		notes: text('notes'),
+		archivedAt: timestamp('archived_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [
+		index('asset_org_idx').on(t.organizationId),
+		index('asset_property_idx').on(t.propertyId),
+		index('asset_unit_idx').on(t.unitId)
+	]
+);
+
+export const pmInterval = pgEnum('pm_interval', ['weeks', 'months', 'years']);
+
+/** Recurring preventive-maintenance schedule; the cron issues a work order when a run comes due. */
+export const pmSchedule = pgTable(
+	'pm_schedule',
+	{
+		id: id(),
+		organizationId: orgId(),
+		propertyId: text('property_id')
+			.notNull()
+			.references(() => property.id, { onDelete: 'cascade' }),
+		unitId: text('unit_id').references(() => unit.id, { onDelete: 'set null' }),
+		assetId: text('asset_id').references(() => asset.id, { onDelete: 'set null' }),
+		title: text('title').notNull(),
+		description: text('description'),
+		priority: ticketPriority('priority').notNull().default('normal'),
+		vendorId: text('vendor_id').references(() => vendor.id, { onDelete: 'set null' }),
+		assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
+		/** Run every `every` × `interval`, e.g. every 3 months. */
+		every: integer('every').notNull().default(1),
+		interval: pmInterval('interval').notNull().default('months'),
+		/** The next service date; the work order's due date. */
+		nextRunOn: date('next_run_on', { mode: 'string' }).notNull(),
+		lastRunOn: date('last_run_on', { mode: 'string' }),
+		/** Issue the work order this many days before the service is due. */
+		leadDays: integer('lead_days').notNull().default(7),
+		enabled: boolean('enabled').notNull().default(true),
+		...timestamps
+	},
+	(t) => [
+		index('pm_schedule_org_idx').on(t.organizationId, t.enabled),
+		index('pm_schedule_property_idx').on(t.propertyId)
+	]
+);
+
 export const maintenanceTicket = pgTable(
 	'maintenance_ticket',
 	{
@@ -290,6 +369,9 @@ export const maintenanceTicket = pgTable(
 		priority: ticketPriority('priority').notNull().default('normal'),
 		assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
 		vendorId: text('vendor_id').references(() => vendor.id, { onDelete: 'set null' }),
+		assetId: text('asset_id').references(() => asset.id, { onDelete: 'set null' }),
+		/** The preventive schedule that issued this work order, if any. */
+		scheduleId: text('schedule_id').references(() => pmSchedule.id, { onDelete: 'set null' }),
 		/** What the work cost, in cents, as reported by staff or the vendor. */
 		costAmount: integer('cost_amount'),
 		vendorSentAt: timestamp('vendor_sent_at', { withTimezone: true }),
@@ -324,6 +406,33 @@ export const ticketNote = pgTable(
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(t) => [index('ticket_note_ticket_idx').on(t.ticketId, t.createdAt)]
+);
+
+export const turnStage = pgEnum('turn_stage', ['move_out', 'make_ready', 'listed', 'done']);
+
+/** A unit's trip from move-out to re-leased. Completing a lease on the unit marks it done. */
+export const unitTurn = pgTable(
+	'unit_turn',
+	{
+		id: id(),
+		organizationId: orgId(),
+		unitId: text('unit_id')
+			.notNull()
+			.references(() => unit.id, { onDelete: 'cascade' }),
+		leaseId: text('lease_id').references(() => lease.id, { onDelete: 'set null' }),
+		stage: turnStage('stage').notNull().default('move_out'),
+		moveOutOn: date('move_out_on', { mode: 'string' }),
+		targetReadyOn: date('target_ready_on', { mode: 'string' }),
+		notes: text('notes'),
+		completedAt: timestamp('completed_at', { withTimezone: true }),
+		...timestamps
+	},
+	(t) => [
+		index('unit_turn_org_idx').on(t.organizationId, t.stage),
+		uniqueIndex('unit_turn_open_idx')
+			.on(t.organizationId, t.unitId)
+			.where(sql`${t.completedAt} is null`)
+	]
 );
 
 export const document = pgTable(
@@ -376,6 +485,7 @@ export const notificationSettings = pgTable('notification_settings', {
 	overdueNotices: boolean('overdue_notices').notNull().default(true),
 	maintenanceUpdates: boolean('maintenance_updates').notNull().default(true),
 	leaseExpiryAlerts: boolean('lease_expiry_alerts').notNull().default(true),
+	vendorInsuranceAlerts: boolean('vendor_insurance_alerts').notNull().default(true),
 	newApplications: boolean('new_applications').notNull().default(true),
 	newLeads: boolean('new_leads').notNull().default(true),
 	updatedAt: timestamp('updated_at', { withTimezone: true })

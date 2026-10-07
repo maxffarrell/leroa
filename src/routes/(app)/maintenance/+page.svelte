@@ -16,6 +16,10 @@
 	import InsuranceBadge from '#lib/components/app/insurance-badge.svelte';
 	import VendorDialog from '#lib/components/app/vendor-dialog.svelte';
 	import TicketActivity from '#lib/components/app/ticket-activity.svelte';
+	import TurnBoard from '#lib/components/app/turn-board.svelte';
+	import SchedulesView from '#lib/components/app/schedules-view.svelte';
+	import AssetsView from '#lib/components/app/assets-view.svelte';
+	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import {
 		getTickets,
 		getWorkOrderLink,
@@ -36,6 +40,14 @@
 	const tickets = $derived(await getTickets());
 	const vendors = $derived(await getVendors(false));
 	const params = page.url.searchParams;
+	const TAB_NAMES = ['requests', 'turns', 'schedules', 'assets'];
+	let tab = $state(
+		params.has('ticket') || params.has('new') || params.has('property')
+			? 'requests'
+			: TAB_NAMES.includes(params.get('tab') ?? '')
+				? (params.get('tab') as string)
+				: 'requests'
+	);
 	let creating = $state(params.has('new'));
 	let search = $state('');
 	let showClosed = $state(false);
@@ -140,71 +152,98 @@
 </PageHeader>
 
 <main class="flex min-h-0 flex-1 flex-col gap-4 p-4 md:p-6">
-	<div class="flex flex-wrap items-center gap-3">
-		<Input placeholder="Filter requests…" class="h-8 max-w-64" bind:value={search} />
-		<label class="flex items-center gap-2 text-sm text-muted-foreground"
-			><input type="checkbox" bind:checked={showClosed} class="accent-primary" /> Show all closed</label
-		>
-		<p class="ml-auto hidden text-xs text-muted-foreground md:block">
-			Drag cards between columns to change status.
-		</p>
-	</div>
-	<div class="grid flex-1 auto-cols-[minmax(16rem,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2">
-		{#each columns as col (col.status)}
-			<section
-				class="flex min-h-48 flex-col rounded-lg bg-muted/40 p-2 transition-colors {over ===
-				col.status
-					? 'bg-muted ring-2 ring-ring/30'
-					: ''}"
-				aria-label={label(col.status)}
-				ondragover={(e) => {
-					e.preventDefault();
-					over = col.status;
-				}}
-				ondragleave={() => over === col.status && (over = null)}
-				ondrop={() => drop(col.status)}
+	<Tabs.Root bind:value={tab} class="flex min-h-0 flex-1 flex-col gap-4">
+		<Tabs.List class="max-w-full justify-start overflow-x-auto">
+			<Tabs.Trigger value="requests"
+				>Requests <span class="ml-1 text-xs text-muted-foreground tabular-nums"
+					>{tickets.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length}</span
+				></Tabs.Trigger
 			>
-				<header class="flex items-center gap-2 px-1.5 pb-2 text-sm font-medium capitalize">
-					{label(col.status)}
-					<span class="text-xs text-muted-foreground tabular-nums">{col.items.length}</span>
-				</header>
-				<ul class="flex flex-col gap-2">
-					{#each col.items as t (t.id)}
-						<li>
-							<button
-								type="button"
-								draggable="true"
-								ondragstart={() => (dragging = t.id)}
-								ondragend={() => (dragging = over = null)}
-								onclick={() => select(t)}
-								class="w-full rounded-md border bg-card p-3 text-left shadow-xs transition hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {dragging ===
-								t.id
-									? 'opacity-50'
-									: ''}"
-							>
-								<div class="flex items-start gap-2">
-									<span class="text-xs text-muted-foreground tabular-nums">#{t.number}</span>
-									<span class="flex-1 text-sm leading-snug font-medium">{t.title}</span>
-								</div>
-								<div class="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-									{#if t.priority !== 'normal'}<StatusBadge status={t.priority} />{/if}
-									<span class="truncate"
-										>{t.propertyName}{t.unitName ? ` · ${t.unitName}` : ''}</span
+			<Tabs.Trigger value="turns">Turns</Tabs.Trigger>
+			<Tabs.Trigger value="schedules">Schedules</Tabs.Trigger>
+			<Tabs.Trigger value="assets">Assets</Tabs.Trigger>
+		</Tabs.List>
+		<Tabs.Content value="requests" class="flex min-h-0 flex-1 flex-col gap-4">
+			<div class="flex flex-wrap items-center gap-3">
+				<Input placeholder="Filter requests…" class="h-8 max-w-64" bind:value={search} />
+				<label class="flex items-center gap-2 text-sm text-muted-foreground"
+					><input type="checkbox" bind:checked={showClosed} class="accent-primary" /> Show all closed</label
+				>
+				<p class="ml-auto hidden text-xs text-muted-foreground md:block">
+					Drag cards between columns to change status.
+				</p>
+			</div>
+			<div
+				class="grid flex-1 auto-cols-[minmax(16rem,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2"
+			>
+				{#each columns as col (col.status)}
+					<section
+						class="flex min-h-48 flex-col rounded-lg bg-muted/40 p-2 transition-colors {over ===
+						col.status
+							? 'bg-muted ring-2 ring-ring/30'
+							: ''}"
+						aria-label={label(col.status)}
+						ondragover={(e) => {
+							e.preventDefault();
+							over = col.status;
+						}}
+						ondragleave={() => over === col.status && (over = null)}
+						ondrop={() => drop(col.status)}
+					>
+						<header class="flex items-center gap-2 px-1.5 pb-2 text-sm font-medium capitalize">
+							{label(col.status)}
+							<span class="text-xs text-muted-foreground tabular-nums">{col.items.length}</span>
+						</header>
+						<ul class="flex flex-col gap-2">
+							{#each col.items as t (t.id)}
+								<li>
+									<button
+										type="button"
+										draggable="true"
+										ondragstart={() => (dragging = t.id)}
+										ondragend={() => (dragging = over = null)}
+										onclick={() => select(t)}
+										class="w-full rounded-md border bg-card p-3 text-left shadow-xs transition hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {dragging ===
+										t.id
+											? 'opacity-50'
+											: ''}"
 									>
-									<span class="ml-auto shrink-0">{formatRelative(t.createdAt)}</span>
-								</div>
-								{#if t.vendorName}
-									<p class="mt-1.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
-										<HardHat class="size-3 shrink-0" />{t.vendorName}
-									</p>
-								{/if}
-							</button>
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{/each}
-	</div>
+										<div class="flex items-start gap-2">
+											<span class="text-xs text-muted-foreground tabular-nums">#{t.number}</span>
+											<span class="flex-1 text-sm leading-snug font-medium">{t.title}</span>
+										</div>
+										<div class="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+											{#if t.priority !== 'normal'}<StatusBadge status={t.priority} />{/if}
+											<span class="truncate"
+												>{t.propertyName}{t.unitName ? ` · ${t.unitName}` : ''}</span
+											>
+											<span class="ml-auto shrink-0">{formatRelative(t.createdAt)}</span>
+										</div>
+										{#if t.vendorName}
+											<p
+												class="mt-1.5 flex items-center gap-1 truncate text-xs text-muted-foreground"
+											>
+												<HardHat class="size-3 shrink-0" />{t.vendorName}
+											</p>
+										{/if}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					</section>
+				{/each}
+			</div>
+		</Tabs.Content>
+		<Tabs.Content value="turns" class="flex min-h-0 flex-1 flex-col gap-4">
+			<TurnBoard />
+		</Tabs.Content>
+		<Tabs.Content value="schedules" class="flex min-h-0 flex-1 flex-col gap-4">
+			<SchedulesView />
+		</Tabs.Content>
+		<Tabs.Content value="assets" class="flex min-h-0 flex-1 flex-col gap-4">
+			<AssetsView />
+		</Tabs.Content>
+	</Tabs.Root>
 </main>
 
 <Sheet.Root open={!!selected} onOpenChange={(o) => !o && select(null)}>
@@ -214,6 +253,8 @@
 				<Sheet.Description
 					>#{selected.number} · {selected.propertyName}{selected.unitName
 						? ` · ${selected.unitName}`
+						: ''}{selected.assetName ? ` · ${selected.assetName}` : ''}{selected.scheduleId
+						? ' · recurring'
 						: ''}</Sheet.Description
 				>
 				<Sheet.Title class="text-lg">{selected.title}</Sheet.Title>

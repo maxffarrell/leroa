@@ -9,16 +9,29 @@
 	import { toast } from 'svelte-sonner';
 	import { getProperties, getUnits } from '#lib/remote/portfolio.remote.ts';
 	import { createTicket } from '#lib/remote/maintenance.remote.ts';
+	import { getAssets } from '#lib/remote/operations.remote.ts';
 	import { ticketPriorities } from '#lib/schemas.ts';
 
-	type Props = { open?: boolean; propertyId?: string | null; unitId?: string | null };
-	let { open = $bindable(false), propertyId = null, unitId = null }: Props = $props();
+	type Props = {
+		open?: boolean;
+		propertyId?: string | null;
+		unitId?: string | null;
+		assetId?: string | null;
+	};
+	let {
+		open = $bindable(false),
+		propertyId = null,
+		unitId = null,
+		assetId = null
+	}: Props = $props();
 
 	const properties = $derived(open ? await getProperties() : []);
 	const units = $derived(open ? await getUnits() : []);
+	const assets = $derived(open ? await getAssets() : []);
 
 	let property = $state('');
 	let unit = $state('');
+	let asset = $state('');
 	let title = $state('');
 	let description = $state('');
 	let priority = $state<(typeof ticketPriorities)[number]>('normal');
@@ -28,12 +41,17 @@
 		if (open) {
 			property = propertyId ?? '';
 			unit = unitId ?? '';
+			asset = assetId ?? '';
 		}
 	});
 
 	const propertyUnits = $derived(units.filter((u) => u.propertyId === property));
 	const propertyName = $derived(properties.find((p) => p.id === property)?.name);
 	const unitName = $derived(units.find((u) => u.id === unit)?.name);
+	const propertyAssets = $derived(
+		assets.filter((a) => a.propertyId === property && (!unit || !a.unitId || a.unitId === unit))
+	);
+	const assetName = $derived(assets.find((a) => a.id === asset)?.name);
 
 	async function submit(e: SubmitEvent) {
 		e.preventDefault();
@@ -43,6 +61,7 @@
 			const t = await createTicket({
 				propertyId: property,
 				unitId: unit || null,
+				assetId: asset || null,
 				title,
 				description: description || null,
 				priority
@@ -99,6 +118,19 @@
 						</Select.Root>
 					</Field.Field>
 				</div>
+				{#if propertyAssets.length}
+					<Field.Field>
+						<Field.Label>Asset</Field.Label>
+						<Select.Root type="single" bind:value={asset}>
+							<Select.Trigger class="w-full">{assetName ?? 'None'}</Select.Trigger>
+							<Select.Content class="max-h-72">
+								<Select.Item value="">None</Select.Item>
+								{#each propertyAssets as a (a.id)}<Select.Item value={a.id}>{a.name}</Select.Item
+									>{/each}
+							</Select.Content>
+						</Select.Root>
+					</Field.Field>
+				{/if}
 				<Field.Field>
 					<Field.Label>Priority</Field.Label>
 					<div class="flex gap-1.5">

@@ -27,6 +27,7 @@ import { emit } from './events.ts';
 import { createTenant } from './portfolio.ts';
 import { createLease } from './leasing.ts';
 import { notifyApplicationReceived, notifyNewApplication } from './notifications.ts';
+import { markTurnListed } from './turns.ts';
 import { leadApplicationApproved, leadFromApplication } from './crm.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
@@ -197,6 +198,7 @@ export async function setListingStatus(
 		if (uniqueViolation(err)) error(409, 'This unit already has another open listing');
 		throw err;
 	}
+	if (status === 'published') await markTurnListed(ctx, current.unitId);
 	if (status !== current.status && status !== 'draft') {
 		await emit({
 			orgId: ctx.orgId,

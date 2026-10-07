@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
 import {
+	asset,
 	maintenanceTicket,
 	property,
 	tenant,
@@ -17,6 +18,7 @@ import { isDemo } from '#lib/server/demo-mode.ts';
 import { emit } from './events.ts';
 import { notifyTicketStatus, notifyWorkOrder } from './notifications.ts';
 import { entityImages } from './documents.ts';
+import { assertAsset } from './assets.ts';
 import { assertVendor } from './vendors.ts';
 import { workOrderToken } from './work-orders.ts';
 
@@ -24,7 +26,7 @@ type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
 export async function listTickets(
 	orgId: string,
-	opts: { propertyId?: string; vendorId?: string } = {}
+	opts: { propertyId?: string; vendorId?: string; assetId?: string; unitId?: string } = {}
 ) {
 	return db
 		.select({
@@ -50,7 +52,10 @@ export async function listTickets(
 			tenantFirstName: tenant.firstName,
 			tenantLastName: tenant.lastName,
 			assigneeId: user.id,
-			assigneeName: user.name
+			assigneeName: user.name,
+			assetId: asset.id,
+			assetName: asset.name,
+			scheduleId: maintenanceTicket.scheduleId
 		})
 		.from(maintenanceTicket)
 		.innerJoin(property, eq(property.id, maintenanceTicket.propertyId))
@@ -58,11 +63,14 @@ export async function listTickets(
 		.leftJoin(tenant, eq(tenant.id, maintenanceTicket.tenantId))
 		.leftJoin(user, eq(user.id, maintenanceTicket.assigneeId))
 		.leftJoin(vendor, eq(vendor.id, maintenanceTicket.vendorId))
+		.leftJoin(asset, eq(asset.id, maintenanceTicket.assetId))
 		.where(
 			and(
 				eq(maintenanceTicket.organizationId, orgId),
 				opts.propertyId ? eq(maintenanceTicket.propertyId, opts.propertyId) : undefined,
-				opts.vendorId ? eq(maintenanceTicket.vendorId, opts.vendorId) : undefined
+				opts.vendorId ? eq(maintenanceTicket.vendorId, opts.vendorId) : undefined,
+				opts.assetId ? eq(maintenanceTicket.assetId, opts.assetId) : undefined,
+				opts.unitId ? eq(maintenanceTicket.unitId, opts.unitId) : undefined
 			)
 		)
 		.orderBy(
@@ -73,12 +81,16 @@ export async function listTickets(
 
 export type Ticket = Awaited<ReturnType<typeof listTickets>>[number];
 
-export async function createTicket(ctx: OrgContext, input: Out<typeof ticketInput>) {
+export async function createTicket(
+	ctx: { orgId: string; userId: string | null },
+	input: Out<typeof ticketInput> & { scheduleId?: string | null }
+) {
 	const p = await db.query.property.findFirst({
 		where: (p, { and, eq }) => and(eq(p.organizationId, ctx.orgId), eq(p.id, input.propertyId))
 	});
 	if (!p) error(404, 'Property not found');
 	if (input.vendorId) await assertVendor(ctx.orgId, input.vendorId);
+	if (input.assetId) await assertAsset(ctx.orgId, input.assetId);
 	const created = await db.transaction(async (tx) => {
 		await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${ctx.orgId}))`);
 		const [{ n }] = (await tx
@@ -111,6 +123,7 @@ export async function createTicket(ctx: OrgContext, input: Out<typeof ticketInpu
 export async function updateTicket(ctx: OrgContext, { id, ...data }: Out<typeof ticketUpdate>) {
 	const closing = data.status === 'done' || data.status === 'cancelled';
 	if (data.vendorId) await assertVendor(ctx.orgId, data.vendorId);
+	if (data.assetId) await assertAsset(ctx.orgId, data.assetId);
 	const [t] = await db
 		.update(maintenanceTicket)
 		.set({

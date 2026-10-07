@@ -23,6 +23,7 @@ import type {
 import { addDays, formatMoney, monthLabel, nextMonth, tenantName, todayISO } from '#lib/format.ts';
 import { emit } from './events.ts';
 import { sendRentNotifications } from './notifications.ts';
+import { autoStartTurn, completeTurnsForUnit } from './turns.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
@@ -180,8 +181,10 @@ export async function createLease(ctx: OrgContext, input: Out<typeof leaseInput>
 		}
 		return l!;
 	});
-	if (created.status === 'active')
+	if (created.status === 'active') {
 		await ensureRentCharges(ctx.orgId, created.startDate.slice(0, 7));
+		await completeTurnsForUnit(ctx, created.unitId);
+	}
 	await emit({
 		orgId: ctx.orgId,
 		actorId: ctx.userId,
@@ -216,6 +219,8 @@ export async function updateLease(ctx: OrgContext, { id, ...data }: Out<typeof l
 				.set({ status: occupied ? 'occupied' : 'vacant' })
 				.where(eq(unit.id, l.unitId));
 		if (occupied && before?.status === 'draft') await activateDraft(ctx.orgId, l);
+		if (occupied) await completeTurnsForUnit(ctx, l.unitId);
+		if (vacated) await autoStartTurn(ctx, l);
 	}
 	await emit({
 		orgId: ctx.orgId,

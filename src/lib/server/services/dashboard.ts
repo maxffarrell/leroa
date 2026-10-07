@@ -1,7 +1,8 @@
-import { and, desc, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, isNull, lte, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
-import { activity, lease, unit, user } from '#lib/server/db/schema.ts';
-import { monthKey, todayISO } from '#lib/format.ts';
+import { activity, lease, unit, unitTurn, user, vendor } from '#lib/server/db/schema.ts';
+import { addDays, monthKey, todayISO } from '#lib/format.ts';
+import { INSURANCE_WARNING_DAYS } from '#lib/vendors.ts';
 import { rentRoll } from './leasing.ts';
 import { listTickets } from './maintenance.ts';
 import { leasingAttention } from './crm.ts';
@@ -11,7 +12,7 @@ export async function dashboard(orgId: string) {
 	const today = todayISO();
 	const in60 = new Date(Date.now() + 60 * 86400_000).toISOString().slice(0, 10);
 
-	const [roll, units, expiring, tickets, feed, leasing] = await Promise.all([
+	const [roll, units, expiring, tickets, feed, leasing, insurance, turns] = await Promise.all([
 		rentRoll(orgId, month),
 		db
 			.select({ status: unit.status, n: sql<number>`count(*)`.mapWith(Number) })
@@ -46,7 +47,27 @@ export async function dashboard(orgId: string) {
 			.where(eq(activity.organizationId, orgId))
 			.orderBy(desc(activity.createdAt))
 			.limit(12),
-		leasingAttention(orgId)
+		leasingAttention(orgId),
+		db
+			.select({
+				id: vendor.id,
+				name: vendor.name,
+				insuranceExpiresOn: vendor.insuranceExpiresOn
+			})
+			.from(vendor)
+			.where(
+				and(
+					eq(vendor.organizationId, orgId),
+					isNotNull(vendor.insuranceExpiresOn),
+					isNull(vendor.archivedAt),
+					lte(vendor.insuranceExpiresOn, addDays(today, INSURANCE_WARNING_DAYS))
+				)
+			)
+			.orderBy(vendor.insuranceExpiresOn),
+		db
+			.select({ n: sql<number>`count(*)`.mapWith(Number) })
+			.from(unitTurn)
+			.where(and(eq(unitTurn.organizationId, orgId), isNull(unitTurn.completedAt)))
 	]);
 
 	const rent = roll.filter((r) => r.kind === 'rent');
@@ -76,6 +97,8 @@ export async function dashboard(orgId: string) {
 		urgentTickets: tickets.filter(
 			(t) => t.priority === 'urgent' && !['done', 'cancelled'].includes(t.status)
 		).length,
+		insuranceAlerts: insurance,
+		openTurns: turns[0]?.n ?? 0,
 		feed,
 		followUps: leasing.followUps.slice(0, 6),
 		toursToday: leasing.tours,

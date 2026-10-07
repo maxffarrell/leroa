@@ -162,5 +162,10 @@
 			'New leads and tour bookings',
 			'An alert when someone contacts you, joins a waitlist or books a tour from a public page.'
 		)}
+		{@render toggle(
+			'vendorInsuranceAlerts',
+			'Vendor insurance expiring',
+			'An alert when a vendor’s certificate of insurance is about to lapse, and again once it has.'
+		)}
 	</Card.Content>
 </Card.Root>

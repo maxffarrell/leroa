@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { REPORT_KEYS } from './reports.ts';
 import { IMPORT_KINDS } from './import.ts';
 import { LEAD_NOTE_KINDS, LEAD_SOURCES, LEAD_STAGES, TOUR_KINDS, TOUR_STATUSES } from './leads.ts';
+import { PM_INTERVALS } from './pm.ts';
 
 const optionalText = v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(5000))));
 const requiredText = (label: string) =>
@@ -10,6 +11,8 @@ const isoDate = v.pipe(v.string(), v.isoDate('Use YYYY-MM-DD'));
 const optionalInt = v.optional(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))));
 /** Money is sent in cents. */
 const cents = v.pipe(v.number(), v.integer(), v.minValue(0));
+const shortText = (max = 200) =>
+	v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(max))));
 export const idSchema = v.pipe(v.string(), v.nonEmpty());
 
 export const propertyTypes = [
@@ -27,6 +30,21 @@ export const chargeKinds = ['rent', 'deposit', 'fee', 'utility', 'other'] as con
 export const paymentMethods = ['ach', 'card', 'check', 'cash', 'transfer', 'other'] as const;
 export const ticketStatuses = ['open', 'in_progress', 'on_hold', 'done', 'cancelled'] as const;
 export const ticketPriorities = ['low', 'normal', 'high', 'urgent'] as const;
+export const assetKinds = [
+	'appliance',
+	'boiler',
+	'electrical',
+	'elevator',
+	'hvac',
+	'laundry',
+	'plumbing',
+	'pool',
+	'roof',
+	'safety',
+	'water_heater',
+	'other'
+] as const;
+export const turnStages = ['move_out', 'make_ready', 'listed', 'done'] as const;
 
 export const propertyInput = v.object({
 	name: requiredText('Name'),
@@ -106,6 +124,7 @@ export const notificationSettingsInput = v.object({
 	overdueNotices: v.boolean(),
 	maintenanceUpdates: v.boolean(),
 	leaseExpiryAlerts: v.boolean(),
+	vendorInsuranceAlerts: v.boolean(),
 	newApplications: v.boolean(),
 	newLeads: v.boolean()
 });
@@ -138,10 +157,64 @@ export const ticketInput = v.object({
 	status: v.optional(v.picklist(ticketStatuses), 'open'),
 	assigneeId: v.optional(v.nullable(idSchema)),
 	vendorId: v.optional(v.nullable(idSchema)),
+	assetId: v.optional(v.nullable(idSchema)),
 	costAmount: v.optional(v.nullable(cents)),
 	dueDate: v.optional(v.nullable(isoDate))
 });
 export const ticketUpdate = v.object({ id: idSchema, ...v.partial(ticketInput).entries });
+
+export const assetInput = v.object({
+	propertyId: idSchema,
+	unitId: v.optional(v.nullable(idSchema)),
+	vendorId: v.optional(v.nullable(idSchema)),
+	name: requiredText('Name'),
+	kind: v.optional(v.picklist(assetKinds), 'other'),
+	make: shortText(100),
+	model: shortText(100),
+	serialNumber: shortText(100),
+	installedOn: v.optional(v.nullable(isoDate)),
+	warrantyExpiresOn: v.optional(v.nullable(isoDate)),
+	notes: optionalText
+});
+export const assetUpdate = v.object({
+	id: idSchema,
+	...v.partial(v.omit(assetInput, ['propertyId'])).entries,
+	archived: v.optional(v.boolean())
+});
+
+export const scheduleInput = v.object({
+	propertyId: idSchema,
+	unitId: v.optional(v.nullable(idSchema)),
+	assetId: v.optional(v.nullable(idSchema)),
+	title: requiredText('Title'),
+	description: optionalText,
+	priority: v.optional(v.picklist(ticketPriorities), 'normal'),
+	vendorId: v.optional(v.nullable(idSchema)),
+	assigneeId: v.optional(v.nullable(idSchema)),
+	every: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(52)), 1),
+	interval: v.optional(v.picklist(PM_INTERVALS), 'months'),
+	nextRunOn: isoDate,
+	leadDays: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(90)), 7)
+});
+export const scheduleUpdate = v.object({
+	id: idSchema,
+	...v.partial(v.omit(scheduleInput, ['propertyId'])).entries,
+	enabled: v.optional(v.boolean())
+});
+
+export const turnInput = v.object({
+	unitId: idSchema,
+	moveOutOn: v.optional(v.nullable(isoDate)),
+	targetReadyOn: v.optional(v.nullable(isoDate)),
+	notes: optionalText
+});
+export const turnUpdate = v.object({
+	id: idSchema,
+	stage: v.optional(v.picklist(turnStages)),
+	moveOutOn: v.optional(v.nullable(isoDate)),
+	targetReadyOn: v.optional(v.nullable(isoDate)),
+	notes: optionalText
+});
 
 const noteBody = v.pipe(v.string(), v.trim(), v.nonEmpty('Write a note'), v.maxLength(5000));
 export const ticketNoteInput = v.object({
@@ -284,9 +357,6 @@ export const listingStatusInput = v.object({
 	id: idSchema,
 	status: v.picklist(listingStatuses)
 });
-
-const shortText = (max = 200) =>
-	v.optional(v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(max))));
 
 /** Public application form. Asks nothing about protected characteristics. */
 export const applicationInput = v.object({

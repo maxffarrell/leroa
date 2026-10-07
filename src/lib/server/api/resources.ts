@@ -6,6 +6,9 @@ import * as leasing from '#lib/server/services/leasing.ts';
 import * as maintenance from '#lib/server/services/maintenance.ts';
 import * as listings from '#lib/server/services/listings.ts';
 import * as vendors from '#lib/server/services/vendors.ts';
+import * as assets from '#lib/server/services/assets.ts';
+import * as schedules from '#lib/server/services/schedules.ts';
+import * as turns from '#lib/server/services/turns.ts';
 import * as inspections from '#lib/server/services/inspections.ts';
 import * as messaging from '#lib/server/services/messaging.ts';
 import * as owners from '#lib/server/services/owners.ts';
@@ -92,6 +95,35 @@ export const resources: Record<string, Resource> = {
 		get: (ctx, id) => vendors.getVendor(ctx.orgId, id),
 		create: { schema: s.vendorInput, run: vendors.createVendor as never },
 		update: { schema: s.vendorUpdate, run: vendors.updateVendor as never }
+	},
+	assets: {
+		description:
+			'Equipment records with warranty and service history (`?archived=true` to include archived)',
+		list: (ctx, url) =>
+			assets.listAssets(ctx.orgId, {
+				propertyId: url.searchParams.get('propertyId') ?? undefined,
+				includeArchived: url.searchParams.get('archived') === 'true'
+			}),
+		get: (ctx, id) => assets.getAsset(ctx.orgId, id),
+		create: { schema: s.assetInput, run: assets.createAsset as never },
+		update: { schema: s.assetUpdate, run: assets.updateAsset as never }
+	},
+	schedules: {
+		description: 'Preventive-maintenance schedules that issue work orders when a run comes due',
+		list: (ctx, url) =>
+			schedules.listSchedules(ctx.orgId, {
+				propertyId: url.searchParams.get('propertyId') ?? undefined
+			}),
+		create: { schema: s.scheduleInput, run: schedules.createSchedule as never },
+		update: { schema: s.scheduleUpdate, run: schedules.updateSchedule as never }
+	},
+	turns: {
+		description:
+			"Unit turns — a unit's trip from move-out to re-leased. `?done=true` includes completed turns.",
+		list: (ctx, url) =>
+			turns.listTurns(ctx.orgId, { includeDone: url.searchParams.get('done') === 'true' }),
+		create: { schema: s.turnInput, run: turns.startTurn as never },
+		update: { schema: s.turnUpdate, run: turns.updateTurn as never }
 	},
 	inspections: {
 		description: 'Move-in, move-out and routine unit inspections (`?leaseId=` to filter)',

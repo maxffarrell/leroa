@@ -4,7 +4,11 @@ import { CRON_SECRET } from '$app/env/private';
 import { db } from '#lib/server/db/index.ts';
 import { organization } from '#lib/server/db/schema.ts';
 import { runRentAutomation } from '#lib/server/services/leasing.ts';
-import { sendRentNotifications } from '#lib/server/services/notifications.ts';
+import {
+	sendRentNotifications,
+	sendVendorInsuranceAlerts
+} from '#lib/server/services/notifications.ts';
+import { runDueSchedules } from '#lib/server/services/schedules.ts';
 import { syncAllConnections } from '#lib/server/integrations/sync.ts';
 import { syncAllProfiles } from '#lib/server/profile/client.ts';
 import type { RequestHandler } from './$types';
@@ -22,10 +26,13 @@ export const GET: RequestHandler = async ({ request }) => {
 	const orgs = await db.select({ id: organization.id }).from(organization);
 	let failed = 0;
 	let emails = 0;
+	let workOrders = 0;
 	for (const o of orgs) {
 		try {
 			await runRentAutomation(o.id, true);
 			emails += (await sendRentNotifications(o.id)) ?? 0;
+			emails += (await sendVendorInsuranceAlerts(o.id)) ?? 0;
+			workOrders += await runDueSchedules(o.id);
 		} catch (err) {
 			failed++;
 			console.error(`cron failed for ${o.id}`, err);
@@ -33,7 +40,7 @@ export const GET: RequestHandler = async ({ request }) => {
 	}
 	const integrations = await syncAllConnections();
 	const profiles = await syncAllProfiles();
-	return json({ workspaces: orgs.length, failed, emails, integrations, profiles });
+	return json({ workspaces: orgs.length, failed, emails, workOrders, integrations, profiles });
 };
 
 export const POST = GET;

@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
 import {
@@ -14,12 +14,14 @@ import {
 	property,
 	tenant,
 	unit,
-	user
+	user,
+	vendor
 } from '#lib/server/db/schema.ts';
 import { appOrigin, sendEmail, type Email } from '#lib/server/email.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
 import type { notificationSettingsInput } from '#lib/schemas.ts';
 import { addDays, formatDate, formatMoney, todayISO } from '#lib/format.ts';
+import { INSURANCE_WARNING_DAYS, insuranceState } from '#lib/vendors.ts';
 
 export type NotificationPrefs = v.InferOutput<typeof notificationSettingsInput>;
 
@@ -29,6 +31,7 @@ export const NOTIFICATION_DEFAULTS: NotificationPrefs = {
 	overdueNotices: true,
 	maintenanceUpdates: true,
 	leaseExpiryAlerts: true,
+	vendorInsuranceAlerts: true,
 	newApplications: true,
 	newLeads: true
 };
@@ -46,6 +49,7 @@ export async function getNotificationPrefs(orgId: string): Promise<NotificationP
 			overdueNotices: s.overdueNotices,
 			maintenanceUpdates: s.maintenanceUpdates,
 			leaseExpiryAlerts: s.leaseExpiryAlerts,
+			vendorInsuranceAlerts: s.vendorInsuranceAlerts,
 			newApplications: s.newApplications,
 			newLeads: s.newLeads
 		})
@@ -235,6 +239,69 @@ export async function sendRentNotifications(orgId: string) {
 						sent++;
 				}
 			}
+		}
+	}
+	return sent;
+}
+
+/**
+ * Daily check on vendor insurance certificates: one alert when a certificate
+ * enters the 30-day window, another if it lapses.
+ * Re-alerts if the date on file changes.
+ */
+export async function sendVendorInsuranceAlerts(orgId: string) {
+	if (!(await getNotificationPrefs(orgId)).vendorInsuranceAlerts) return 0;
+	const today = todayISO();
+	const rows = await db
+		.select({
+			id: vendor.id,
+			name: vendor.name,
+			insuranceExpiresOn: vendor.insuranceExpiresOn
+		})
+		.from(vendor)
+		.where(
+			and(
+				eq(vendor.organizationId, orgId),
+				isNotNull(vendor.insuranceExpiresOn),
+				isNull(vendor.archivedAt),
+				lte(vendor.insuranceExpiresOn, addDays(today, INSURANCE_WARNING_DAYS))
+			)
+		);
+	if (!rows.length) return 0;
+	const org = await orgName(orgId);
+	const managers = await managerEmails(orgId);
+	let sent = 0;
+	for (const v of rows) {
+		const state = insuranceState(v.insuranceExpiresOn, today);
+		if (state !== 'expiring' && state !== 'expired') continue;
+		const expired = state === 'expired';
+		for (const to of managers) {
+			const ok = await notifyOnce(
+				orgId,
+				expired ? 'vendor.coi.expired' : 'vendor.coi.expiring',
+				`${v.id}:${v.insuranceExpiresOn}`,
+				{
+					to,
+					subject: expired
+						? `Vendor insurance lapsed: ${v.name}`
+						: `Vendor insurance expires ${formatDate(v.insuranceExpiresOn)}: ${v.name}`,
+					...renderEmail({
+						orgName: org,
+						heading: expired ? 'A vendor’s insurance has lapsed' : 'Vendor insurance expiring',
+						lines: expired
+							? [
+									`${v.name}’s certificate of insurance expired on ${formatDate(v.insuranceExpiresOn)}.`,
+									'Get a current certificate before sending them more work orders.'
+								]
+							: [
+									`${v.name}’s certificate of insurance expires on ${formatDate(v.insuranceExpiresOn)}.`,
+									'Ask them for a renewal before it lapses.'
+								],
+						action: { label: 'Open vendors', url: `${appOrigin()}/vendors` }
+					})
+				}
+			);
+			if (ok) sent++;
 		}
 	}
 	return sent;

@@ -2,13 +2,22 @@ import type { OrgContext } from '#lib/server/context.ts';
 import { createVendor } from './vendors.ts';
 import { db } from '#lib/server/db/index.ts';
 import { and, eq, inArray } from 'drizzle-orm';
-import { inspectionItem, rentalApplication, ticketNote, user } from '#lib/server/db/schema.ts';
+import {
+	inspectionItem,
+	pmSchedule,
+	rentalApplication,
+	ticketNote,
+	user
+} from '#lib/server/db/schema.ts';
 import { completeInspection, createInspection } from './inspections.ts';
 import { addDays, monthKey, todayISO } from '#lib/format.ts';
 import { createProperty, createTenant, getProperty, updateUnit } from './portfolio.ts';
 import { createListing, setListingStatus, updateListing } from './listings.ts';
 import { createLease, recordPayment, rentRoll } from './leasing.ts';
-import { createTicket } from './maintenance.ts';
+import { createTicket, updateTicket } from './maintenance.ts';
+import { createAsset } from './assets.ts';
+import { createSchedule } from './schedules.ts';
+import { startTurn, updateTurn } from './turns.ts';
 import { createAnnouncement, postMessage } from './messaging.ts';
 import { createOwner } from './owners.ts';
 import {
@@ -175,6 +184,60 @@ export async function loadDemoData(ctx: OrgContext) {
 		)
 	);
 
+	const t0 = todayISO();
+	const waterHeater = await createAsset(ctx, {
+		propertyId: maple.id,
+		unitId: units[2]!.id,
+		vendorId: plumber!.id,
+		name: 'Water heater — 103',
+		kind: 'water_heater',
+		make: 'Rheem',
+		model: 'PROE40',
+		serialNumber: 'RH103-2205',
+		installedOn: addDays(t0, -1150),
+		warrantyExpiresOn: addDays(t0, 26),
+		notes: 'Basement closet, shared wall. Shut-off valve sticks.'
+	});
+	const dishwasher = await createAsset(ctx, {
+		propertyId: harbor.id,
+		unitId: units[8]!.id,
+		vendorId: plumber!.id,
+		name: 'Dishwasher — A',
+		kind: 'appliance',
+		make: 'Bosch',
+		model: 'SHXM4AY55N',
+		serialNumber: null,
+		installedOn: addDays(t0, -540),
+		warrantyExpiresOn: addDays(t0, -180),
+		notes: null
+	});
+	await createAsset(ctx, {
+		propertyId: harbor.id,
+		unitId: null,
+		vendorId: null,
+		name: 'Rooftop HVAC',
+		kind: 'hvac',
+		make: 'Carrier',
+		model: '48TC',
+		serialNumber: null,
+		installedOn: addDays(t0, -2200),
+		warrantyExpiresOn: null,
+		notes: 'Services the common hallways.'
+	});
+	const boiler = await createAsset(ctx, {
+		propertyId: maple.id,
+		unitId: null,
+		vendorId: plumber!.id,
+		name: 'Basement boiler',
+		kind: 'boiler',
+		make: 'Weil-McLain',
+		model: 'EGi-45',
+		serialNumber: null,
+		installedOn: addDays(t0, -3300),
+		warrantyExpiresOn: null,
+		notes: null
+	});
+
 	const tickets: [
 		string,
 		string,
@@ -203,6 +266,10 @@ export async function loadDemoData(ctx: OrgContext) {
 			costAmount,
 			dueDate: null
 		});
+		if (title === 'Water heater not working')
+			await updateTicket(ctx, { id: t.id, assetId: waterHeater.id });
+		if (title === 'Dishwasher leaking')
+			await updateTicket(ctx, { id: t.id, assetId: dishwasher.id });
 		if (title === 'Dishwasher leaking')
 			await db.insert(ticketNote).values({
 				organizationId: ctx.orgId,
@@ -213,6 +280,93 @@ export async function loadDemoData(ctx: OrgContext) {
 				body: 'Drain hose is cracked. Replacement part arrives Thursday; I will be back then.'
 			});
 	}
+	await createSchedule(ctx, {
+		propertyId: harbor.id,
+		unitId: null,
+		assetId: null,
+		title: 'Replace hallway HVAC filters',
+		description: 'Swap all four hallway unit filters; check return grilles for dust build-up.',
+		priority: 'normal',
+		vendorId: null,
+		assigneeId: null,
+		every: 3,
+		interval: 'months',
+		nextRunOn: addDays(t0, 10),
+		leadDays: 14
+	});
+	await createSchedule(ctx, {
+		propertyId: maple.id,
+		unitId: null,
+		assetId: boiler.id,
+		title: 'Annual boiler service',
+		description: 'Combustion check, pressure relief valve test, flush low-water cut-off.',
+		priority: 'high',
+		vendorId: plumber!.id,
+		assigneeId: null,
+		every: 1,
+		interval: 'years',
+		nextRunOn: addDays(t0, 45),
+		leadDays: 10
+	});
+	await createSchedule(ctx, {
+		propertyId: cedar.id,
+		unitId: null,
+		assetId: null,
+		title: 'Gutter and downspout check',
+		description: null,
+		priority: 'low',
+		vendorId: grounds!.id,
+		assigneeId: null,
+		every: 6,
+		interval: 'months',
+		nextRunOn: addDays(t0, 3),
+		leadDays: 0
+	});
+	await createSchedule(ctx, {
+		propertyId: maple.id,
+		unitId: null,
+		assetId: null,
+		title: 'Smoke and CO detector batteries',
+		description: 'Replace batteries in every unit; log any detector that fails the test button.',
+		priority: 'normal',
+		vendorId: electric!.id,
+		assigneeId: null,
+		every: 6,
+		interval: 'months',
+		nextRunOn: addDays(t0, 90),
+		leadDays: 14
+	});
+	const detectors = await createSchedule(ctx, {
+		propertyId: harbor.id,
+		unitId: null,
+		assetId: null,
+		title: 'Elevator maintenance',
+		description: null,
+		priority: 'normal',
+		vendorId: null,
+		assigneeId: null,
+		every: 1,
+		interval: 'months',
+		nextRunOn: addDays(t0, 20),
+		leadDays: 7
+	});
+	await db.update(pmSchedule).set({ enabled: false }).where(eq(pmSchedule.id, detectors.id));
+
+	// A move-out in progress on Harbor D — its listing going live will mark it listed.
+	const turn = await startTurn(ctx, {
+		unitId: units[11]!.id,
+		moveOutOn: addDays(t0, -4),
+		targetReadyOn: addDays(t0, 6),
+		notes: 'Full paint touch-up, steam clean carpets, rekey.'
+	});
+	await updateTurn(ctx, { id: turn.id, stage: 'make_ready' });
+	await startTurn(ctx, {
+		unitId: units[12]!.id,
+		moveOutOn: addDays(t0, -1),
+		targetReadyOn: addDays(t0, 14),
+		notes: null
+	});
+
 	await loadDemoInspections(ctx, leases[0]!, leases[1]!, start);
 	await loadDemoListings(ctx, units.slice(people.length));
 	await loadDemoMessages(ctx, tenants, maple.id);

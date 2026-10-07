@@ -7,7 +7,7 @@
 	import * as Empty from '#lib/components/ui/empty/index.js';
 	import { getDashboard, seedDemo } from '#lib/remote/workspace.remote.ts';
 	import { toast } from 'svelte-sonner';
-	import { formatMoney, formatRelative, formatDate } from '#lib/format.ts';
+	import { formatMoney, formatRelative, formatDate, todayISO } from '#lib/format.ts';
 	import { formatTourTime } from '#lib/tours.ts';
 	import { leadName } from '#lib/leads.ts';
 	import Building2 from '@lucide/svelte/icons/building-2';
@@ -105,7 +105,8 @@
 				</Card.Header>
 				<Card.Content
 					><p class="text-xs text-muted-foreground">
-						{d.urgentTickets} urgent · {d.expiringLeases} leases ending in 60 days
+						{d.urgentTickets} urgent · {d.openTurns}
+						{d.openTurns === 1 ? 'turn' : 'turns'} running
 					</p></Card.Content
 				>
 			</Card.Root>
@@ -120,7 +121,7 @@
 					>
 				</Card.Header>
 				<Card.Content class="px-0">
-					{#if d.rent.overdue.length === 0 && d.openTickets.length === 0 && d.followUps.length === 0 && d.toursToday.length === 0}
+					{#if d.rent.overdue.length === 0 && d.openTickets.length === 0 && d.followUps.length === 0 && d.toursToday.length === 0 && d.insuranceAlerts.length === 0}
 						<p class="px-6 text-sm text-muted-foreground">You're all caught up.</p>
 					{:else}
 						<ul class="divide-y">
@@ -160,6 +161,25 @@
 										>
 										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block"
 											>{formatDate(f.nextFollowUpOn, true)}</span
+										>
+									</a>
+								</li>
+							{/each}
+							{#each d.insuranceAlerts as v (v.id)}
+								<li>
+									<a
+										href="/vendors/{v.id}"
+										class="flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50"
+									>
+										<StatusBadge
+											status={v.insuranceExpiresOn! < todayISO() ? 'overdue' : 'notice'}
+										/>
+										<span class="min-w-0 flex-1 truncate text-sm"
+											><span class="font-medium">{v.name}</span> · insurance {v.insuranceExpiresOn! <
+											todayISO()
+												? 'lapsed'
+												: 'expires'}
+											{formatDate(v.insuranceExpiresOn, true)}</span
 										>
 									</a>
 								</li>
