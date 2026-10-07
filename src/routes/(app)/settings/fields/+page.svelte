@@ -12,7 +12,8 @@
 	import Plus from '@lucide/svelte/icons/plus';
 
 	const isAdmin = $derived(page.data.role !== 'member');
-	const entityLabel = (e: string) => `${e[0]!.toUpperCase()}${e.slice(1)}s`;
+	const plural = (e: string) => (e === 'property' ? 'properties' : `${e}s`);
+	const entityLabel = (e: string) => plural(e)[0]!.toUpperCase() + plural(e).slice(1);
 
 	let entity = $state<(typeof FIELD_ENTITIES)[number]>('tenant');
 	const fields = $derived(await getFields(entity));

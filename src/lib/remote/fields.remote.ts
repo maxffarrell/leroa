@@ -47,7 +47,10 @@ export const saveField = command(
 			const code = (err as { code?: string; cause?: { code?: string } }).code;
 			const causeCode = (err as { cause?: { code?: string } }).cause?.code;
 			if (code === '23505' || causeCode === '23505')
-				error(409, `A field named “${name}” already exists on ${e}s`);
+				error(
+					409,
+					`A field named “${name}” already exists on ${e === 'property' ? 'properties' : `${e}s`}`
+				);
 			throw err;
 		}
 		void getFields(e).refresh();
