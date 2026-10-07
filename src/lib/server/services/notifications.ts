@@ -18,6 +18,7 @@ import {
 	vendor
 } from '#lib/server/db/schema.ts';
 import { appOrigin, sendEmail, type Email } from '#lib/server/email.ts';
+import { inboxForManagers } from '#lib/server/services/inbox.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
 import type { notificationSettingsInput } from '#lib/schemas.ts';
 import { addDays, formatDate, formatMoney, todayISO } from '#lib/format.ts';
@@ -221,6 +222,11 @@ export async function sendRentNotifications(orgId: string) {
 		if (expiring.length) {
 			const managers = await managerEmails(orgId);
 			for (const l of expiring) {
+				await inboxForManagers(orgId, 'lease.expiring', l.id, {
+					title: `Lease ending ${formatDate(l.endDate)}`,
+					body: `${l.propertyName} · ${l.unitName} hasn't been renewed yet.`,
+					href: `/leases/${l.id}`
+				});
 				for (const to of managers) {
 					if (
 						await notifyOnce(orgId, 'lease.expiring', l.id, {
@@ -275,6 +281,17 @@ export async function sendVendorInsuranceAlerts(orgId: string) {
 		const state = insuranceState(v.insuranceExpiresOn, today);
 		if (state !== 'expiring' && state !== 'expired') continue;
 		const expired = state === 'expired';
+		await inboxForManagers(
+			orgId,
+			expired ? 'vendor.coi.expired' : 'vendor.coi.expiring',
+			`${v.id}:${v.insuranceExpiresOn}`,
+			{
+				title: expired
+					? `Vendor insurance lapsed: ${v.name}`
+					: `Vendor insurance expires ${formatDate(v.insuranceExpiresOn)}: ${v.name}`,
+				href: '/vendors'
+			}
+		);
 		for (const to of managers) {
 			const ok = await notifyOnce(
 				orgId,
@@ -344,6 +361,11 @@ export async function notifyTicketStatus(t: TicketRef) {
 export async function notifyPortalRequest(t: TicketRef, place: string) {
 	if (!(await getNotificationPrefs(t.organizationId)).maintenanceUpdates) return;
 	const org = await orgName(t.organizationId);
+	await inboxForManagers(t.organizationId, 'ticket.created', t.id, {
+		title: `New maintenance request #${t.number}`,
+		body: `A tenant at ${place} reported: \u201c${t.title}\u201d.`,
+		href: `/maintenance?ticket=${t.id}`
+	});
 	for (const to of await managerEmails(t.organizationId)) {
 		await notifyOnce(t.organizationId, 'ticket.created', t.id, {
 			to,
@@ -389,6 +411,11 @@ export async function notifyAgreementSigned(
 	agreement: { id: string; title: string; leaseId: string }
 ) {
 	const org = await orgName(orgId);
+	await inboxForManagers(orgId, 'agreement.signed', agreement.id, {
+		title: `Signed: ${agreement.title}`,
+		body: 'Every tenant has signed. The signed PDF is on the lease.',
+		href: `/leases/${agreement.leaseId}`
+	});
 	for (const to of await managerEmails(orgId)) {
 		await notifyOnce(orgId, 'agreement.signed', agreement.id, {
 			to,
@@ -434,6 +461,11 @@ export async function notifyNewApplication(
 ) {
 	if (!(await getNotificationPrefs(orgId)).newApplications) return;
 	const org = await orgName(orgId);
+	await inboxForManagers(orgId, 'application.submitted', app.id, {
+		title: `New application: ${listingTitle}`,
+		body: `${app.firstName} ${app.lastName} applied.`,
+		href: `/leasing/applications/${app.id}`
+	});
 	for (const to of await managerEmails(orgId)) {
 		await notifyOnce(orgId, 'application.submitted', app.id, {
 			to,
@@ -488,6 +520,11 @@ export async function notifyVendorUpdate(
 ) {
 	if (!(await getNotificationPrefs(t.organizationId)).maintenanceUpdates) return;
 	const org = await orgName(t.organizationId);
+	await inboxForManagers(t.organizationId, 'ticket.vendor_update', key, {
+		title: `#${t.number} ${t.title}: ${vendorName} ${changes.join(', ')}`,
+		body: note ?? undefined,
+		href: `/maintenance?ticket=${t.id}`
+	});
 	for (const to of await managerEmails(t.organizationId)) {
 		await notifyOnce(t.organizationId, 'ticket.vendor_update', key, {
 			to,
@@ -540,6 +577,13 @@ export async function notifyInspectionAcknowledged(
 	i: { id: string; tenantComment: string | null }
 ) {
 	const org = await orgName(orgId);
+	await inboxForManagers(orgId, 'inspection.acknowledged', i.id, {
+		title: i.tenantComment
+			? 'A resident commented on an inspection report'
+			: 'A resident reviewed an inspection report',
+		body: i.tenantComment ?? undefined,
+		href: `/inspections/${i.id}`
+	});
 	for (const to of await managerEmails(orgId)) {
 		await notifyOnce(orgId, 'inspection.acknowledged', i.id, {
 			to,
@@ -593,6 +637,11 @@ export async function notifyStaffMessage(
 	from: { tenantId: string; name: string }
 ) {
 	const org = await orgName(orgId);
+	await inboxForManagers(orgId, 'message.created', m.id, {
+		title: `New message from ${from.name}`,
+		body: paragraphs(m.body)[0],
+		href: `/messages/${from.tenantId}`
+	});
 	for (const to of await managerEmails(orgId)) {
 		await notifyOnce(orgId, 'message.created', m.id, {
 			to,
@@ -644,6 +693,11 @@ export async function notifyLeadActivity(
 ) {
 	if (!(await getNotificationPrefs(orgId)).newLeads) return;
 	const org = await orgName(orgId);
+	await inboxForManagers(orgId, 'lead.activity', key, {
+		title: subject,
+		body: line,
+		href: `/leasing/leads/${lead.id}`
+	});
 	for (const to of await managerEmails(orgId)) {
 		await notifyOnce(orgId, 'lead.activity', key, {
 			to,

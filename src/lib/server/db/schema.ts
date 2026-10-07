@@ -531,6 +531,29 @@ export const notificationLog = pgTable(
 	(t) => [uniqueIndex('notification_log_once_idx').on(t.kind, t.entityId, t.recipient)]
 );
 
+/** One in-app notification for one workspace member, deduped per (kind, entity, user). */
+export const inboxItem = pgTable(
+	'inbox_item',
+	{
+		id: id(),
+		organizationId: orgId(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		kind: text('kind').notNull(),
+		entityId: text('entity_id').notNull(),
+		title: text('title').notNull(),
+		body: text('body'),
+		href: text('href'),
+		readAt: timestamp('read_at', { withTimezone: true }),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [
+		uniqueIndex('inbox_item_once_idx').on(t.kind, t.entityId, t.userId),
+		index('inbox_item_user_idx').on(t.userId, t.organizationId, t.createdAt)
+	]
+);
+
 export const webhook = pgTable(
 	'webhook',
 	{
