@@ -17,10 +17,12 @@ declare const self: ServiceWorkerGlobalScope;
 const CACHE = `leroa-${version}`;
 const OFFLINE = asset('/offline.html');
 
-// immutable/prerendered paths are already URL paths; static files resolve via asset().
+// Manifest paths may lack a leading '/', so normalize before matching
+// against url.pathname (which always has one).
+const slash = (p: string) => (p.startsWith('/') ? p : `/${p}`);
 const ASSETS = new Set([
-	...immutable.map((f) => f.path),
-	...prerendered.map((f) => f.path),
+	...immutable.map((f) => slash(f.path)),
+	...prerendered.map((f) => slash(f.path)),
 	...assets.map((f) => asset(f.path)),
 	OFFLINE
 ]);
@@ -77,21 +79,7 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
-	// Same-origin GETs (images etc.): stale-while-revalidate.
-	if (url.origin === self.location.origin) {
-		event.respondWith(
-			caches.match(request).then((hit) => {
-				const refresh = fetch(request)
-					.then((res) => {
-						if (res.ok) {
-							const copy = res.clone();
-							caches.open(CACHE).then((cache) => cache.put(request, copy));
-						}
-						return res;
-					})
-					.catch(() => hit ?? Promise.reject(new Error('offline')));
-				return hit ?? refresh;
-			})
-		);
-	}
+	// Everything else — remote functions, __data.json, REST, uploads — is
+	// dynamic app data and goes straight to the network. Caching it would
+	// serve stale (and potentially cross-user) responses.
 });
