@@ -128,10 +128,13 @@
 	</p>
 </div>
 
-<div class="grid flex-1 auto-cols-[minmax(15rem,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2">
+<div
+	class="grid flex-1 snap-x snap-mandatory auto-cols-[minmax(min(15rem,80vw),1fr)] grid-flow-col gap-3 overflow-x-auto pb-2"
+>
 	{#each columns as col (col.stage)}
 		<section
-			class="flex min-h-48 flex-col rounded-lg bg-muted/40 p-2 transition-colors {over === col.stage
+			class="flex min-h-48 snap-start flex-col rounded-lg bg-muted/40 p-2 transition-colors {over ===
+			col.stage
 				? 'bg-muted ring-2 ring-ring/30'
 				: ''}"
 			aria-label={labels[col.stage]}
