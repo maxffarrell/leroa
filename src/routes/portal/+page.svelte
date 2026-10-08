@@ -7,6 +7,7 @@
 	import PortalAnnouncements from '#lib/components/app/portal-announcements.svelte';
 	import PortalSurveys from '#lib/components/app/portal-surveys.svelte';
 	import PortalProfile from '#lib/components/app/portal-profile.svelte';
+	import SocialAccounts from '#lib/components/app/social-accounts.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -261,6 +262,7 @@
 	{/each}
 	<PortalMessages />
 	<PortalProfile />
+	<SocialAccounts />
 	{#if p.tickets.length}
 		<Card.Root>
 			<Card.Header><Card.Title>Your requests</Card.Title></Card.Header>

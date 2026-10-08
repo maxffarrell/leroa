@@ -91,6 +91,9 @@ export async function dashboard(orgId: string) {
 			vacant: units.find((u) => u.status === 'vacant')?.n ?? 0
 		},
 		expiringLeases: expiring.length,
+		nextLeaseExpiryDays: expiring[0]
+			? Math.ceil((new Date(expiring[0].endDate + 'T00:00:00Z').getTime() - Date.now()) / 86400_000)
+			: null,
 		openTickets: tickets
 			.filter((t) => ['open', 'in_progress', 'on_hold'].includes(t.status))
 			.slice(0, 6),

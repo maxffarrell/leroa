@@ -8,12 +8,15 @@
 	import MoneyInput from './money-input.svelte';
 	import TenantForm from './tenant-form.svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { getTenants, getUnits } from '#lib/remote/portfolio.remote.ts';
 	import { createLease } from '#lib/remote/leasing.remote.ts';
 	import { tenantName, todayISO } from '#lib/format.ts';
 	import X from '@lucide/svelte/icons/x';
 	import Plus from '@lucide/svelte/icons/plus';
+	import FileUp from '@lucide/svelte/icons/file-up';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
 
 	type Props = {
 		open?: boolean;
@@ -50,6 +53,65 @@
 	let lateFeeGraceDays = $state(5);
 	let pending = $state(false);
 	let addingTenant = $state(false);
+	let extracting = $state(false);
+	let extractHint = $state<string | null>(null);
+
+	async function fillFromPdf(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (!file) return;
+		extracting = true;
+		extractHint = null;
+		try {
+			const body = new FormData();
+			body.append('file', file);
+			const res = await fetch('/api/ai/lease-draft', { method: 'POST', body });
+			const data = (await res.json().catch(() => null)) as {
+				tenants?: string[];
+				startDate?: string | null;
+				endDate?: string | null;
+				rentAmount?: number | null;
+				depositAmount?: number | null;
+				message?: string;
+			} | null;
+			if (!res.ok || !data) {
+				toast.error(data?.message ?? 'Could not read that PDF');
+				return;
+			}
+			let filled = 0;
+			if (data.startDate) {
+				startDate = data.startDate;
+				filled++;
+			}
+			if (data.endDate) {
+				endDate = data.endDate;
+				filled++;
+			}
+			if (data.rentAmount) {
+				rentAmount = data.rentAmount;
+				filled++;
+			}
+			if (data.depositAmount) {
+				depositAmount = data.depositAmount;
+				filled++;
+			}
+			const unmatched: string[] = [];
+			for (const name of data.tenants ?? []) {
+				const t = tenants.find((x) => tenantName(x).toLowerCase() === name.toLowerCase());
+				if (t && !tenantIds.includes(t.id)) tenantIds = [...tenantIds, t.id];
+				else if (!t) unmatched.push(name);
+			}
+			if (unmatched.length) extractHint = `On the lease: ${unmatched.join(', ')}`;
+			toast.success(
+				filled || data.tenants?.length
+					? `Filled ${filled} field${filled === 1 ? '' : 's'} from the PDF`
+					: 'Nothing useful found in that PDF'
+			);
+		} finally {
+			extracting = false;
+		}
+	}
 
 	$effect(() => {
 		if (open) {
@@ -100,6 +162,26 @@
 			<Modal.Header>
 				<Modal.Title>New lease</Modal.Title>
 				<Modal.Description>Rent charges are generated automatically each month.</Modal.Description>
+				{#if page.data.enterprise}
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						class="mt-1 w-fit"
+						disabled={extracting}
+						onclick={() => document.getElementById('lease-pdf')?.click()}
+					>
+						{#if extracting}<Spinner />{:else}<FileUp />{/if}
+						{extracting ? 'Reading PDF…' : 'Fill from lease PDF'}
+					</Button>
+					<input
+						id="lease-pdf"
+						type="file"
+						accept="application/pdf"
+						class="hidden"
+						onchange={fillFromPdf}
+					/>
+				{/if}
 			</Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field>
@@ -158,6 +240,7 @@
 							onclick={() => (addingTenant = true)}><Plus /> New</Button
 						>
 					</div>
+					{#if extractHint}<Field.Description>{extractHint}</Field.Description>{/if}
 				</Field.Field>
 				<div class="grid grid-cols-2 gap-3">
 					<Field.Field
