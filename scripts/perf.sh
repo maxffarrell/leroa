@@ -40,7 +40,7 @@ for path in "${ROUTES[@]}"; do
     times+=("$(curl -sf -b "$JAR" -o /dev/null -w '%{time_total}' "$BASE$path")")
   done
   IFS=$'\n' sorted=($(sort -n <<<"${times[*]}")); unset IFS
-  ms=$(echo "${sorted[1]} * 1000" | bc | cut -d. -f1)
+  ms=$(awk "BEGIN{ printf \"%d\", ${sorted[1]} * 1000 }")
   q=$(docker logs "$PG" --since "$since" 2>&1 | grep -c 'execute' || true)
   printf '%-28s %8s %8s\n' "$path" "$ms" "$q"
 done
