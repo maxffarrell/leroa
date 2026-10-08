@@ -7,11 +7,33 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { CopyButton } from '#lib/components/ui/copy-button/index.js';
+	import { saveBranding } from '#lib/remote/workspace.remote.ts';
 	import { toast } from 'svelte-sonner';
 
 	const org = $derived(page.data.org!);
 	const canEdit = $derived(page.data.role !== 'member');
 	let name = $state(page.data.org!.name);
+	const enterprise = $derived(!!page.data.enterprise);
+	let portalTitle = $state(page.data.org!.portalTitle ?? '');
+	let accentColor = $state(page.data.org!.accentColor ?? '#1d4ed8');
+	let brandingPending = $state(false);
+
+	async function saveBrand(e: SubmitEvent) {
+		e.preventDefault();
+		brandingPending = true;
+		try {
+			await saveBranding({
+				portalTitle: portalTitle.trim() || null,
+				accentColor: accentColor || null
+			});
+			toast.success('Branding saved');
+			await invalidateAll();
+		} catch {
+			toast.error('Could not save branding');
+		} finally {
+			brandingPending = false;
+		}
+	}
 
 	async function save(e: SubmitEvent) {
 		e.preventDefault();
@@ -45,6 +67,37 @@
 		</form>
 	</Card.Content>
 </Card.Root>
+{#if enterprise}
+	<Card.Root>
+		<Card.Header
+			><Card.Title>Branding</Card.Title><Card.Description
+				>Shown on your public listing pages and the resident portal. Enterprise feature.</Card.Description
+			></Card.Header
+		>
+		<Card.Content>
+			<form class="flex flex-wrap items-end gap-3" onsubmit={saveBrand}>
+				<Field.Field class="min-w-56 flex-1"
+					><Field.Label for="portal-title">Resident-facing name</Field.Label><Input
+						id="portal-title"
+						bind:value={portalTitle}
+						placeholder={org.name}
+						disabled={!canEdit}
+					/></Field.Field
+				>
+				<Field.Field
+					><Field.Label for="accent-color">Accent color</Field.Label><Input
+						id="accent-color"
+						type="color"
+						class="h-9 w-20 cursor-pointer p-1"
+						bind:value={accentColor}
+						disabled={!canEdit}
+					/></Field.Field
+				>
+				<Button type="submit" disabled={!canEdit || brandingPending}>Save branding</Button>
+			</form>
+		</Card.Content>
+	</Card.Root>
+{/if}
 <Card.Root>
 	<Card.Header
 		><Card.Title>Get familiar</Card.Title><Card.Description

@@ -2,7 +2,8 @@
 
 import { LEROA_CLOUD, LEROA_ENTERPRISE_KEY } from '$app/env/private';
 
-export type EnterpriseFeature = 'sso' | 'passkeys' | 'ai' | 'audit_export';
+export type EnterpriseFeature =
+	'sso' | 'passkeys' | 'ai' | 'audit_export' | 'custom_roles' | 'branding' | 'channels';
 
 /**
  * Enterprise features are enabled on Leroa Cloud, or on self-hosted installs

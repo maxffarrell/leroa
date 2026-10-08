@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { command, query } from '$app/server';
-import { requireOrg } from '#lib/server/context.ts';
+import { requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
 import * as svc from '#lib/server/services/leasing.ts';
 import {
 	chargeInput,
@@ -22,23 +22,35 @@ export const getRentRoll = query(monthSchema, async (month) =>
 );
 
 export const createLease = command(leaseInput, async (input) => {
-	const l = await svc.createLease(await requireOrg(), input);
+	const l = await svc.createLease(
+		await assertScope(await requirePerm('leases', 'write'), input),
+		input
+	);
 	void getLeases().refresh();
 	return l;
 });
 export const updateLease = command(leaseUpdate, async (input) => {
-	const l = await svc.updateLease(await requireOrg(), input);
+	const l = await svc.updateLease(
+		await assertScope(await requirePerm('leases', 'write'), input),
+		input
+	);
 	void getLease(l.id).refresh();
 	return l;
 });
 export const renewLease = command(leaseRenewal, async (input) => {
-	const l = await svc.renewLease(await requireOrg(), input);
+	const l = await svc.renewLease(
+		await assertScope(await requirePerm('leases', 'write'), input),
+		input
+	);
 	void getLeases().refresh();
 	void getLease(input.id).refresh();
 	return l;
 });
 export const addCharge = command(chargeInput, async (input) => {
-	const c = await svc.addCharge(await requireOrg(), input);
+	const c = await svc.addCharge(
+		await assertScope(await requirePerm('charges', 'write'), input),
+		input
+	);
 	void getLease(c.leaseId).refresh();
 	void getRentRoll(c.dueDate.slice(0, 7)).refresh();
 	return c;
@@ -46,7 +58,10 @@ export const addCharge = command(chargeInput, async (input) => {
 export const recordPayment = command(
 	v.object({ ...paymentInput.entries, month: v.optional(monthSchema) }),
 	async ({ month, ...input }) => {
-		const p = await svc.recordPayment(await requireOrg(), input);
+		const p = await svc.recordPayment(
+			await assertScope(await requirePerm('payments', 'write'), input),
+			input
+		);
 		void getLease(p.leaseId).refresh();
 		if (month) void getRentRoll(month).refresh();
 		return p;

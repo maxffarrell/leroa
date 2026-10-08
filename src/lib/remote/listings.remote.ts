@@ -1,6 +1,7 @@
 import * as v from 'valibot';
+import { inScope } from '#lib/remote/scope.ts';
 import { command, getRequestEvent, query } from '$app/server';
-import { requireOrg } from '#lib/server/context.ts';
+import { requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
 import * as svc from '#lib/server/services/listings.ts';
 import { deleteDocument } from '#lib/server/services/documents.ts';
 import {
@@ -15,26 +16,38 @@ import {
 import { getLeases } from './leasing.remote.ts';
 import { getTenants } from './portfolio.remote.ts';
 
-export const getListings = query(async () => svc.listListings((await requireOrg()).orgId));
+export const getListings = query(async () => {
+	const ctx = await requireOrg();
+	return inScope(await svc.listListings(ctx.orgId), ctx.propertyIds);
+});
 export const getListing = query(idSchema, async (id) =>
 	svc.getListing((await requireOrg()).orgId, id)
 );
 
 export const createListing = command(listingCreate, async (input) => {
-	const l = await svc.createListing(await requireOrg(), input);
+	const l = await svc.createListing(
+		await assertScope(await requirePerm('listings', 'write'), input),
+		input
+	);
 	void getListings().refresh();
 	return l;
 });
 
 export const updateListing = command(listingUpdate, async (input) => {
-	const l = await svc.updateListing(await requireOrg(), input);
+	const l = await svc.updateListing(
+		await assertScope(await requirePerm('listings', 'write'), input),
+		input
+	);
 	void getListing(l.id).refresh();
 	void getListings().refresh();
 	return { id: l.id };
 });
 
 export const setListingStatus = command(listingStatusInput, async (input) => {
-	await svc.setListingStatus(await requireOrg(), input);
+	await svc.setListingStatus(
+		await assertScope(await requirePerm('listings', 'write'), input),
+		input
+	);
 	void getListing(input.id).refresh();
 	void getListings().refresh();
 });
@@ -47,7 +60,7 @@ export const deleteListing = command(idSchema, async (id) => {
 export const removeListingPhoto = command(
 	v.object({ listingId: idSchema, photoId: idSchema }),
 	async ({ listingId, photoId }) => {
-		const ctx = await requireOrg();
+		const ctx = await requirePerm('listings', 'write');
 		const l = await svc.getListing(ctx.orgId, listingId);
 		if (!l.photos.some((p) => p.id === photoId)) return;
 		await deleteDocument(ctx, photoId);
@@ -62,14 +75,20 @@ export const getApplication = query(idSchema, async (id) =>
 );
 
 export const updateApplication = command(applicationUpdate, async (input) => {
-	await svc.updateApplication(await requireOrg(), input);
+	await svc.updateApplication(
+		await assertScope(await requirePerm('applications', 'write'), input),
+		input
+	);
 	void getApplication(input.id).refresh();
 	void getApplications().refresh();
 	void getListings().refresh();
 });
 
 export const approveApplication = command(applicationApprove, async (input) => {
-	const r = await svc.approveApplication(await requireOrg(), input);
+	const r = await svc.approveApplication(
+		await assertScope(await requirePerm('applications', 'write'), input),
+		input
+	);
 	void getApplication(input.id).refresh();
 	void getApplications().refresh();
 	void getListings().refresh();

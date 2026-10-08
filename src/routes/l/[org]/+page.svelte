@@ -6,18 +6,19 @@
 	import MapPin from '@lucide/svelte/icons/map-pin';
 
 	let { data }: PageProps = $props();
+	const brandName = $derived(data.org.portalTitle ?? data.org.name);
 	const today = todayISO();
 </script>
 
 <svelte:head>
-	<title>Homes for rent · {data.org.name}</title>
-	<meta name="description" content="Available rentals from {data.org.name}. Apply online." />
-	<meta property="og:title" content="Homes for rent · {data.org.name}" />
+	<title>Homes for rent · {brandName}</title>
+	<meta name="description" content="Available rentals from {brandName}. Apply online." />
+	<meta property="og:title" content="Homes for rent · {brandName}" />
 </svelte:head>
 
 <header class="border-b">
 	<div class="mx-auto flex h-14 max-w-6xl items-center px-4">
-		<span class="font-semibold">{data.org.name}</span>
+		<span class="font-semibold" style:color={data.org.accentColor}>{brandName}</span>
 	</div>
 </header>
 

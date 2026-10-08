@@ -10,6 +10,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 
 	let { data }: PageProps = $props();
+	const brandName = $derived(data.org.portalTitle ?? data.org.name);
 	const p = $derived(data.property);
 	const today = todayISO();
 	const address = $derived(
@@ -32,9 +33,9 @@
 </script>
 
 <svelte:head>
-	<title>{p.name} · {data.org.name}</title>
+	<title>{p.name} · {brandName}</title>
 	<meta name="description" content="{p.name}{address ? `, ${address}` : ''}. {summary}." />
-	<meta property="og:title" content="{p.name} · {data.org.name}" />
+	<meta property="og:title" content="{p.name} · {brandName}" />
 	<meta property="og:description" content={summary} />
 	{#if photos[0]}<meta property="og:image" content={photo(photos[0])} />{/if}
 	{#if data.preview}<meta name="robots" content="noindex" />{/if}
@@ -43,7 +44,9 @@
 <header class="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
 	<div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4">
 		<a href="/l/{data.org.slug}" class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
-			<ArrowLeft class="size-4 shrink-0" /><span class="truncate">{data.org.name}</span>
+			<ArrowLeft class="size-4 shrink-0" /><span class="truncate" style:color={data.org.accentColor}
+				>{brandName}</span
+			>
 		</a>
 		<Button size="sm" href="#contact"
 			>{data.selfBooking

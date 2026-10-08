@@ -1,6 +1,7 @@
 import * as v from 'valibot';
+import { inScope } from '#lib/remote/scope.ts';
 import { command, getRequestEvent, query } from '$app/server';
-import { getOrg, requireOrg } from '#lib/server/context.ts';
+import { getOrg, requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
 import * as svc from '#lib/server/services/crm.ts';
 import {
 	idSchema,
@@ -17,11 +18,15 @@ import {
 } from '#lib/schemas.ts';
 import { getDashboard } from './workspace.remote.ts';
 
-const orgId = async () => (await requireOrg()).orgId;
+const ctx = async () => await requireOrg();
+const orgId = async () => (await ctx()).orgId;
 
 export const getLeads = query(async () => svc.listLeads(await orgId()));
 export const getLead = query(idSchema, async (id) => svc.getLead(await orgId(), id));
-export const getTours = query(async () => svc.listTours(await orgId()));
+export const getTours = query(async () => {
+	const c = await ctx();
+	return inScope(await svc.listTours(c.orgId), c.propertyIds);
+});
 export const getLeasingAttention = query(async () => svc.leasingAttention(await orgId()));
 export const getLeasingBadge = query(async () => svc.leasingBadge(await orgId()));
 
@@ -34,13 +39,16 @@ function refreshLeads(id?: string) {
 }
 
 export const createLead = command(leadInput, async (input) => {
-	const l = await svc.createLead(await requireOrg(), input);
+	const l = await svc.createLead(
+		await assertScope(await requirePerm('leads', 'write'), input),
+		input
+	);
 	refreshLeads(l.id);
 	return { id: l.id, existing: l.existing };
 });
 
 export const updateLead = command(leadUpdate, async (input) => {
-	await svc.updateLead(await requireOrg(), input);
+	await svc.updateLead(await assertScope(await requirePerm('leads', 'write'), input), input);
 	refreshLeads(input.id);
 	void getTours().refresh();
 });
@@ -52,19 +60,25 @@ export const deleteLead = command(idSchema, async (id) => {
 });
 
 export const addLeadNote = command(leadNoteInput, async (input) => {
-	await svc.addLeadNote(await requireOrg(), input);
+	await svc.addLeadNote(await assertScope(await requirePerm('leads', 'write'), input), input);
 	refreshLeads(input.leadId);
 });
 
 export const scheduleTour = command(tourInput, async (input) => {
-	const t = await svc.scheduleTour(await requireOrg(), input);
+	const t = await svc.scheduleTour(
+		await assertScope(await requirePerm('tours', 'write'), input),
+		input
+	);
 	refreshLeads(input.leadId);
 	void getTours().refresh();
 	return { id: t.id };
 });
 
 export const updateTour = command(tourUpdate, async (input) => {
-	const t = await svc.updateTour(await requireOrg(), input);
+	const t = await svc.updateTour(
+		await assertScope(await requirePerm('tours', 'write'), input),
+		input
+	);
 	refreshLeads(t.leadId);
 	void getTours().refresh();
 });
@@ -83,7 +97,10 @@ export const getPropertyMarketing = query(idSchema, async (id) =>
 	svc.getPropertyMarketing(await orgId(), id)
 );
 export const updatePropertyMarketing = command(propertyMarketingInput, async (input) => {
-	await svc.updatePropertyMarketing(await requireOrg(), input);
+	await svc.updatePropertyMarketing(
+		await assertScope(await requirePerm('leads', 'write'), input),
+		input
+	);
 	void getPropertyMarketing(input.id).refresh();
 });
 
@@ -91,7 +108,7 @@ export const getWaitlist = query(idSchema, async (listingId) =>
 	svc.waitlistForListing(await orgId(), listingId)
 );
 export const emailWaitlist = command(idSchema, async (listingId) => {
-	const r = await svc.emailWaitlist(await requireOrg(), listingId);
+	const r = await svc.emailWaitlist(await requirePerm('leads', 'write'), listingId);
 	void getWaitlist(listingId).refresh();
 	refreshLeads();
 	return r;

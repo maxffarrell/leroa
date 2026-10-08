@@ -23,6 +23,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 
 	let { data }: PageProps = $props();
+	const brandName = $derived(data.org.portalTitle ?? data.org.name);
 	const l = $derived(data.listing);
 	const today = todayISO();
 	const address = $derived(
@@ -107,7 +108,7 @@
 </script>
 
 <svelte:head>
-	<title>{l.title} · {data.org.name}</title>
+	<title>{l.title} · {brandName}</title>
 	<meta name="description" content={summary} />
 	<meta property="og:title" content={l.title} />
 	<meta property="og:description" content={summary} />
@@ -121,7 +122,9 @@
 <header class="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
 	<div class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4">
 		<a href="/l/{data.org.slug}" class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
-			<ArrowLeft class="size-4 shrink-0" /><span class="truncate">{data.org.name}</span>
+			<ArrowLeft class="size-4 shrink-0" /><span class="truncate" style:color={data.org.accentColor}
+				>{brandName}</span
+			>
 		</a>
 		<Button size="sm" href="#apply" class="hidden sm:inline-flex">Apply now</Button>
 	</div>
@@ -269,7 +272,7 @@
 						<CircleCheck class="size-10 text-emerald-600" />
 						<h2 class="text-lg font-semibold">Application sent</h2>
 						<p class="max-w-sm text-sm text-muted-foreground">
-							Thanks! {data.org.name} will review it and get back to you by email.
+							Thanks! {brandName} will review it and get back to you by email.
 						</p>
 						<Button variant="outline" href="/l/{data.org.slug}">See other homes</Button>
 					</div>
@@ -365,7 +368,7 @@
 							<Field.Field orientation="horizontal">
 								<Checkbox id="a-consent" bind:checked={form.consent} />
 								<Field.Label for="a-consent" class="text-sm leading-snug font-normal">
-									The information above is accurate, and {data.org.name} may contact me about this application.
+									The information above is accurate, and {brandName} may contact me about this application.
 								</Field.Label>
 							</Field.Field>
 							<Button type="submit" size="lg" class="w-full sm:w-auto" disabled={pending}>

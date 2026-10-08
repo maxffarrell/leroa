@@ -4,18 +4,44 @@
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
+	import * as Modal from '#lib/components/ui/modal/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 	import { getMembers } from '#lib/remote/workspace.remote.ts';
+	import { getProperties } from '#lib/remote/portfolio.remote.ts';
+	import {
+		getMemberAccess,
+		assignMemberRole,
+		setMemberScope,
+		getRoles
+	} from '#lib/remote/roles.remote.ts';
 	import { initials } from '#lib/format.ts';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { toast } from 'svelte-sonner';
 	import Copy from '@lucide/svelte/icons/copy';
+	import Building2 from '@lucide/svelte/icons/building-2';
 
 	const members = $derived(await getMembers());
 	const canManage = $derived(page.data.role !== 'member');
+	const enterprise = $derived(!!page.data.enterprise);
+	const roles = $derived(enterprise && canManage ? await getRoles() : []);
+	const access = $derived(
+		enterprise && canManage
+			? new Map((await getMemberAccess()).map((a) => [a.memberId, a]))
+			: new Map()
+	);
+	const properties = $derived(await getProperties());
+
 	let email = $state('');
 	let role = $state<'member' | 'admin'>('member');
 	let inviteLink = $state<string | null>(null);
+
+	let scopeFor = $state<{ memberId: string; name: string } | null>(null);
+	let scopeDraft = new SvelteSet<string>();
+	let scopeAll = $state(true);
+	let pending = $state(false);
 
 	async function invite(e: SubmitEvent) {
 		e.preventDefault();
@@ -33,6 +59,39 @@
 		});
 		if (error) return toast.error(error.message ?? 'Could not change role');
 		await getMembers().refresh();
+	}
+
+	async function changeCustomRole(memberId: string, customRoleId: string | null) {
+		try {
+			await assignMemberRole({ memberId, customRoleId });
+			toast.success('Access updated');
+		} catch {
+			toast.error('Could not update access');
+		}
+	}
+
+	function openScope(memberId: string, name: string) {
+		const ids = access.get(memberId)?.propertyIds ?? [];
+		scopeAll = ids.length === 0;
+		scopeDraft = new SvelteSet(ids);
+		scopeFor = { memberId, name };
+	}
+
+	async function saveScope() {
+		if (!scopeFor) return;
+		pending = true;
+		try {
+			await setMemberScope({
+				memberId: scopeFor.memberId,
+				propertyIds: scopeAll ? [] : [...scopeDraft]
+			});
+			scopeFor = null;
+			toast.success('Property scope updated');
+		} catch {
+			toast.error('Could not update scope');
+		} finally {
+			pending = false;
+		}
 	}
 
 	async function remove(memberId: string) {
@@ -94,7 +153,8 @@
 	<Card.Content class="px-0">
 		<ul class="divide-y">
 			{#each members as m (m.id)}
-				<li class="flex items-center gap-3 px-6 py-3">
+				{@const a = access.get(m.id)}
+				<li class="flex flex-wrap items-center gap-3 px-6 py-3">
 					<Avatar.Root class="size-8"
 						>{#if m.image}<Avatar.Image src={m.image} alt={m.name} />{/if}<Avatar.Fallback
 							>{initials(m.name)}</Avatar.Fallback
@@ -104,9 +164,40 @@
 						<p class="truncate text-sm font-medium">
 							{m.name}{m.userId === page.data.user?.id ? ' (you)' : ''}
 						</p>
-						<p class="truncate text-xs text-muted-foreground">{m.email}</p>
+						<p class="truncate text-xs text-muted-foreground">
+							{m.email}{#if a?.customRoleId}
+								· {roles.find((r) => r.id === a.customRoleId)?.name}{/if}{#if a?.propertyIds.length}
+								· {a.propertyIds.length}
+								{a.propertyIds.length === 1 ? 'property' : 'properties'}{/if}
+						</p>
 					</div>
 					{#if canManage && m.role !== 'owner' && m.userId !== page.data.user?.id}
+						{#if enterprise && m.role === 'member'}
+							<Select.Root
+								type="single"
+								value={a?.customRoleId ?? ''}
+								onValueChange={(v) => changeCustomRole(m.id, v || null)}
+							>
+								<Select.Trigger size="sm" class="w-36"
+									>{a?.customRoleId
+										? (roles.find((r) => r.id === a.customRoleId)?.name ?? 'Role')
+										: 'Full access'}</Select.Trigger
+								>
+								<Select.Content>
+									<Select.Item value="">Full access</Select.Item>
+									{#each roles as r (r.id)}
+										<Select.Item value={r.id}>{r.name}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						{/if}
+						<Button
+							size="sm"
+							variant="ghost"
+							aria-label="Property scope"
+							onclick={() => openScope(m.id, m.name)}
+							><Building2 />{a?.propertyIds.length ? a.propertyIds.length : 'All'}</Button
+						>
 						<Select.Root type="single" value={m.role} onValueChange={(v) => changeRole(m.id, v)}>
 							<Select.Trigger size="sm" class="w-24 capitalize">{m.role}</Select.Trigger>
 							<Select.Content
@@ -126,3 +217,43 @@
 		</ul>
 	</Card.Content>
 </Card.Root>
+
+<Modal.Root bind:open={() => !!scopeFor, (v) => !v && (scopeFor = null)}>
+	<Modal.Content class="sm:max-w-md">
+		<Modal.Header>
+			<Modal.Title>Properties for {scopeFor?.name}</Modal.Title>
+			<Modal.Description
+				>Limit which properties this member can see and work on. "All properties" includes future
+				ones.</Modal.Description
+			>
+		</Modal.Header>
+		<div class="space-y-2">
+			<div class="flex items-center gap-2">
+				<Checkbox id="scope-all" checked={scopeAll} onCheckedChange={(v) => (scopeAll = !!v)} />
+				<Label for="scope-all">All properties</Label>
+			</div>
+			{#if !scopeAll}
+				<ul class="max-h-64 space-y-2 overflow-y-auto rounded-lg border p-3">
+					{#each properties as p (p.id)}
+						<li class="flex items-center gap-2">
+							<Checkbox
+								id="scope-{p.id}"
+								checked={scopeDraft.has(p.id)}
+								onCheckedChange={(v) => {
+									if (v) scopeDraft.add(p.id);
+									else scopeDraft.delete(p.id);
+								}}
+							/>
+							<Label for="scope-{p.id}">{p.name}</Label>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+		<Modal.Footer>
+			<Button onclick={saveScope} disabled={pending || (!scopeAll && scopeDraft.size === 0)}>
+				Save
+			</Button>
+		</Modal.Footer>
+	</Modal.Content>
+</Modal.Root>

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { command } from '$app/server';
-import { requireOrg } from '#lib/server/context.ts';
+import { requireOrg, requirePerm } from '#lib/server/context.ts';
 import { idSchema, ticketPriorities, ticketStatuses } from '#lib/schemas.ts';
 import { LEAD_STAGES } from '#lib/leads.ts';
 import * as ticketSvc from '#lib/server/services/maintenance.ts';
@@ -18,7 +18,7 @@ export const bulkUpdateTickets = command(
 		vendorId: v.optional(v.nullable(idSchema))
 	}),
 	async ({ ids, ...data }) => {
-		const ctx = await requireOrg();
+		const ctx = await requirePerm('tickets', 'write');
 		for (const id of ids) await ticketSvc.updateTicket(ctx, { id, ...data });
 		void getTickets().refresh();
 		return { count: ids.length };
@@ -39,7 +39,7 @@ export const bulkSetVendorsArchived = command(
 export const bulkSetLeadStage = command(
 	v.object({ ids: v.array(idSchema), stage: v.picklist(LEAD_STAGES) }),
 	async ({ ids, stage }) => {
-		const ctx = await requireOrg();
+		const ctx = await requirePerm('leads', 'write');
 		for (const id of ids) await crm.updateLead(ctx, { id, stage });
 		void getLeads().refresh();
 		return { count: ids.length };

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { command, query } from '$app/server';
-import { requireOrg, requireUser } from '#lib/server/context.ts';
+import { requireOrg, requirePerm, assertScope, requireUser } from '#lib/server/context.ts';
 import * as svc from '#lib/server/services/messaging.ts';
 import { portalTenants } from '#lib/server/services/portal.ts';
 import { announcementCreate, idSchema, messageSend } from '#lib/schemas.ts';
@@ -14,7 +14,10 @@ export const getThread = query(idSchema, async (tenantId) =>
 );
 
 export const sendMessage = command(messageSend, async (input) => {
-	const m = await svc.sendStaffMessage(await requireOrg(), input);
+	const m = await svc.sendStaffMessage(
+		await assertScope(await requirePerm('messages', 'write'), input),
+		input
+	);
 	void getThread(input.tenantId).refresh();
 	void getThreads().refresh();
 	return m;
@@ -29,13 +32,16 @@ export const getAudience = query(v.nullable(idSchema), async (propertyId) =>
 );
 
 export const sendAnnouncement = command(announcementCreate, async (input) => {
-	const a = await svc.createAnnouncement(await requireOrg(), input);
+	const a = await svc.createAnnouncement(
+		await assertScope(await requirePerm('messages', 'write'), input),
+		input
+	);
 	void getAnnouncements().refresh();
 	return a;
 });
 
 export const deleteAnnouncement = command(idSchema, async (id) => {
-	await svc.deleteAnnouncement(await requireOrg(), id);
+	await svc.deleteAnnouncement(await requirePerm('messages', 'write'), id);
 	void getAnnouncements().refresh();
 });
 

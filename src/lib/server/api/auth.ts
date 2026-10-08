@@ -40,6 +40,16 @@ export async function apiContext(event: RequestEvent, action: ApiAction): Promis
 		userId: actor.userId,
 		orgId,
 		role: 'admin',
-		org: { id: org.id, name: org.name, slug: org.slug, logo: org.logo ?? null }
+		memberId: actor.id,
+		perms: null,
+		propertyIds: null,
+		org: {
+			id: org.id,
+			name: org.name,
+			slug: org.slug,
+			logo: org.logo ?? null,
+			accentColor: org.accentColor ?? null,
+			portalTitle: org.portalTitle ?? null
+		}
 	};
 }

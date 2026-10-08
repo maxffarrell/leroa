@@ -5,7 +5,7 @@ import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
 import { requireOrg } from '#lib/server/context.ts';
 import { db } from '#lib/server/db/index.ts';
-import { integrationInstall, member, user, webhook } from '#lib/server/db/schema.ts';
+import { integrationInstall, member, organization, user, webhook } from '#lib/server/db/schema.ts';
 import { dashboard } from '#lib/server/services/dashboard.ts';
 import { search } from '#lib/server/services/search.ts';
 import { loadDemoData } from '#lib/server/services/demo.ts';
@@ -13,11 +13,12 @@ import { property } from '#lib/server/db/schema.ts';
 import { getIntegration, listIntegrations } from '#lib/server/integrations/runtime.ts';
 import { oauthApp, oauthEnv } from '#lib/server/integrations/credentials.ts';
 import { disconnect, redirectUri } from '#lib/server/integrations/oauth.ts';
+import { assertNotDemo } from '#lib/server/demo-mode.ts';
 import { connectionStatus, syncIssues } from '#lib/server/integrations/status.ts';
 import { runSync } from '#lib/server/integrations/sync.ts';
 import { appOrigin } from '#lib/server/email.ts';
 import { idSchema, webhookInput } from '#lib/schemas.ts';
-import { assertNotDemo } from '#lib/server/demo-mode.ts';
+import { hasFeature } from '#lib/server/ee/license.ts';
 
 export const getDashboard = query(async () => dashboard((await requireOrg()).orgId));
 export const searchAll = query(v.pipe(v.string(), v.maxLength(100)), async (q) =>
@@ -199,3 +200,25 @@ export const seedDemo = command(async () => {
 	void getDashboard().refresh();
 	return result;
 });
+
+/** Enterprise: workspace branding shown on the public listing pages, portal and emails. */
+export const saveBranding = command(
+	v.object({
+		portalTitle: v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(80))),
+		accentColor: v.nullable(
+			v.pipe(v.string(), v.regex(/^#[0-9a-fA-F]{6}$/, 'Use a hex color like #1d4ed8'))
+		)
+	}),
+	async (input) => {
+		assertNotDemo();
+		if (!hasFeature('branding')) error(403, 'Branding requires an enterprise license');
+		const { orgId } = await requireOrg('admin');
+		await db
+			.update(organization)
+			.set({
+				portalTitle: input.portalTitle || null,
+				accentColor: input.accentColor || null
+			})
+			.where(eq(organization.id, orgId));
+	}
+);

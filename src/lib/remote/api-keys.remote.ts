@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 import { getRequestEvent, command, query } from '$app/server';
 import { auth } from '#lib/server/auth.ts';
 import { requireOrg } from '#lib/server/context.ts';
+import { idSchema } from '#lib/schemas.ts';
 import { apiPermissionsSchema } from '#lib/api-permissions.ts';
 import { assertNotDemo } from '#lib/server/demo-mode.ts';
 
@@ -46,9 +47,10 @@ export const getApiKeys = query(async () => {
 export const createApiKey = command(
 	v.object({
 		name: v.pipe(v.string(), v.trim(), v.nonEmpty(), v.maxLength(64)),
-		permissions: apiPermissionsSchema
+		permissions: apiPermissionsSchema,
+		expiresInDays: v.optional(v.nullable(v.number()))
 	}),
-	async ({ name, permissions }) => {
+	async ({ name, permissions, expiresInDays }) => {
 		assertNotDemo();
 		const { orgId, userId } = await requireOrg('admin');
 		const key = await auth.api.createApiKey({
@@ -57,6 +59,7 @@ export const createApiKey = command(
 				organizationId: orgId,
 				userId,
 				permissions: permissions as Record<string, string[]>,
+				expiresIn: expiresInDays ?? null,
 				metadata: { createdBy: userId }
 			}
 		});
@@ -64,6 +67,26 @@ export const createApiKey = command(
 		return { key: key.key };
 	}
 );
+
+/** Deletes the old key and mints a new one with the same name and permissions. */
+export const rotateApiKey = command(idSchema, async (keyId) => {
+	assertNotDemo();
+	const { orgId, userId } = await requireOrg('admin');
+	const old = (await listKeys(orgId)).find((k) => k.id === keyId);
+	if (!old) error(404, 'API key not found');
+	await auth.api.deleteApiKey({ body: { keyId }, headers: getRequestEvent().request.headers });
+	const key = await auth.api.createApiKey({
+		body: {
+			name: old.name ?? 'Rotated key',
+			organizationId: orgId,
+			userId,
+			permissions: (old.permissions ?? {}) as Record<string, string[]>,
+			metadata: { createdBy: userId, rotatedFrom: keyId }
+		}
+	});
+	void getApiKeys().refresh();
+	return { key: key.key };
+});
 
 export const updateApiKeyPermissions = command(
 	v.object({ keyId: v.string(), permissions: apiPermissionsSchema }),

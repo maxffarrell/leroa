@@ -100,6 +100,16 @@ export async function startDemo(ip: string) {
 		userId: demoUser.id,
 		orgId: org.id,
 		role: 'owner',
-		org: { id: org.id, name: org.name, slug: org.slug, logo: null }
+		memberId: 'demo-member',
+		perms: null,
+		propertyIds: null,
+		org: {
+			id: org.id,
+			name: org.name,
+			slug: org.slug,
+			logo: null,
+			accentColor: null,
+			portalTitle: null
+		}
 	});
 }

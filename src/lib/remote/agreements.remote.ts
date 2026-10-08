@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { command, getRequestEvent, query } from '$app/server';
-import { requireOrg, requireUser } from '#lib/server/context.ts';
+import { requireOrg, requirePerm, assertScope, requireUser } from '#lib/server/context.ts';
 import * as svc from '#lib/server/services/agreements.ts';
 import {
 	agreementCreate,
@@ -29,24 +29,30 @@ export const getAgreements = query(idSchema, async (leaseId) =>
 );
 
 export const createAgreement = command(agreementCreate, async (input) => {
-	const a = await svc.createAgreement(await requireOrg(), input);
+	const a = await svc.createAgreement(
+		await assertScope(await requirePerm('leases', 'write'), input),
+		input
+	);
 	void getAgreements(input.leaseId).refresh();
 	return a;
 });
 
 export const updateAgreement = command(agreementUpdate, async (input) => {
-	const a = await svc.updateAgreement(await requireOrg(), input);
+	const a = await svc.updateAgreement(
+		await assertScope(await requirePerm('leases', 'write'), input),
+		input
+	);
 	void getAgreements(a.leaseId).refresh();
 	return a;
 });
 
 export const deleteAgreement = command(idSchema, async (id) => {
-	const a = await svc.deleteDraft(await requireOrg(), id);
+	const a = await svc.deleteDraft(await requirePerm('leases', 'write'), id);
 	void getAgreements(a.leaseId).refresh();
 });
 
 export const sendAgreement = command(idSchema, async (id) => {
-	const a = await svc.sendAgreement(await requireOrg(), id);
+	const a = await svc.sendAgreement(await requirePerm('leases', 'write'), id);
 	void getAgreements(a.leaseId).refresh();
 	return { unreachable: a.unreachable };
 });

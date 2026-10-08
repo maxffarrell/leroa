@@ -10,6 +10,7 @@
 	const tabs = [
 		{ href: '/settings', label: 'General' },
 		{ href: '/settings/team', label: 'Team' },
+		{ href: '/settings/roles', label: 'Roles' },
 		{ href: '/settings/notifications', label: 'Notifications' },
 		{ href: '/settings/templates', label: 'Lease templates' },
 		{ href: '/settings/leasing', label: 'Leasing' },

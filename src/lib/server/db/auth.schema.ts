@@ -1,5 +1,15 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core';
+import {
+	pgTable,
+	text,
+	timestamp,
+	boolean,
+	integer,
+	index,
+	uniqueIndex,
+	primaryKey,
+	jsonb
+} from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(),
@@ -79,9 +89,28 @@ export const organization = pgTable('organization', {
 	name: text('name').notNull(),
 	slug: text('slug').notNull().unique(),
 	logo: text('logo'),
+	/** Enterprise branding: accent color shown on portal, listings and emails. */
+	accentColor: text('accent_color'),
+	/** Enterprise branding: display name shown to residents instead of the workspace name. */
+	portalTitle: text('portal_title'),
 	createdAt: timestamp('created_at').notNull(),
 	metadata: text('metadata')
 });
+
+/** Enterprise: a named permission matrix assignable to members (same shape as API-key permissions). */
+export const orgRole = pgTable(
+	'org_role',
+	{
+		id: text('id').primaryKey(),
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		permissions: jsonb('permissions').$type<Record<string, string[]>>().notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [uniqueIndex('org_role_name_idx').on(table.organizationId, table.name)]
+);
 
 export const member = pgTable(
 	'member',
@@ -94,6 +123,10 @@ export const member = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 		role: text('role').default('member').notNull(),
+		/** Optional enterprise custom role; when set, its permission matrix restricts this member. */
+		customRoleId: text('custom_role_id').references(() => orgRole.id, {
+			onDelete: 'set null'
+		}),
 		createdAt: timestamp('created_at').notNull()
 	},
 	(table) => [
@@ -154,6 +187,21 @@ export const apikey = pgTable(
 		index('apikey_configId_idx').on(table.configId),
 		index('apikey_referenceId_idx').on(table.referenceId),
 		index('apikey_key_idx').on(table.key)
+	]
+);
+
+/** Enterprise: restricts a member to these properties; zero rows means access to all. */
+export const memberPropertyScope = pgTable(
+	'member_property_scope',
+	{
+		memberId: text('member_id')
+			.notNull()
+			.references(() => member.id, { onDelete: 'cascade' }),
+		propertyId: text('property_id').notNull()
+	},
+	(table) => [
+		primaryKey({ columns: [table.memberId, table.propertyId] }),
+		index('member_scope_property_idx').on(table.propertyId)
 	]
 );
 

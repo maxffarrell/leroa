@@ -240,7 +240,13 @@ export async function deleteListing(ctx: OrgContext, id: string) {
 
 async function orgBySlug(slug: string) {
 	const [org] = await db
-		.select({ id: organization.id, name: organization.name, slug: organization.slug })
+		.select({
+			id: organization.id,
+			name: organization.name,
+			slug: organization.slug,
+			accentColor: organization.accentColor,
+			portalTitle: organization.portalTitle
+		})
 		.from(organization)
 		.where(eq(organization.slug, slug));
 	if (!org) error(404, 'Not found');

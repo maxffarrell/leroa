@@ -26,6 +26,9 @@
 	import { toast } from 'svelte-sonner';
 	import { CopyButton } from '#lib/components/ui/copy-button/index.js';
 	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
+	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
+	import { rotateApiKey } from '#lib/remote/api-keys.remote.ts';
+	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash from '@lucide/svelte/icons/trash-2';
@@ -36,6 +39,7 @@
 	let editing = $state<{ id: string | null; title: string } | null>(null);
 	let name = $state('');
 	let permissions = $state<ApiPermissions>({});
+	let expiresInDays = $state<number | null>(null);
 	let pending = $state(false);
 	let created = $state<string | null>(null);
 
@@ -43,6 +47,7 @@
 
 	function openCreate() {
 		name = '';
+		expiresInDays = null;
 		permissions = everything('read');
 		editing = { id: null, title: 'New API key' };
 	}
@@ -65,7 +70,7 @@
 				await updateApiKeyPermissions({ keyId: editing.id, permissions });
 				toast.success('Permissions updated');
 			} else {
-				created = (await createApiKey({ name, permissions })).key;
+				created = (await createApiKey({ name, permissions, expiresInDays })).key;
 			}
 			editing = null;
 		} catch (err) {
@@ -109,7 +114,9 @@
 							<p class="text-xs text-muted-foreground">
 								<code>{k.start ?? k.prefix}…</code> · created {formatRelative(
 									k.createdAt
-								)}{k.lastRequest ? ` · last used ${formatRelative(k.lastRequest)}` : ''}
+								)}{k.lastRequest ? ` · last used ${formatRelative(k.lastRequest)}` : ''}{k.expiresAt
+									? ` · expires ${formatRelative(k.expiresAt)}`
+									: ''}
 							</p>
 							<div class="flex flex-wrap gap-1">
 								{#if summary === 'custom'}
@@ -127,6 +134,15 @@
 								{/if}
 							</div>
 						</div>
+						<Button
+							size="icon-sm"
+							variant="ghost"
+							aria-label="Rotate key"
+							onclick={async () => {
+								created = (await rotateApiKey(k.id)).key;
+								toast.success('Key rotated — copy the new key above');
+							}}><RefreshCw /></Button
+						>
 						<Button
 							size="icon-sm"
 							variant="ghost"
@@ -165,6 +181,20 @@
 				<Field.Field>
 					<Field.Label for="key-name">Name</Field.Label>
 					<Input id="key-name" placeholder="e.g. Zapier" required bind:value={name} />
+				</Field.Field>
+				<Field.Field>
+					<Field.Label for="key-expiry">Expires</Field.Label>
+					<NativeSelect.Root
+						id="key-expiry"
+						value={expiresInDays === null ? '' : String(expiresInDays)}
+						onchange={(e) =>
+							(expiresInDays = e.currentTarget.value === '' ? null : Number(e.currentTarget.value))}
+					>
+						<NativeSelect.Option value="">Never</NativeSelect.Option>
+						<NativeSelect.Option value="30">30 days</NativeSelect.Option>
+						<NativeSelect.Option value="90">90 days</NativeSelect.Option>
+						<NativeSelect.Option value="365">1 year</NativeSelect.Option>
+					</NativeSelect.Root>
 				</Field.Field>
 			{/if}
 			<ApiPermissionsEditor bind:value={permissions} />
