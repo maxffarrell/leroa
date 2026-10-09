@@ -7,9 +7,7 @@
 	"access": "restricted",
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
-	"ignore": [
-		"@leroa/integration-sdk"
-	],
+	"ignore": ["@leroa/integration-sdk"],
 	"privatePackages": {
 		"version": true,
 		"tag": false
