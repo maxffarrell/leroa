@@ -19,7 +19,7 @@
 			<div
 				class="flex flex-wrap items-center justify-center gap-x-2 bg-primary px-4 py-1.5 text-center text-xs text-primary-foreground"
 			>
-				<span>You're in a private demo workspace. It's deleted after 24 hours.</span>
+				<span>Your private demo session lasts 8 minutes. The workspace is deleted after 24 hours.</span>
 				<a
 					class="font-medium underline underline-offset-2"
 					href="https://github.com/maxffarrell/leroa#quick-start">Deploy your own</a
