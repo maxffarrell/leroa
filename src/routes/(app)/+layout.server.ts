@@ -15,6 +15,8 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		redirect(303, '/onboarding');
 	}
 	return {
+		demoExpiresAt: isDemo() ? (locals.session?.expiresAt.getTime() ?? null) : null,
+		demoServerNow: Date.now(),
 		user: {
 			id: locals.user.id,
 			name: locals.user.name,
