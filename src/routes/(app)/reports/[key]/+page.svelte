@@ -177,7 +177,18 @@
 						legend
 					>
 						{#snippet tooltip()}
-							<Chart.Tooltip />
+							<Chart.Tooltip>
+								{#snippet formatter({ value, name })}
+									<div class="flex w-full items-center justify-between gap-2">
+										<span class="text-muted-foreground">{name}</span>
+										<span class="font-mono font-medium text-foreground tabular-nums">
+											{report.currency
+												? formatMoney(Number(value), report.currency)
+												: (Number(value) / 100).toFixed(2)}
+										</span>
+									</div>
+								{/snippet}
+							</Chart.Tooltip>
 						{/snippet}
 					</BarChart>
 				</Chart.Container>
