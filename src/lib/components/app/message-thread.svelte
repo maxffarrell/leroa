@@ -28,7 +28,7 @@
 		side: Side;
 		lastReadAt?: Date | null;
 		otherReadAt?: Date | null;
-		onsend: (body: string) => Promise<unknown>;
+		onsend?: (body: string) => Promise<unknown>;
 		ondraft?: () => Promise<string>;
 		placeholder?: string;
 		empty?: Snippet;
@@ -94,7 +94,7 @@
 
 	async function send() {
 		const text = body.trim();
-		if (!text || sending) return;
+		if (!text || sending || !onsend) return;
 		sending = true;
 		try {
 			await onsend(text);
@@ -151,36 +151,38 @@
 			</Message.Group>
 		{/if}
 	</div>
-	<form
-		class="flex items-end gap-2 border-t bg-background p-3"
-		onsubmit={(e) => {
-			e.preventDefault();
-			void send();
-		}}
-	>
-		<Textarea
-			bind:value={body}
-			{placeholder}
-			rows={1}
-			maxlength={5000}
-			class="max-h-40 min-h-10 resize-none"
-			aria-label="Message"
-			{onkeydown}
-		/>
-		{#if ondraft}
-			<Button
-				type="button"
-				size="icon"
-				variant="ghost"
-				disabled={drafting}
-				aria-label="Draft a reply"
-				title="Draft a reply"
-				onclick={draft}
-				>{#if drafting}<Spinner />{:else}<Sparkles />{/if}</Button
-			>
-		{/if}
-		<Button type="submit" size="icon" disabled={sending || !body.trim()} aria-label="Send"
-			><SendHorizontal /></Button
+	{#if onsend}
+		<form
+			class="flex items-end gap-2 border-t bg-background p-3"
+			onsubmit={(e) => {
+				e.preventDefault();
+				void send();
+			}}
 		>
-	</form>
+			<Textarea
+				bind:value={body}
+				{placeholder}
+				rows={1}
+				maxlength={5000}
+				class="max-h-40 min-h-10 resize-none"
+				aria-label="Message"
+				{onkeydown}
+			/>
+			{#if ondraft}
+				<Button
+					type="button"
+					size="icon"
+					variant="ghost"
+					disabled={drafting}
+					aria-label="Draft a reply"
+					title="Draft a reply"
+					onclick={draft}
+					>{#if drafting}<Spinner />{:else}<Sparkles />{/if}</Button
+				>
+			{/if}
+			<Button type="submit" size="icon" disabled={sending || !body.trim()} aria-label="Send"
+				><SendHorizontal /></Button
+			>
+		</form>
+	{/if}
 </div>

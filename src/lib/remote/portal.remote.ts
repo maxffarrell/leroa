@@ -1,7 +1,12 @@
 import * as v from 'valibot';
 import { command, query } from '$app/server';
 import { requireUser, requireOrg } from '#lib/server/context.ts';
-import { portalOverview, portalRequest, portalToken } from '#lib/server/services/portal.ts';
+import {
+	portalOverview,
+	portalPreview,
+	portalRequest,
+	portalToken
+} from '#lib/server/services/portal.ts';
 import { db } from '#lib/server/db/index.ts';
 import { assertNotDemo } from '#lib/server/demo-mode.ts';
 import { createCheckout } from '#lib/server/services/online-payments.ts';
@@ -9,6 +14,12 @@ import { idSchema } from '#lib/schemas.ts';
 import { error } from '@sveltejs/kit';
 
 export const getPortal = query(async () => portalOverview(requireUser().user.id));
+
+/** Manager-side read-only preview of a tenant's portal. */
+export const previewPortal = query(idSchema, async (tenantId) => {
+	const { orgId } = await requireOrg();
+	return portalPreview(orgId, tenantId);
+});
 
 export const submitRequest = command(
 	v.object({

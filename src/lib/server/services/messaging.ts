@@ -8,6 +8,7 @@ import {
 	leaseTenant,
 	message,
 	messageThread,
+	organization,
 	property,
 	tenant,
 	unit,
@@ -414,4 +415,25 @@ export async function portalAnnouncements(tenantIds: string[]) {
 		)
 		.orderBy(desc(announcement.createdAt))
 		.limit(20);
+}
+
+/** Threads for arbitrary tenant ids, read-only (no read-marking) — for the manager portal preview. */
+export async function tenantMessageThreads(tenantIds: string[]) {
+	if (!tenantIds.length) return [];
+	const rows = await db
+		.select({ thread: messageThread, orgName: organization.name })
+		.from(messageThread)
+		.innerJoin(tenant, eq(tenant.id, messageThread.tenantId))
+		.innerJoin(organization, eq(organization.id, tenant.organizationId))
+		.where(inArray(messageThread.tenantId, tenantIds));
+	const out = [];
+	for (const { thread, orgName } of rows) {
+		out.push({
+			tenantId: thread.tenantId,
+			orgName,
+			lastReadAt: thread.tenantReadAt ?? null,
+			messages: await threadMessages(thread.id)
+		});
+	}
+	return out;
 }

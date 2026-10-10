@@ -3,7 +3,21 @@
 	import MessageThread from '#lib/components/app/message-thread.svelte';
 	import { getPortalMessages, sendPortalMessage } from '#lib/remote/messaging.remote.ts';
 
-	const threads = $derived(await getPortalMessages());
+	type Thread = {
+		tenantId: string;
+		orgName: string;
+		lastReadAt: Date | null;
+		messages: {
+			id: string;
+			authorType: 'staff' | 'tenant';
+			authorName: string;
+			body: string;
+			createdAt: Date;
+		}[];
+	};
+
+	let { threads: given, preview = false }: { threads?: Thread[]; preview?: boolean } = $props();
+	const threads = $derived(given ?? (await getPortalMessages()));
 
 	// Keep the "New" divider where it was when the page was opened.
 	const readOnOpen: Record<string, Date | null> = {};
@@ -13,6 +27,7 @@
 	};
 
 	$effect(() => {
+		if (given) return; // preview data is not polled
 		const timer = setInterval(() => {
 			if (document.visibilityState === 'visible') void getPortalMessages().refresh();
 		}, 15_000);
@@ -32,7 +47,7 @@
 			messages={t.messages}
 			lastReadAt={readAt(t)}
 			placeholder="Message {t.orgName}…"
-			onsend={(body) => sendPortalMessage({ tenantId: t.tenantId, body })}
+			onsend={preview ? undefined : (body) => sendPortalMessage({ tenantId: t.tenantId, body })}
 		>
 			{#snippet empty()}
 				<p class="py-10 text-center text-sm text-muted-foreground">

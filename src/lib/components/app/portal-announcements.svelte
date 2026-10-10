@@ -4,7 +4,16 @@
 	import { formatDate } from '#lib/format.ts';
 	import Megaphone from '@lucide/svelte/icons/megaphone';
 
-	const items = $derived(await getPortalAnnouncements());
+	type Item = {
+		id: string;
+		subject: string;
+		body: string;
+		createdAt: Date;
+		propertyName: string | null;
+	};
+
+	let { items: given }: { items?: Item[] } = $props();
+	const items = $derived(given ?? (await getPortalAnnouncements()));
 	let expanded = $state(false);
 	const shown = $derived(expanded ? items : items.slice(0, 2));
 </script>

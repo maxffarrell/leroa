@@ -15,7 +15,7 @@
 		acknowledgedAt: Date | null;
 		tenantComment: string | null;
 	};
-	let { inspections }: { inspections: Report[] } = $props();
+	let { inspections, preview = false }: { inspections: Report[]; preview?: boolean } = $props();
 
 	let comments = $state<Record<string, string>>({});
 	let busy = $state<string | null>(null);
@@ -54,19 +54,23 @@
 		<Button href={pdf(i.id)} target="_blank" rel="noopener" variant="outline" size="sm"
 			>Open report</Button
 		>
-		<Field.Field>
-			<Field.Label for="ack-{i.id}">Anything that doesn’t match? (optional)</Field.Label>
-			<Textarea
-				id="ack-{i.id}"
-				rows={3}
-				maxlength={2000}
-				placeholder="The bedroom carpet already had a stain by the closet."
-				bind:value={() => comments[i.id] ?? '', (v) => (comments[i.id] = v)}
-			/>
-		</Field.Field>
-		<Button type="submit" disabled={busy !== null}
-			>{busy === i.id ? 'Saving…' : 'I’ve reviewed this report'}</Button
-		>
+		{#if preview}
+			<p class="text-xs text-muted-foreground">Awaiting the tenant's review.</p>
+		{:else}
+			<Field.Field>
+				<Field.Label for="ack-{i.id}">Anything that doesn’t match? (optional)</Field.Label>
+				<Textarea
+					id="ack-{i.id}"
+					rows={3}
+					maxlength={2000}
+					placeholder="The bedroom carpet already had a stain by the closet."
+					bind:value={() => comments[i.id] ?? '', (v) => (comments[i.id] = v)}
+				/>
+			</Field.Field>
+			<Button type="submit" disabled={busy !== null}
+				>{busy === i.id ? 'Saving…' : 'I’ve reviewed this report'}</Button
+			>
+		{/if}
 	</form>
 {/each}
 

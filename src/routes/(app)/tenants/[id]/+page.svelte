@@ -19,6 +19,7 @@
 	import Phone from '@lucide/svelte/icons/phone';
 	import FileSignature from '@lucide/svelte/icons/file-signature';
 	import MessagesSquare from '@lucide/svelte/icons/messages-square';
+	import MonitorSmartphone from '@lucide/svelte/icons/monitor-smartphone';
 
 	const id = $derived(page.params.id!);
 	const t = $derived(await getTenant(id));
@@ -56,6 +57,9 @@
 	{#snippet actions()}
 		<Button size="sm" variant="outline" href="/messages/{id}"
 			><MessagesSquare /> <span class="hidden sm:inline">Message</span></Button
+		>
+		<Button size="sm" variant="outline" href="/tenants/{id}/portal"
+			><MonitorSmartphone /> <span class="hidden sm:inline">Portal preview</span></Button
 		>
 		<Button size="sm" variant="outline" onclick={copyPortalLink}
 			><Link />

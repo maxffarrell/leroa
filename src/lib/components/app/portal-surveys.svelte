@@ -9,7 +9,8 @@
 	import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
 
 	let {
-		surveys
+		surveys,
+		preview = false
 	}: {
 		surveys: {
 			id: string;
@@ -18,6 +19,7 @@
 			propertyName: string | null;
 			answered: boolean;
 		}[];
+		preview?: boolean;
 	} = $props();
 
 	let rating = $state<Record<string, number>>({});
@@ -57,6 +59,8 @@
 				<p class="flex items-center gap-2 text-sm text-muted-foreground">
 					<CheckCircle2 class="size-4 text-emerald-600" /> Answered — thank you!
 				</p>
+			{:else if preview}
+				<p class="text-sm text-muted-foreground">Not answered yet.</p>
 			{:else}
 				<div class="flex items-center gap-1">
 					{#each { length: 5 } as _, i (i)}
