@@ -21,7 +21,7 @@
 
 <svelte:window onfocus={() => void getPortal().refresh()} />
 
-<svelte:head><title>Resident portal</title></svelte:head>
+<svelte:head><title>{p ? `${p.orgName} — Resident portal` : 'Resident portal'}</title></svelte:head>
 
 {#if !p}
 	<Card.Root>

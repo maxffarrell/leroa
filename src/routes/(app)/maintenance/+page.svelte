@@ -39,6 +39,7 @@
 	import { untrack } from 'svelte';
 	import Mail from '@lucide/svelte/icons/mail';
 	import LinkIcon from '@lucide/svelte/icons/link';
+	import Copy from '@lucide/svelte/icons/copy';
 	import HardHat from '@lucide/svelte/icons/hard-hat';
 	import { ticketPriorities, ticketStatuses } from '#lib/schemas.ts';
 	import { formatRelative, tenantName } from '#lib/format.ts';
@@ -421,6 +422,19 @@
 				<Sheet.Title class="text-lg">{selected.title}</Sheet.Title>
 			</Sheet.Header>
 			<div class="space-y-4 overflow-y-auto px-4 pb-4">
+				{#if selected.duplicateOf}
+					<p
+						class="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
+					>
+						<Copy class="mt-0.5 size-4 shrink-0" />
+						<span
+							>AI flagged this as a possible duplicate of
+							<a class="font-medium underline" href="?ticket={selected.duplicateOf}"
+								>#{selected.dupNumber} {selected.dupTitle}</a
+							>.</span
+						>
+					</p>
+				{/if}
 				<div class="grid grid-cols-2 gap-3">
 					<Field.Field>
 						<Field.Label>Status</Field.Label>

@@ -106,7 +106,9 @@
 
 <div>
 	<h1 class="text-2xl font-semibold tracking-tight">Hi {p.name}</h1>
-	<p class="text-sm text-muted-foreground">Managed by {p.orgName}</p>
+	<p class="text-sm text-muted-foreground">
+		Managed by <span class="font-medium" style:color={p.orgAccent}>{p.orgName}</span>
+	</p>
 </div>
 <PortalAnnouncements items={announcements} />
 {#if p.surveys.length}

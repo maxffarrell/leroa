@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Message from '#lib/components/ui/message/index.js';
 	import * as Bubble from '#lib/components/ui/bubble/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { cn } from '#lib/utils.js';
@@ -11,7 +12,14 @@
 	import type { Snippet } from 'svelte';
 
 	type Side = 'staff' | 'tenant';
-	type Msg = { id: string; authorType: Side; authorName: string; body: string; createdAt: Date };
+	type Msg = {
+		id: string;
+		authorType: Side;
+		authorName: string;
+		body: string;
+		createdAt: Date;
+		aiCategory?: string | null;
+	};
 
 	let {
 		messages,
@@ -20,6 +28,7 @@
 		otherReadAt = null,
 		onsend,
 		ondraft,
+		showCategories = false,
 		placeholder = 'Write a message…',
 		empty,
 		class: className
@@ -30,10 +39,25 @@
 		otherReadAt?: Date | null;
 		onsend?: (body: string) => Promise<unknown>;
 		ondraft?: () => Promise<string>;
+		showCategories?: boolean;
 		placeholder?: string;
 		empty?: Snippet;
 		class?: string;
 	} = $props();
+
+	const CATEGORY_LABELS: Record<string, string> = {
+		maintenance: 'Maintenance',
+		payment: 'Payment',
+		lease: 'Lease',
+		other: 'Other'
+	};
+
+	const categoryOf = (raw: string | null | undefined) => {
+		if (!raw) return null;
+		const urgent = raw.endsWith('!');
+		const label = CATEGORY_LABELS[urgent ? raw.slice(0, -1) : raw];
+		return label ? { urgent, label } : null;
+	};
 
 	let body = $state('');
 	let sending = $state(false);
@@ -138,6 +162,16 @@
 										>{stamp(m.createdAt)}</time
 									>
 								</Message.Header>
+							{/if}
+							{@const cat = categoryOf(m.aiCategory)}
+							{#if showCategories && !mine && cat}
+								<span class="flex">
+									<Badge
+										variant={cat.urgent ? 'destructive' : 'outline'}
+										class="h-5 px-1.5 text-[10px] font-normal"
+										>{cat.urgent ? `Urgent · ${cat.label}` : cat.label}</Badge
+									>
+								</span>
 							{/if}
 							<Bubble.Root variant={mine ? 'default' : 'muted'} align={mine ? 'end' : 'start'}>
 								<Bubble.Content class="whitespace-pre-wrap">{m.body}</Bubble.Content>

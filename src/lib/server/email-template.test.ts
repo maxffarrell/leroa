@@ -20,4 +20,16 @@ describe('renderEmail', () => {
 		expect(email.text).toContain('View in portal: https://pm.example.com/portal?a=1&b=2');
 		expect(email.text.endsWith('— Sunrise <Co>')).toBe(true);
 	});
+
+	it('uses the workspace accent on the button, defaulting to dark', () => {
+		expect(email.html).toContain('background:#18181b');
+		const branded = renderEmail({
+			orgName: 'Sunrise',
+			heading: 'Hi',
+			lines: [],
+			action: { label: 'Open', url: 'https://x.example.com' },
+			accent: '#0ea5e9'
+		});
+		expect(branded.html).toContain('background:#0ea5e9');
+	});
 });

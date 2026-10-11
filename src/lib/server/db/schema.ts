@@ -372,6 +372,8 @@ export const maintenanceTicket = pgTable(
 		assetId: text('asset_id').references(() => asset.id, { onDelete: 'set null' }),
 		/** The preventive schedule that issued this work order, if any. */
 		scheduleId: text('schedule_id').references(() => pmSchedule.id, { onDelete: 'set null' }),
+		/** Enterprise AI: another open request this one probably repeats. */
+		duplicateOf: text('duplicate_of'),
 		/** What the work cost, in cents, as reported by staff or the vendor. */
 		costAmount: integer('cost_amount'),
 		vendorSentAt: timestamp('vendor_sent_at', { withTimezone: true }),
@@ -382,7 +384,8 @@ export const maintenanceTicket = pgTable(
 	(t) => [
 		index('ticket_org_status_idx').on(t.organizationId, t.status),
 		uniqueIndex('ticket_org_number_idx').on(t.organizationId, t.number),
-		index('ticket_vendor_idx').on(t.vendorId)
+		index('ticket_vendor_idx').on(t.vendorId),
+		index('ticket_dup_idx').on(t.duplicateOf)
 	]
 );
 
@@ -927,6 +930,9 @@ export const lead = pgTable(
 		tenantId: text('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
 		/** When the prospect agreed to be contacted from a public form. */
 		consentAt: timestamp('consent_at', { withTimezone: true }),
+		/** Enterprise AI intake score: 'hot' | 'warm' | 'cold', plus the one-line reason. */
+		aiScore: text('ai_score'),
+		aiScoreReason: text('ai_score_reason'),
 		...timestamps
 	},
 	(t) => [
@@ -1117,6 +1123,8 @@ export const message = pgTable(
 		authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
 		authorName: text('author_name').notNull(),
 		body: text('body').notNull(),
+		/** Enterprise AI triage of tenant messages: maintenance | payment | lease | other (+ '!' when urgent). */
+		aiCategory: text('ai_category'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(t) => [index('message_thread_created_idx').on(t.threadId, t.createdAt)]

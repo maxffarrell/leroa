@@ -1,8 +1,9 @@
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
-import { member, organization, user, workflow } from '#lib/server/db/schema.ts';
+import { member, user, workflow } from '#lib/server/db/schema.ts';
 import { appOrigin, sendEmail } from '#lib/server/email.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
+import { orgBrand } from '#lib/server/branding.ts';
 import * as v from 'valibot';
 import type { OrgContext } from '#lib/server/context.ts';
 import type { workflowInput, workflowUpdate } from '#lib/schemas.ts';
@@ -62,14 +63,6 @@ const ENTITY_HREFS: Record<string, (id: string) => string> = {
 const render = (template: string, event: LeroaEvent) =>
 	template.replaceAll('{summary}', event.summary).replaceAll('{event}', event.type);
 
-async function orgName(orgId: string) {
-	const [o] = await db
-		.select({ name: organization.name })
-		.from(organization)
-		.where(eq(organization.id, orgId));
-	return o?.name ?? 'Your workspace';
-}
-
 async function managerEmails(orgId: string) {
 	const rows = await db
 		.select({ email: user.email })
@@ -99,13 +92,14 @@ export async function runWorkflows(event: LeroaEvent) {
 					body,
 					href
 				});
-				const org = await orgName(event.organizationId);
+				const org = await orgBrand(event.organizationId);
 				for (const to of await managerEmails(event.organizationId)) {
 					await sendEmail({
 						to,
 						subject: `${rule.name}: ${event.summary}`,
 						...renderEmail({
-							orgName: org,
+							orgName: org.name,
+							accent: org.accent,
 							heading: `Workflow: ${rule.name}`,
 							lines: [body, `Event: ${event.type}`],
 							action: href ? { label: 'Open in Leroa', url: `${appOrigin()}${href}` } : undefined

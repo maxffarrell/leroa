@@ -1,5 +1,6 @@
 <script lang="ts">
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
+	import LeadScoreBadge from '#lib/components/app/lead-score-badge.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
@@ -9,6 +10,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { getLeads, updateLead } from '#lib/remote/crm.remote.ts';
 	import { bulkSetLeadStage } from '#lib/remote/bulk.remote.ts';
@@ -229,7 +231,13 @@
 								>
 									<div class="flex items-start justify-between gap-2">
 										<span class="text-sm leading-snug font-medium">{leadName(l)}</span>
-										{#if l.waitlist}<StatusBadge status="waitlist" />{/if}
+										<span class="flex shrink-0 items-center gap-1">
+											{#if l.aiScore && page.data.enterprise}<LeadScoreBadge
+													score={l.aiScore}
+													reason={l.aiScoreReason}
+												/>{/if}
+											{#if l.waitlist}<StatusBadge status="waitlist" />{/if}
+										</span>
 									</div>
 									<p class="mt-0.5 truncate text-xs text-muted-foreground">
 										{l.listingTitle ?? l.propertyName ?? 'Any property'}{l.budgetMax
@@ -285,7 +293,15 @@
 								</span>
 							</Table.Cell>
 							<Table.Cell class="max-w-48">
-								<a href="/leasing/leads/{l.id}" class="block truncate font-medium">{leadName(l)}</a>
+								<span class="flex items-center gap-1.5">
+									<a href="/leasing/leads/{l.id}" class="block truncate font-medium"
+										>{leadName(l)}</a
+									>
+									{#if l.aiScore && page.data.enterprise}<LeadScoreBadge
+											score={l.aiScore}
+											reason={l.aiScoreReason}
+										/>{/if}
+								</span>
 								<span class="block truncate text-xs text-muted-foreground"
 									>{l.email ?? l.phone ?? ''}</span
 								>

@@ -20,6 +20,8 @@ import {
 	user
 } from '#lib/server/db/schema.ts';
 import type { OrgContext } from '#lib/server/context.ts';
+import { hasFeature } from '#lib/server/ee/license.ts';
+import { scoreLead } from '#lib/server/ai/decisions.ts';
 import type {
 	inquiryInput,
 	leadInput,
@@ -167,6 +169,8 @@ export async function listLeads(orgId: string) {
 			waitlist: lead.waitlist,
 			waitlistedAt: lead.waitlistedAt,
 			applicationId: lead.applicationId,
+			aiScore: lead.aiScore,
+			aiScoreReason: lead.aiScoreReason,
 			createdAt: lead.createdAt,
 			updatedAt: lead.updatedAt,
 			nextTourAt
@@ -303,6 +307,40 @@ async function captureLead(orgId: string, data: Out<typeof leadInput>, opts: Cap
 				consentAt: opts.consent ? now : null
 			})
 			.returning()) as [LeadRow];
+		if (hasFeature('ai')) {
+			const [prop, lst] = await Promise.all([
+				data.propertyId
+					? db
+							.select({ name: property.name })
+							.from(property)
+							.where(eq(property.id, data.propertyId))
+							.limit(1)
+					: Promise.resolve([]),
+				data.listingId
+					? db
+							.select({ title: listing.title })
+							.from(listing)
+							.where(eq(listing.id, data.listingId))
+							.limit(1)
+					: Promise.resolve([])
+			]);
+			const s = await scoreLead(orgId, {
+				email,
+				phone: data.phone,
+				moveInDate: data.moveInDate,
+				bedrooms: data.bedrooms,
+				budgetMax: data.budgetMax,
+				propertyName: prop[0]?.name ?? null,
+				listingTitle: lst[0]?.title ?? null,
+				source: data.source,
+				message: data.message
+			});
+			[row] = (await db
+				.update(lead)
+				.set({ aiScore: s.score, aiScoreReason: s.reason })
+				.where(eq(lead.id, row.id))
+				.returning()) as [LeadRow];
+		}
 		await emit({
 			orgId,
 			actorId: opts.actorId ?? null,

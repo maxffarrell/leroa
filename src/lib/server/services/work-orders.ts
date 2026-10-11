@@ -58,6 +58,8 @@ async function load(token: string) {
 			ticket: maintenanceTicket,
 			vendorName: vendor.name,
 			orgName: organization.name,
+			portalTitle: organization.portalTitle,
+			orgAccent: organization.accentColor,
 			property: {
 				name: property.name,
 				addressLine1: property.addressLine1,
@@ -107,7 +109,8 @@ export async function getWorkOrder(token: string) {
 		dueDate: t.dueDate,
 		costAmount: t.costAmount,
 		createdAt: t.createdAt,
-		orgName: row.orgName,
+		orgName: row.portalTitle ?? row.orgName,
+		orgAccent: row.orgAccent,
 		vendorName: row.vendorName,
 		property: row.property,
 		unitName: row.unitName,

@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+	heuristicDelinquency,
 	heuristicDigest,
 	heuristicDocCategory,
 	heuristicInsights,
+	heuristicIntake,
+	heuristicLeadScore,
 	heuristicLeaseExtract,
 	heuristicListingCopy,
+	heuristicMessageClass,
 	heuristicReply,
 	heuristicReportSummary,
 	heuristicTenantSummary,
@@ -285,5 +289,124 @@ describe('heuristicDigest', () => {
 		});
 		expect(d.lines).toEqual([]);
 		expect(d.intro).toContain('Quiet day');
+	});
+});
+
+describe('heuristicIntake', () => {
+	it('escalates emergencies with a reason', () => {
+		const d = heuristicIntake({
+			title: 'Gas smell in the hallway',
+			candidates: []
+		});
+		expect(d.emergency).toBe(true);
+		expect(d.reason).toContain('emergency');
+		expect(d.duplicateOf).toBeNull();
+	});
+
+	it('spots a near-duplicate open request', () => {
+		const d = heuristicIntake({
+			title: 'Kitchen sink is leaking again',
+			description: 'Water dripping under the cabinet',
+			candidates: [
+				{ id: 't1', title: 'Leaking kitchen sink', description: 'Drip under the cabinet' },
+				{ id: 't2', title: 'Replace bedroom blinds' }
+			]
+		});
+		expect(d.emergency).toBe(false);
+		expect(d.duplicateOf).toBe('t1');
+	});
+
+	it('does not flag different problems as duplicates', () => {
+		const d = heuristicIntake({
+			title: 'Bedroom window stuck shut',
+			candidates: [{ id: 't1', title: 'Kitchen faucet drips' }]
+		});
+		expect(d.duplicateOf).toBeNull();
+	});
+});
+
+describe('heuristicLeadScore', () => {
+	it('scores an urgent, reachable applicant hot', () => {
+		const s = heuristicLeadScore({
+			email: 'a@b.c',
+			phone: '555-1234',
+			moveInDate: '2026-11-01',
+			today: '2026-10-15',
+			listingTitle: 'Maple Court 3B',
+			source: 'application',
+			message: 'Ready to sign ASAP'
+		});
+		expect(s.score).toBe('hot');
+		expect(s.reason.length).toBeGreaterThan(0);
+	});
+
+	it('scores a thin inquiry cold', () => {
+		const s = heuristicLeadScore({ email: 'a@b.c', source: 'website' });
+		expect(s.score).toBe('cold');
+	});
+
+	it('scores a warm middle ground', () => {
+		const s = heuristicLeadScore({
+			email: 'a@b.c',
+			source: 'listing',
+			listingTitle: 'Elm House 1',
+			moveInDate: '2027-03-01',
+			today: '2026-10-15'
+		});
+		expect(s.score).toBe('warm');
+	});
+});
+
+describe('heuristicMessageClass', () => {
+	it('categorizes payment and maintenance messages', () => {
+		expect(heuristicMessageClass('Why is there a late fee on my rent?').category).toBe('payment');
+		expect(heuristicMessageClass('The bathroom sink keeps leaking').category).toBe('maintenance');
+		expect(heuristicMessageClass('Can I renew my lease early?').category).toBe('lease');
+		expect(heuristicMessageClass('Happy holidays!').category).toBe('other');
+	});
+
+	it('marks emergency wording urgent', () => {
+		expect(heuristicMessageClass('There is water pouring through my ceiling').urgent).toBe(true);
+		expect(heuristicMessageClass('The sink drips sometimes').urgent).toBe(false);
+	});
+});
+
+describe('heuristicDelinquency', () => {
+	it('watches a lease owing two-plus months', () => {
+		const d = heuristicDelinquency({
+			balanceCents: 340000,
+			monthlyRentCents: 145000,
+			lateCount6m: 1,
+			dueCount6m: 6,
+			lastPaymentAt: '2026-08-01',
+			today: '2026-10-15'
+		});
+		expect(d.watch).toBe(true);
+		expect(d.reason).toContain('months');
+	});
+
+	it('watches a mostly-late payer', () => {
+		const d = heuristicDelinquency({
+			balanceCents: 145000,
+			monthlyRentCents: 145000,
+			lateCount6m: 4,
+			dueCount6m: 6,
+			lastPaymentAt: '2026-10-10',
+			today: '2026-10-15'
+		});
+		expect(d.watch).toBe(true);
+		expect(d.reason).toContain('Late on 4');
+	});
+
+	it('ignores a lease with no balance', () => {
+		expect(
+			heuristicDelinquency({
+				balanceCents: 0,
+				monthlyRentCents: 145000,
+				lateCount6m: 6,
+				dueCount6m: 6,
+				lastPaymentAt: '2026-01-01'
+			}).watch
+		).toBe(false);
 	});
 });
