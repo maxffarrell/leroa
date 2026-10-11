@@ -1,6 +1,7 @@
 <script lang="ts">
-	/* SSO and passkey management. Server routes are gated by the Enterprise license (see src/lib/server/ee). */
+	/* Basic SSO and passkey management are included in the AGPL core. */
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import { authClient } from '#lib/auth-client.ts';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
@@ -8,18 +9,16 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { toast } from 'svelte-sonner';
 	import KeyRound from '@lucide/svelte/icons/key-round';
-	import Lock from '@lucide/svelte/icons/lock';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const isAdmin = $derived(page.data.role !== 'member');
 
 	let passkeys = $state<{ id: string; name?: string | null; createdAt: Date }[]>([]);
-	$effect(() => {
-		if (data.enterprise)
+	onMount(() => {
+		if (data.security)
 			void authClient.passkey
 				.listUserPasskeys()
 				.then((r) => (passkeys = (r.data as typeof passkeys) ?? []));
@@ -66,30 +65,10 @@
 	}
 </script>
 
-{#if !data.enterprise}
-	<Card.Root class="border-dashed">
-		<Card.Header>
-			<Card.Title class="flex items-center gap-2"
-				><Lock class="size-4" /> SAML, OIDC and passkeys</Card.Title
-			>
-			<Card.Description
-				>Single sign-on and passkeys are included in Leroa Cloud and available on self-hosted
-				installs with an Enterprise license key (<code>LEROA_ENTERPRISE_KEY</code
-				>).</Card.Description
-			>
-		</Card.Header>
-		<Card.Footer
-			><Button href="https://leroa.example.com/pricing" target="_blank" variant="outline"
-				>See plans</Button
-			></Card.Footer
-		>
-	</Card.Root>
-{:else}
+{#if data.security}
 	<Card.Root>
 		<Card.Header>
-			<Card.Title class="flex items-center gap-2"
-				>Passkeys <Badge variant="secondary">Enterprise</Badge></Card.Title
-			>
+			<Card.Title class="flex items-center gap-2">Passkeys</Card.Title>
 			<Card.Description
 				>Sign in with Face ID, Touch ID, Windows Hello or a security key.</Card.Description
 			>
@@ -110,9 +89,7 @@
 	{#if isAdmin}
 		<Card.Root>
 			<Card.Header>
-				<Card.Title class="flex items-center gap-2"
-					>Single sign-on <Badge variant="secondary">Enterprise</Badge></Card.Title
-				>
+				<Card.Title class="flex items-center gap-2">Single sign-on</Card.Title>
 				<Card.Description
 					>Connect Okta, Entra ID, Google Workspace or any SAML 2.0 / OIDC provider. New users are
 					added to this workspace as members.</Card.Description
@@ -192,4 +169,6 @@
 			</Card.Content>
 		</Card.Root>
 	{/if}
+{:else}
+	<p class="text-sm text-muted-foreground">Sign-in settings are turned off in the public demo.</p>
 {/if}

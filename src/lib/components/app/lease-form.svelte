@@ -162,7 +162,7 @@
 			<Modal.Header>
 				<Modal.Title>New lease</Modal.Title>
 				<Modal.Description>Rent charges are generated automatically each month.</Modal.Description>
-				{#if page.data.enterprise}
+				{#if page.data.ai}
 					<Button
 						type="button"
 						variant="outline"

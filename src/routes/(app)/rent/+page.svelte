@@ -41,7 +41,7 @@
 	let sorting = $state<SortingState>([]);
 
 	const roll = $derived(await getRentRoll(month));
-	const watchList = $derived(page.data.enterprise ? await aiDelinquencyWatch() : []);
+	const watchList = $derived(page.data.ai ? await aiDelinquencyWatch() : []);
 	const watch = $derived(new Map(watchList.map((w) => [w.leaseId, w.reason])));
 	const rows = $derived(
 		roll.filter((r) => {

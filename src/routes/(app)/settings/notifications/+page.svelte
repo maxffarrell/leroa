@@ -167,7 +167,7 @@
 			'Vendor insurance expiring',
 			'An alert when a vendor’s certificate of insurance is about to lapse, and again once it has.'
 		)}
-		{#if page.data.enterprise}
+		{#if page.data.ai}
 			{@render toggle(
 				'aiDigest',
 				'AI morning digest',

@@ -2,7 +2,7 @@ import { query } from '$app/server';
 import * as v from 'valibot';
 import { requireOrg } from '#lib/server/context.ts';
 import { auditCount, auditFacets, listAudit } from '#lib/server/services/audit.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 
 const auditFilter = v.object({
 	entityType: v.optional(v.string()),

@@ -144,7 +144,7 @@
 			<RecordFields entity="tenant" recordId={t.id} />
 			{#snippet pending()}{/snippet}
 		</svelte:boundary>
-		{#if page.data.enterprise}
+		{#if page.data.ai}
 			<AiSummary
 				load={() => aiTenantSummary(id)}
 				description="An AI overview of this tenant’s lease, balance, payments and requests."

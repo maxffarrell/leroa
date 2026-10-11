@@ -1,5 +1,5 @@
 /**
- * Snap decisions for the enterprise tier — one fast classification call that
+ * Snap decisions for the self-hosted core — one fast classification call that
  * routes, flags and prioritizes incoming work. These calls go through the
  * decision provider (`AI_DECISION_*`, falling back to `AI_*`), so they can run
  * on a cheaper/faster model than the generative features. Each feature falls

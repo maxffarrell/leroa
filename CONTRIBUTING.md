@@ -18,6 +18,7 @@ Before opening a PR run `pnpm check`, `pnpm lint` and `pnpm test`.
 - Every write that matters calls `emit()` so it shows up in the activity feed, webhooks and integrations.
 - Schema changes: edit `src/lib/server/db/schema.ts`, then `pnpm db:generate --name <change>`.
 - UI uses shadcn-svelte components from `src/lib/components/ui`. Keep app-specific components in `src/lib/components/app`.
+- Basic SSO, passkeys and BYOK AI belong to the AGPL core (`src/lib/server/auth-plugins.ts` and `src/lib/server/ai/`).
 - Enterprise code goes in `src/lib/server/ee/` with a `/* @license Enterprise */` header. Contributions there are accepted under the Enterprise license.
 
 ## Contributing an integration

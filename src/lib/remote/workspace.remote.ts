@@ -18,7 +18,7 @@ import { connectionStatus, syncIssues } from '#lib/server/integrations/status.ts
 import { runSync } from '#lib/server/integrations/sync.ts';
 import { appOrigin } from '#lib/server/email.ts';
 import { idSchema, webhookInput } from '#lib/schemas.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 
 export const getDashboard = query(async () => dashboard((await requireOrg()).orgId));
 export const searchAll = query(v.pipe(v.string(), v.maxLength(100)), async (q) =>

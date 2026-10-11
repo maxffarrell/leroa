@@ -26,7 +26,7 @@ import {
 	notifyStaffMessage,
 	notifyUrgentMessage
 } from './notifications.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 import { classifyMessage } from '#lib/server/ai/decisions.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;

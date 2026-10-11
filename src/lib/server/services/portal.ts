@@ -15,7 +15,7 @@ import {
 	unit
 } from '#lib/server/db/schema.ts';
 import { emit } from './events.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 import { intakeTicket } from '#lib/server/ai/decisions.ts';
 
 type Tenant = typeof tenant.$inferSelect;

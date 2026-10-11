@@ -7,7 +7,7 @@ import type { OrgContext } from '#lib/server/context.ts';
 import { MAX_UPLOAD_BYTES, store } from './storage.ts';
 import { emit } from './events.ts';
 import { assertNotDemo } from '#lib/server/demo-mode.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 
 export async function listDocuments(orgId: string, entity?: { type: string; id: string }) {
 	return db
