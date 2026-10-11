@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, max, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
@@ -16,13 +17,17 @@ import type { OrgContext } from '#lib/server/context.ts';
 import type { ticketInput, ticketNoteInput, ticketUpdate } from '#lib/schemas.ts';
 import { isDemo } from '#lib/server/demo-mode.ts';
 import { emit } from './events.ts';
-import { notifyTicketStatus, notifyWorkOrder } from './notifications.ts';
+import { notifyTicketEmergency, notifyTicketStatus, notifyWorkOrder } from './notifications.ts';
+import { hasFeature } from '#lib/server/ee/license.ts';
+import { intakeTicket, type IntakeDecision } from '#lib/server/ai/decisions.ts';
 import { entityImages } from './documents.ts';
 import { assertAsset } from './assets.ts';
 import { assertVendor } from './vendors.ts';
 import { workOrderToken } from './work-orders.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
+
+const dupTicket = alias(maintenanceTicket, 'dup_ticket');
 
 export async function listTickets(
 	orgId: string,
@@ -55,7 +60,10 @@ export async function listTickets(
 			assigneeName: user.name,
 			assetId: asset.id,
 			assetName: asset.name,
-			scheduleId: maintenanceTicket.scheduleId
+			scheduleId: maintenanceTicket.scheduleId,
+			duplicateOf: maintenanceTicket.duplicateOf,
+			dupNumber: dupTicket.number,
+			dupTitle: dupTicket.title
 		})
 		.from(maintenanceTicket)
 		.innerJoin(property, eq(property.id, maintenanceTicket.propertyId))
@@ -64,6 +72,7 @@ export async function listTickets(
 		.leftJoin(user, eq(user.id, maintenanceTicket.assigneeId))
 		.leftJoin(vendor, eq(vendor.id, maintenanceTicket.vendorId))
 		.leftJoin(asset, eq(asset.id, maintenanceTicket.assetId))
+		.leftJoin(dupTicket, eq(dupTicket.id, maintenanceTicket.duplicateOf))
 		.where(
 			and(
 				eq(maintenanceTicket.organizationId, orgId),
@@ -91,6 +100,14 @@ export async function createTicket(
 	if (!p) error(404, 'Property not found');
 	if (input.vendorId) await assertVendor(ctx.orgId, input.vendorId);
 	if (input.assetId) await assertAsset(ctx.orgId, input.assetId);
+	const intake = hasFeature('ai')
+		? await intakeTicket(ctx.orgId, {
+				title: input.title,
+				description: input.description,
+				unitId: input.unitId ?? null,
+				propertyId: input.propertyId
+			})
+		: null;
 	const created = await db.transaction(async (tx) => {
 		await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${ctx.orgId}))`);
 		const [{ n }] = (await tx
@@ -103,6 +120,8 @@ export async function createTicket(
 				...input,
 				organizationId: ctx.orgId,
 				number: (n ?? 0) + 1,
+				...(intake?.emergency && input.priority !== 'urgent' ? { priority: 'urgent' } : {}),
+				...(intake?.duplicateOf ? { duplicateOf: intake.duplicateOf } : {}),
 				closedAt: input.status === 'done' || input.status === 'cancelled' ? new Date() : null
 			})
 			.returning();
@@ -117,7 +136,52 @@ export async function createTicket(
 		summary: `#${created.number} ${created.title} · ${p.name}`,
 		data: { priority: created.priority }
 	});
+	if (intake && (intake.emergency || intake.duplicateOf))
+		await applyTicketIntake(ctx.orgId, created, intake, p.name);
 	return created;
+}
+
+/**
+ * Records an intake decision on a freshly created request: an internal note for
+ * each flag, plus a manager alert when it reads like an emergency. Shared by the
+ * staff flow and the tenant portal flow.
+ */
+export async function applyTicketIntake(
+	orgId: string,
+	t: Pick<
+		typeof maintenanceTicket.$inferSelect,
+		'id' | 'organizationId' | 'number' | 'title' | 'status' | 'tenantId'
+	>,
+	intake: IntakeDecision,
+	place: string
+) {
+	if (intake.emergency) {
+		await db.insert(ticketNote).values({
+			organizationId: orgId,
+			ticketId: t.id,
+			authorType: 'staff',
+			authorName: 'Leroa AI',
+			body: `Flagged as a possible emergency and moved to urgent.${intake.reason ? ` ${intake.reason}` : ''}`,
+			internal: true
+		});
+		void notifyTicketEmergency(t, place, intake.reason).catch((err) =>
+			console.error('emergency alert failed', err)
+		);
+	}
+	if (intake.duplicateOf) {
+		const [d] = await db
+			.select({ number: maintenanceTicket.number })
+			.from(maintenanceTicket)
+			.where(eq(maintenanceTicket.id, intake.duplicateOf));
+		await db.insert(ticketNote).values({
+			organizationId: orgId,
+			ticketId: t.id,
+			authorType: 'staff',
+			authorName: 'Leroa AI',
+			body: `Possible duplicate of #${d?.number ?? '?'} — ${intake.duplicateReason ?? 'similar wording'}.`,
+			internal: true
+		});
+	}
 }
 
 export async function updateTicket(ctx: OrgContext, { id, ...data }: Out<typeof ticketUpdate>) {

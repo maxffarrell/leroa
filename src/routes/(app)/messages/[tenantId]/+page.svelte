@@ -102,6 +102,7 @@
 		placeholder="Message {th.tenant.name.split(' ')[0]}…"
 		onsend={(body) => sendMessage({ tenantId: tid, body })}
 		ondraft={page.data.enterprise ? () => aiDraftReply(tid) : undefined}
+		showCategories={page.data.enterprise}
 	>
 		{#snippet empty()}
 			<p class="py-10 text-center text-sm text-muted-foreground">

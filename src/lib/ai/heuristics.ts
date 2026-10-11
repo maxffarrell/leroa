@@ -12,7 +12,7 @@ export type Triage = {
 
 const URGENT = [
 	/\b(flood|flooding|burst|gushing|sewage|gas (leak|smell)|smell gas|smoke|fire|no heat|no water|no hot water|spark|sparking|carbon monoxide|insecure|break-?in)\b/i,
-	/\b(overflowing|electrical (fire|shock)|tree (fell|through))\b/i
+	/\b(overflowing|electrical (fire|shock)|tree (fell|through)|pour(ing|ed|s)? (water|through|down|in))\b/i
 ];
 const HIGH = [
 	/\b(broken|stopped working|not working|won't (turn on|start|stop|lock)|won’t (turn on|start|stop|lock)|no (a\/?c|air conditioning|heat)|soaked|mold|mildew|rotten|dangling|exposed|ceiling (fell|is falling)|door won’t close|door won't close|lock (broke|broken|doesn't work))\b/i
@@ -523,4 +523,181 @@ function fmtCents(cents: number, currency: string | null): string {
 
 function daysUntil(date: string): number {
 	return Math.round((Date.parse(`${date}T00:00:00Z`) - Date.now()) / 86_400_000);
+}
+
+// ---- Snap decisions (emergency, duplicate, lead score, message class, delinquency) ----
+
+const STOPWORDS = new Set(
+	'a an and are as at be but by for from has have i in is it its me my of on or our so that the their them they this to was we with you your please hi hey thanks thank can could would should'.split(
+		' '
+	)
+);
+
+function keywords(text: string): Set<string> {
+	return new Set(
+		text
+			.toLowerCase()
+			.replace(/[^a-z0-9\s]/g, ' ')
+			.split(/\s+/)
+			.filter((w) => w.length > 2 && !STOPWORDS.has(w))
+	);
+}
+
+function jaccard(a: Set<string>, b: Set<string>): number {
+	if (!a.size || !b.size) return 0;
+	let shared = 0;
+	for (const w of a) if (b.has(w)) shared++;
+	return shared / (a.size + b.size - shared);
+}
+
+export type IntakeDecision = {
+	emergency: boolean;
+	reason: string | null;
+	/** Candidate ticket id when the request repeats an open one. */
+	duplicateOf: string | null;
+	duplicateReason: string | null;
+};
+
+export function heuristicIntake(input: {
+	title: string;
+	description?: string | null;
+	candidates: { id: string; title: string; description?: string | null }[];
+}): IntakeDecision {
+	const text = `${input.title} ${input.description ?? ''}`;
+	const emergency = URGENT.some((re) => re.test(text));
+	const kw = keywords(text);
+	let dup: { id: string; score: number } | null = null;
+	for (const c of input.candidates) {
+		const score = jaccard(kw, keywords(`${c.title} ${c.description ?? ''}`));
+		if (score >= 0.45 && (!dup || score > dup.score)) dup = { id: c.id, score };
+	}
+	return {
+		emergency,
+		reason: emergency
+			? 'Reads like an emergency — safety or active damage risk, respond immediately.'
+			: null,
+		duplicateOf: dup?.id ?? null,
+		duplicateReason: dup ? 'Very similar wording to an open request at the same home.' : null
+	};
+}
+
+export type LeadScore = { score: 'hot' | 'warm' | 'cold'; reason: string };
+
+export function heuristicLeadScore(input: {
+	email?: string | null;
+	phone?: string | null;
+	moveInDate?: string | null;
+	propertyName?: string | null;
+	listingTitle?: string | null;
+	source: string;
+	message?: string | null;
+	/** ISO date used for "days until move-in"; defaults to today. */
+	today?: string;
+}): LeadScore {
+	const text = (input.message ?? '').toLowerCase();
+	const today = input.today ?? new Date().toISOString().slice(0, 10);
+	const why: string[] = [];
+	let pts = 0;
+	if (input.email && input.phone) pts += 2;
+	else if (input.email || input.phone) pts += 1;
+	if (input.moveInDate) {
+		const days = Math.round(
+			(Date.parse(`${input.moveInDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86400_000
+		);
+		if (days >= 0 && days <= 30) {
+			pts += 2;
+			why.push(`wants to move in ~${days}d`);
+		} else if (days > 0 && days <= 90) {
+			pts += 1;
+			why.push('move-in inside 90 days');
+		}
+	}
+	const home = input.listingTitle ?? input.propertyName;
+	if (home) {
+		pts += 1;
+		why.push(`named a home: ${home}`);
+	}
+	if (input.source === 'application') {
+		pts += 2;
+		why.push('already submitted an application');
+	}
+	if (
+		/\b(asap|urgent|immediately|right away|this (week|month)|ready to (move|sign|lease)|deposit ready)\b/i.test(
+			text
+		)
+	) {
+		pts += 2;
+		why.push('signaled urgency in their message');
+	} else if (input.message && input.message.trim().length > 40) {
+		pts += 1;
+		why.push('wrote a real inquiry');
+	}
+	const score = pts >= 5 ? 'hot' : pts >= 2 ? 'warm' : 'cold';
+	const reason = why.length
+		? `${why.slice(0, 2).join('; ')}.`
+		: 'Little to go on — just a name and one way to reach them.';
+	return { score, reason };
+}
+
+export type MessageCategory = 'maintenance' | 'payment' | 'lease' | 'other';
+export type MessageClass = { category: MessageCategory; urgent: boolean };
+
+const MESSAGE_RULES: [MessageCategory, RegExp][] = [
+	[
+		'payment',
+		/\b(rent|payment|pay|invoice|balance|charge|late fee|autopay|deposit|refund|bill|owed)\b/i
+	],
+	[
+		'lease',
+		/\b(lease|renew|renewal|move[- ]?out|notice|sublet|roommate|guest|pet|parking|locked? out|keys?)\b/i
+	],
+	[
+		'maintenance',
+		/\b(repair|fix|broken|leak|leaking|heat|a\/?c|hvac|toilet|sink|mold|mildew|pest|smell|gas|water|door|window|light|outlet|dishwasher|fridge|noise|ceiling)\b/i
+	]
+];
+
+export function heuristicMessageClass(body: string): MessageClass {
+	return {
+		category: MESSAGE_RULES.find(([, re]) => re.test(body))?.[0] ?? 'other',
+		urgent: URGENT.some((re) => re.test(body))
+	};
+}
+
+export type Delinquency = { watch: boolean; reason: string };
+
+export function heuristicDelinquency(input: {
+	/** Outstanding cents on charges already due. */
+	balanceCents: number;
+	/** Monthly rent in cents, when the lease has rent charges. */
+	monthlyRentCents: number;
+	/** Payments made more than a week after the charge's due date, last 6 months. */
+	lateCount6m: number;
+	/** Charges that came due in the last 6 months. */
+	dueCount6m: number;
+	lastPaymentAt: string | null;
+	/** ISO date; defaults to today. */
+	today?: string;
+}): Delinquency {
+	if (input.balanceCents <= 0) return { watch: false, reason: '' };
+	const today = input.today ?? new Date().toISOString().slice(0, 10);
+	const daysSincePay = input.lastPaymentAt
+		? Math.floor((Date.parse(`${today}T00:00:00Z`) - Date.parse(input.lastPaymentAt)) / 86400_000)
+		: null;
+	if (input.monthlyRentCents > 0 && input.balanceCents >= 2 * input.monthlyRentCents)
+		return {
+			watch: true,
+			reason: `Owes about ${Math.round(input.balanceCents / input.monthlyRentCents)} months of rent.`
+		};
+	if (input.dueCount6m >= 3 && input.lateCount6m / input.dueCount6m >= 0.5)
+		return {
+			watch: true,
+			reason: `Late on ${input.lateCount6m} of the last ${input.dueCount6m} charges.`
+		};
+	if ((daysSincePay ?? 999) >= 60)
+		return {
+			watch: true,
+			reason: `Balance outstanding with no payment in ${daysSincePay ?? '60+'} days.`
+		};
+	return { watch: false, reason: '' };
 }

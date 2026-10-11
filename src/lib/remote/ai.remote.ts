@@ -6,6 +6,7 @@ import { hasFeature } from '#lib/server/ee/license.ts';
 import { idSchema, reportParams } from '#lib/schemas.ts';
 import * as ai from '#lib/server/ai/index.ts';
 import { askAssistant } from '#lib/server/ai/assistant.ts';
+import { delinquencyWatch } from '#lib/server/ai/decisions.ts';
 
 /** Enterprise-only: AI draft/triage helpers (works keyless via local heuristics). */
 async function requireEnterprise() {
@@ -74,4 +75,10 @@ export const aiReportSummary = command(reportParams, async ({ key, ...params }) 
 export const aiSuggestVendor = command(idSchema, async (ticketId) => {
 	const ctx = await requireEnterprise();
 	return ai.suggestVendor(ctx.orgId, ticketId);
+});
+
+/** Leases whose payment pattern is drifting — a watch flag and a reason. */
+export const aiDelinquencyWatch = query(async () => {
+	const ctx = await requireEnterprise();
+	return delinquencyWatch(ctx.orgId);
 });

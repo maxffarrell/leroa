@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import PageHeader from '#lib/components/app/page-header.svelte';
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
+	import LeadScoreBadge from '#lib/components/app/lead-score-badge.svelte';
 	import MoneyInput from '#lib/components/app/money-input.svelte';
 	import ScheduleTourDialog from '#lib/components/app/schedule-tour-dialog.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -220,7 +221,11 @@
 				<h1 class="text-xl font-semibold tracking-tight">{name}</h1>
 				<StatusBadge status={l.stage} />
 				{#if l.waitlist}<StatusBadge status="waitlist" />{/if}
+				{#if l.aiScore}<LeadScoreBadge score={l.aiScore} reason={l.aiScoreReason} />{/if}
 			</div>
+			{#if l.aiScoreReason}
+				<p class="text-xs text-muted-foreground">AI intake score — {l.aiScoreReason}</p>
+			{/if}
 			<p class="text-sm text-muted-foreground">
 				{LEAD_SOURCE_LABELS[l.source]}{l.sourceDetail ? ` (${l.sourceDetail})` : ''} · added {formatRelative(
 					l.createdAt

@@ -20,7 +20,14 @@ import { isDemo } from '#lib/server/demo-mode.ts';
 import { tenantName } from '#lib/format.ts';
 import { emit } from './events.ts';
 import { portalTenants } from './portal.ts';
-import { notifyAnnouncement, notifyResidentMessage, notifyStaffMessage } from './notifications.ts';
+import {
+	notifyAnnouncement,
+	notifyResidentMessage,
+	notifyStaffMessage,
+	notifyUrgentMessage
+} from './notifications.ts';
+import { hasFeature } from '#lib/server/ee/license.ts';
+import { classifyMessage } from '#lib/server/ai/decisions.ts';
 
 type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 type Author = { type: 'staff' | 'tenant'; id: string | null; name: string };
@@ -111,6 +118,7 @@ async function threadMessages(threadId: string) {
 			authorId: message.authorId,
 			authorName: message.authorName,
 			body: message.body,
+			aiCategory: message.aiCategory,
 			createdAt: message.createdAt
 		})
 		.from(message)
@@ -273,6 +281,18 @@ export async function sendPortalMessage(userId: string, input: Out<typeof messag
 		{ type: 'tenant', id: userId, name },
 		input.body
 	);
+	if (hasFeature('ai')) {
+		const cls = await classifyMessage(input.body);
+		await db
+			.update(message)
+			.set({ aiCategory: cls.urgent ? `${cls.category}!` : cls.category })
+			.where(eq(message.id, m.id));
+		m.aiCategory = cls.urgent ? `${cls.category}!` : cls.category;
+		if (cls.urgent && !isDemo())
+			void notifyUrgentMessage(t.organizationId, m.id, name, t.id, preview(input.body)).catch(
+				(err) => console.error('urgent message alert failed', err)
+			);
+	}
 	if (!isDemo()) await notifyStaffMessage(t.organizationId, m, { tenantId: t.id, name });
 	return m;
 }

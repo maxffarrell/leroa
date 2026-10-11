@@ -15,6 +15,8 @@ import {
 	unit
 } from '#lib/server/db/schema.ts';
 import { emit } from './events.ts';
+import { hasFeature } from '#lib/server/ee/license.ts';
+import { intakeTicket } from '#lib/server/ai/decisions.ts';
 
 type Tenant = typeof tenant.$inferSelect;
 
@@ -209,6 +211,14 @@ export async function portalRequest(
 		.where(and(eq(leaseTenant.leaseId, input.leaseId), inArray(leaseTenant.tenantId, ids)));
 	if (!row) error(404, 'Lease not found');
 	const orgId = row.lease.organizationId;
+	const intake = hasFeature('ai')
+		? await intakeTicket(orgId, {
+				title: input.title,
+				description: input.description,
+				unitId: row.lease.unitId,
+				propertyId: row.propertyId
+			})
+		: null;
 	const created = await db.transaction(async (tx) => {
 		await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${orgId}))`);
 		const [{ n }] = (await tx
@@ -224,7 +234,9 @@ export async function portalRequest(
 				unitId: row.lease.unitId,
 				tenantId: row.tenantId,
 				title: input.title,
-				description: input.description ?? null
+				description: input.description ?? null,
+				...(intake?.emergency ? { priority: 'urgent' as const } : {}),
+				...(intake?.duplicateOf ? { duplicateOf: intake.duplicateOf } : {})
 			})
 			.returning();
 		return t!;
@@ -245,6 +257,15 @@ export async function portalRequest(
 		created,
 		place ? `${place.property} · ${place.unit}` : 'your property'
 	).catch((err) => console.error('portal request email failed', err));
+	if (intake && (intake.emergency || intake.duplicateOf)) {
+		const { applyTicketIntake } = await import('./maintenance.ts');
+		await applyTicketIntake(
+			orgId,
+			created,
+			intake,
+			place ? `${place.property} · ${place.unit}` : 'the property'
+		);
+	}
 	return created;
 }
 

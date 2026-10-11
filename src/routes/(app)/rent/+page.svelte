@@ -24,6 +24,9 @@
 		type SortingState
 	} from '@tanstack/table-core';
 	import { getRentRoll } from '#lib/remote/leasing.remote.ts';
+	import { aiDelinquencyWatch } from '#lib/remote/ai.remote.ts';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import Eye from '@lucide/svelte/icons/eye';
 	import { formatDate, formatMoney, monthKey } from '#lib/format.ts';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -38,6 +41,8 @@
 	let sorting = $state<SortingState>([]);
 
 	const roll = $derived(await getRentRoll(month));
+	const watchList = $derived(page.data.enterprise ? await aiDelinquencyWatch() : []);
+	const watch = $derived(new Map(watchList.map((w) => [w.leaseId, w.reason])));
 	const rows = $derived(
 		roll.filter((r) => {
 			if (filter === 'paid' && r.status !== 'paid') return false;
@@ -272,9 +277,19 @@
 <PaymentDialog bind:target={payment} />
 
 {#snippet tenantCell(r: Row)}
-	<a href="/leases/{r.leaseId}" class="block max-w-48 truncate font-medium hover:underline"
-		>{r.tenants || '—'}</a
-	>
+	<span class="flex max-w-56 items-center gap-1.5">
+		<a href="/leases/{r.leaseId}" class="truncate font-medium hover:underline">{r.tenants || '—'}</a
+		>
+		{#if watch.has(r.leaseId)}
+			<Badge
+				variant="outline"
+				class="shrink-0 gap-1 border-amber-500/40 bg-amber-500/10 px-1.5 text-[10px] font-normal text-amber-700 dark:text-amber-400"
+				title={watch.get(r.leaseId)}
+			>
+				<Eye class="size-3" />Watch
+			</Badge>
+		{/if}
+	</span>
 {/snippet}
 
 {#snippet statusCell(r: Row)}

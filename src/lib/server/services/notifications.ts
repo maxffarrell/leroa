@@ -445,6 +445,66 @@ export async function notifyPortalRequest(t: TicketRef, place: string) {
 	}
 }
 
+/** Tells managers a new request triaged as a possible emergency. Emergencies skip pref checks. */
+export async function notifyTicketEmergency(t: TicketRef, place: string, reason: string | null) {
+	const org = await orgName(t.organizationId);
+	await inboxForManagers(t.organizationId, 'ticket.emergency', t.id, {
+		title: `Possible emergency: #${t.number} ${t.title}`,
+		body: `${place}${reason ? ` — ${reason}` : ''}`,
+		href: `/maintenance?ticket=${t.id}`
+	});
+	for (const to of await managerEmails(t.organizationId)) {
+		await notifyOnce(t.organizationId, 'ticket.emergency', t.id, {
+			to,
+			subject: `Possible emergency at ${place}: #${t.number} ${t.title}`,
+			...renderEmail({
+				orgName: org,
+				heading: 'A request reads like an emergency',
+				lines: [
+					`“${t.title}” was reported at ${place} and triaged as a possible emergency.`,
+					...(reason ? [reason] : []),
+					'It was moved to urgent priority.'
+				],
+				action: {
+					label: 'Open request',
+					url: `${appOrigin()}/maintenance?ticket=${t.id}`
+				}
+			})
+		});
+	}
+}
+
+/** Tells managers a resident's message matched emergency wording. */
+export async function notifyUrgentMessage(
+	orgId: string,
+	messageId: string,
+	tenantName: string,
+	tenantId: string,
+	excerpt: string
+) {
+	const org = await orgName(orgId);
+	await inboxForManagers(orgId, 'message.urgent', messageId, {
+		title: `Urgent-sounding message from ${tenantName}`,
+		body: `“${excerpt}”`,
+		href: `/messages/${tenantId}`
+	});
+	for (const to of await managerEmails(orgId)) {
+		await notifyOnce(orgId, 'message.urgent', messageId, {
+			to,
+			subject: `Urgent-sounding message from ${tenantName}`,
+			...renderEmail({
+				orgName: org,
+				heading: 'A resident message may be urgent',
+				lines: [
+					`${tenantName} wrote: “${excerpt}”`,
+					'It matched emergency wording — worth a quick look.'
+				],
+				action: { label: 'Open messages', url: `${appOrigin()}/messages/${tenantId}` }
+			})
+		});
+	}
+}
+
 /** Asks each signer to review and sign a lease agreement in the portal. */
 export async function notifyAgreementSent(
 	orgId: string,
