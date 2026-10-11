@@ -200,7 +200,7 @@ export const variables = defineEnvVars({
 	},
 	AI_API_KEY: {
 		description:
-			'API key for an OpenAI-compatible chat-completions endpoint powering AI triage and draft features (enterprise tier). Unset, the features use deterministic local fallbacks.',
+			'API key for an OpenAI-compatible chat-completions endpoint powering generative AI features (enterprise tier), and the fallback key for structured AI decision calls when AI_DECISION_API_KEY is unset. Unset, the features use deterministic local fallbacks.',
 		schema: (value) => value || undefined
 	},
 	AI_BASE_URL: {
@@ -210,5 +210,20 @@ export const variables = defineEnvVars({
 	AI_MODEL: {
 		description: 'Model name used for AI features. Defaults to `gpt-4o-mini`.',
 		schema: (value) => value || 'gpt-4o-mini'
+	},
+	AI_DECISION_API_KEY: {
+		description:
+			'Optional separate API key for structured AI decision calls (maintenance intake, lead scoring, message triage, delinquency watch). Falls back to `AI_API_KEY`.',
+		schema: (value) => value || undefined
+	},
+	AI_DECISION_BASE_URL: {
+		description:
+			'Optional OpenAI-compatible base URL for AI decision calls. Falls back to `AI_BASE_URL`.',
+		schema: (value) => value?.replace(/\/+$/, '') || undefined
+	},
+	AI_DECISION_MODEL: {
+		description:
+			'Optional model name for AI decision calls, e.g. a cheaper/faster model than the feature model. Falls back to `AI_MODEL`.',
+		schema: (value) => value || undefined
 	}
 });
