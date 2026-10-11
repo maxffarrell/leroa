@@ -6,7 +6,9 @@
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { page } from '$app/state';
 	import { importCsv } from '#lib/remote/reports.remote.ts';
+	import { aiMapCsv } from '#lib/remote/ai.remote.ts';
 	import { parseCsv } from '#lib/csv.ts';
 	import {
 		IMPORT_KINDS,
@@ -32,6 +34,37 @@
 	let done = $state<Result | null>(null);
 	let pending = $state(false);
 	let problemsOnly = $state(false);
+	let aiMapped = $state<string[]>([]);
+	let mappingGen = 0;
+
+	/** Fills columns the alias table missed; autoMap stays authoritative. */
+	async function aiFill() {
+		if (!page.data.enterprise || !headers.length) return;
+		const gen = ++mappingGen;
+		const unmapped = spec.fields.filter((f) => mapping[f.key] == null).map((f) => f.key);
+		if (!unmapped.length) return;
+		try {
+			const guess = await aiMapCsv({
+				headers,
+				fields: spec.fields.map(({ key, label }) => ({ key, label })),
+				unmapped
+			});
+			if (gen !== mappingGen) return;
+			const filled: string[] = [];
+			for (const [k, i] of Object.entries(guess)) {
+				if (i != null && mapping[k] == null) {
+					mapping[k] = i;
+					filled.push(spec.fields.find((f) => f.key === k)?.label ?? k);
+				}
+			}
+			if (filled.length) {
+				aiMapped = filled;
+				toast.success(`AI mapped: ${filled.join(', ')}`);
+			}
+		} catch {
+			/* AI unavailable or 403 — keep manual mapping */
+		}
+	}
 
 	const spec = $derived(IMPORT_TYPES[kind]);
 	const missing = $derived(
@@ -53,7 +86,9 @@
 	function chooseKind(k: ImportKind) {
 		kind = k;
 		mapping = headers.length ? autoMap(headers, k) : {};
+		aiMapped = [];
 		reset();
+		void aiFill();
 	}
 
 	async function onfile(e: Event & { currentTarget: HTMLInputElement }) {
@@ -71,7 +106,9 @@
 		sample = table[1]!;
 		rowCount = table.length - 1;
 		mapping = autoMap(headers, kind);
+		aiMapped = [];
 		reset();
+		void aiFill();
 	}
 
 	function downloadTemplate() {
@@ -170,7 +207,12 @@
 
 		{#if headers.length}
 			<div class="space-y-2">
-				<p class="text-sm font-medium">3. Match the columns</p>
+				<p class="text-sm font-medium">
+					3. Match the columns
+					{#if aiMapped.length}<span class="font-normal text-muted-foreground"
+							>— AI filled {aiMapped.length} for you</span
+						>{/if}
+				</p>
 				<div class="overflow-x-auto rounded-lg border">
 					<Table.Root>
 						<Table.Header>

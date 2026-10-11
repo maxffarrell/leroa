@@ -85,6 +85,7 @@
 		"stripe": "~23.0.0",
 		"svelte-tel-input": "^4.3.3",
 		"svelte-toolbelt": "^0.10.6",
+		"unpdf": "^1.8.1",
 		"valibot": "^1.5.0"
 	}
 }

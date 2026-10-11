@@ -1,4 +1,4 @@
-import { command } from '$app/server';
+import { command, query } from '$app/server';
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { requireOrg } from '#lib/server/context.ts';
@@ -43,3 +43,20 @@ export const aiAsk = command(
 		return askAssistant(ctx.orgId, question);
 	}
 );
+
+export const aiMapCsv = command(
+	v.object({
+		headers: v.pipe(v.array(v.string()), v.maxLength(100)),
+		fields: v.pipe(v.array(v.object({ key: v.string(), label: v.string() })), v.maxLength(100)),
+		unmapped: v.pipe(v.array(v.string()), v.maxLength(100))
+	}),
+	async (input) => {
+		await requireEnterprise();
+		return ai.mapCsvColumns(input);
+	}
+);
+
+export const aiInsights = query(async () => {
+	const ctx = await requireEnterprise();
+	return ai.insights(ctx.orgId);
+});

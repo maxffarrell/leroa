@@ -5,15 +5,19 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Progress } from '#lib/components/ui/progress/index.js';
 	import * as Empty from '#lib/components/ui/empty/index.js';
+	import { page } from '$app/state';
 	import { getDashboard, seedDemo } from '#lib/remote/workspace.remote.ts';
+	import { aiInsights } from '#lib/remote/ai.remote.ts';
 	import { toast } from 'svelte-sonner';
 	import { formatMoney, formatRelative, formatDate, todayISO } from '#lib/format.ts';
 	import { formatTourTime } from '#lib/tours.ts';
 	import { leadName } from '#lib/leads.ts';
 	import Building2 from '@lucide/svelte/icons/building-2';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
 
 	const d = $derived(await getDashboard());
+	const insights = $derived(page.data.enterprise ? await aiInsights().catch(() => []) : []);
 	let seeding = $state(false);
 
 	async function demo() {
@@ -111,6 +115,25 @@
 				>
 			</Card.Root>
 		</div>
+
+		{#if insights.length}
+			<div class="grid gap-3 sm:grid-cols-2">
+				{#each insights as i (i.title)}
+					<a
+						href={i.href}
+						class="group rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-shadow hover:ring-foreground/25"
+					>
+						<p class="flex items-center gap-1.5 text-sm font-medium">
+							<Sparkles class="size-3.5 text-primary" />{i.title}
+							<ArrowRight
+								class="ml-auto size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+							/>
+						</p>
+						<p class="mt-1 text-xs text-muted-foreground">{i.body}</p>
+					</a>
+				{/each}
+			</div>
+		{/if}
 
 		<div class="grid gap-4 lg:grid-cols-3">
 			<Card.Root class="lg:col-span-2">
