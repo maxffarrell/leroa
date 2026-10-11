@@ -7,6 +7,7 @@ import type { OrgContext } from '#lib/server/context.ts';
 import { MAX_UPLOAD_BYTES, store } from './storage.ts';
 import { emit } from './events.ts';
 import { assertNotDemo } from '#lib/server/demo-mode.ts';
+import { hasFeature } from '#lib/server/ee/license.ts';
 
 export async function listDocuments(orgId: string, entity?: { type: string; id: string }) {
 	return db
@@ -15,6 +16,7 @@ export async function listDocuments(orgId: string, entity?: { type: string; id: 
 			name: document.name,
 			contentType: document.contentType,
 			size: document.size,
+			category: document.category,
 			entityType: document.entityType,
 			entityId: document.entityId,
 			createdAt: document.createdAt,
@@ -58,6 +60,11 @@ export async function saveDocument(
 			uploadedBy
 		})
 		.returning();
+	if (hasFeature('ai')) {
+		const { classifyDocument } = await import('#lib/server/ai/classify.ts');
+		doc!.category = await classifyDocument(doc!.name, doc!.contentType);
+		await db.update(document).set({ category: doc!.category }).where(eq(document.id, doc!.id));
+	}
 	await emit({
 		orgId,
 		actorId: uploadedBy,

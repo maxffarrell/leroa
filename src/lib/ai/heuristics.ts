@@ -314,3 +314,213 @@ export function heuristicInsights(facts: {
 		});
 	return out.slice(0, 4);
 }
+
+export const DOC_CATEGORIES = [
+	'lease',
+	'insurance',
+	'tax',
+	'invoice',
+	'inspection',
+	'photo',
+	'notice',
+	'agreement',
+	'other'
+] as const;
+export type DocCategory = (typeof DOC_CATEGORIES)[number];
+
+const DOC_RULES: [RegExp, DocCategory][] = [
+	[/\b(lease|rental agreement|addendum|renewal)\b/i, 'lease'],
+	[/\b(coi|certificate of insurance|insurance|policy|liability)\b/i, 'insurance'],
+	[/\b(w-?9|w-?4|1099|tax|ein)\b/i, 'tax'],
+	[/\b(invoice|receipt|bill|statement|payment)\b|\binv[-_]?\d/i, 'invoice'],
+	[/\b(inspection|checklist|move-?in|move-?out|walkthrough|walk-?through)\b/i, 'inspection'],
+	[/\b(notice|eviction|demand|violation|warning)\b/i, 'notice'],
+	[/\b(agreement|contract|proposal|estimate|quote|scope)\b/i, 'agreement']
+];
+
+export function heuristicDocCategory(name: string, contentType: string): DocCategory {
+	if (contentType.startsWith('image/')) return 'photo';
+	const hit = DOC_RULES.find(([re]) => re.test(name));
+	return hit ? hit[1] : 'other';
+}
+
+export type AiSummary = { summary: string; flags: string[] };
+
+export function heuristicTenantSummary(input: {
+	name: string;
+	leases: {
+		status: string;
+		propertyName: string;
+		unitName: string;
+		endDate: string;
+		balance: number;
+		rentAmount: number | null;
+		currency: string | null;
+	}[];
+	ticketCount: number;
+	openTickets: number;
+	paymentsLast12m: number;
+	paidOnTime?: boolean | null;
+}): AiSummary {
+	const active = input.leases.find((l) => l.status === 'active');
+	const flags: string[] = [];
+	const parts: string[] = [];
+	if (active) {
+		parts.push(
+			`${input.name} rents ${active.unitName} at ${active.propertyName}` +
+				(active.rentAmount != null
+					? ` for ${fmtCents(active.rentAmount, active.currency)}/mo`
+					: '') +
+				`, lease ending ${active.endDate}.`
+		);
+	} else {
+		parts.push(`${input.name} has no active lease.`);
+	}
+	const balance = input.leases.reduce((s, l) => s + Math.max(0, l.balance), 0);
+	if (balance > 0) {
+		parts.push(`Outstanding balance: ${fmtCents(balance, active?.currency ?? null)}.`);
+		flags.push('Carries a balance');
+	} else if (active) {
+		parts.push('Account is current.');
+	}
+	if (input.paymentsLast12m > 0)
+		parts.push(
+			`${input.paymentsLast12m} payment${input.paymentsLast12m === 1 ? '' : 's'} in the last year.`
+		);
+	if (input.ticketCount > 0) {
+		parts.push(
+			`${input.ticketCount} maintenance request${input.ticketCount === 1 ? '' : 's'} on file` +
+				(input.openTickets ? `, ${input.openTickets} still open` : '') +
+				'.'
+		);
+		if (input.openTickets > 2) flags.push(`${input.openTickets} open maintenance requests`);
+	}
+	const soon = input.leases.find(
+		(l) => l.status === 'active' && daysUntil(l.endDate) >= 0 && daysUntil(l.endDate) <= 90
+	);
+	if (soon) flags.push(`Lease ends ${soon.endDate} — renewal not yet lined up`);
+	return { summary: parts.join(' '), flags };
+}
+
+export function heuristicReportSummary(input: {
+	title: string;
+	subtitle: string;
+	columns: { key: string; label: string; type?: string }[];
+	rows: Record<string, string | number | null>[];
+	totals: Record<string, string | number | null> | null;
+}): AiSummary {
+	const { rows, totals, columns } = input;
+	const flags: string[] = [];
+	const moneyCols = columns.filter((c) => c.type === 'money' && totals?.[c.key] != null);
+	const money = moneyCols
+		.map((c) => `${c.label.toLowerCase()} ${fmtCents(Number(totals![c.key]), null)}`)
+		.join(', ');
+	const summary = `${input.title}: ${rows.length} row${rows.length === 1 ? '' : 's'}${money ? ` — ${money}` : ''}.`;
+	const numCols = columns.filter((c) => c.type === 'number' || c.type === 'money');
+	for (const c of numCols) {
+		let worst: { name: string; v: number } | null = null;
+		for (const r of rows.slice(0, 200)) {
+			const v = Number(r[c.key]);
+			const name = String(r[columns[0]!.key] ?? '');
+			if (!Number.isFinite(v) || !name) continue;
+			if (!worst || v > worst.v) worst = { name, v };
+		}
+		if (worst && worst.v > 0 && rows.length > 2) {
+			const disp = c.type === 'money' ? fmtCents(worst.v, null) : worst.v.toLocaleString('en-US');
+			flags.push(`Highest ${c.label.toLowerCase()}: ${worst.name} (${disp})`);
+			break;
+		}
+	}
+	const empty = rows.filter((r) => numCols.every((c) => !Number(r[c.key]))).length;
+	if (rows.length >= 5 && empty / rows.length > 0.5)
+		flags.push('More than half the rows have no activity.');
+	return { summary, flags };
+}
+
+export function heuristicVendorPick(input: {
+	vendors: {
+		id: string;
+		name: string;
+		trades: string[];
+		jobsCompleted: number;
+		avgCost: number | null;
+		insuranceExpiresOn: string | null;
+	}[];
+	trade: string | null;
+}): { vendorId: string; reason: string } | null {
+	const insured = (v: { insuranceExpiresOn: string | null }) =>
+		!v.insuranceExpiresOn || daysUntil(v.insuranceExpiresOn) > 0;
+	const matching = input.vendors.filter(
+		(v) =>
+			insured(v) &&
+			(input.trade
+				? v.trades.some((t) => t.toLowerCase().includes(input.trade!.toLowerCase()))
+				: true)
+	);
+	if (!matching.length) return null;
+	matching.sort((a, b) => b.jobsCompleted - a.jobsCompleted || (a.avgCost ?? 0) - (b.avgCost ?? 0));
+	const top = matching[0]!;
+	return {
+		vendorId: top.id,
+		reason:
+			`${top.name} handles ${input.trade ?? 'this kind of'} work` +
+			(top.jobsCompleted
+				? ` — ${top.jobsCompleted} job${top.jobsCompleted === 1 ? '' : 's'} completed for you`
+				: '') +
+			(top.insuranceExpiresOn
+				? `, insured through ${top.insuranceExpiresOn}`
+				: ', no COI on file to expire') +
+			'.'
+	};
+}
+
+export function heuristicDigest(input: {
+	orgName: string;
+	paymentsCount: number;
+	paymentsTotal: number;
+	currency: string | null;
+	newTickets: { number: number; title: string; priority: string }[];
+	closedTickets: number;
+	expiringLeases: { tenant: string; unit: string; endDate: string }[];
+	expiringCois: { vendor: string; expiresOn: string }[];
+	newLeads: number;
+}): { subject: string; intro: string; lines: string[] } {
+	const lines: string[] = [];
+	if (input.paymentsCount)
+		lines.push(
+			`${input.paymentsCount} payment${input.paymentsCount === 1 ? '' : 's'} received (${fmtCents(input.paymentsTotal, input.currency)}).`
+		);
+	for (const t of input.newTickets)
+		lines.push(
+			`New request #${t.number}: ${t.title}${t.priority === 'urgent' ? ' — marked urgent' : ''}.`
+		);
+	if (input.closedTickets)
+		lines.push(`${input.closedTickets} request${input.closedTickets === 1 ? '' : 's'} closed.`);
+	for (const l of input.expiringLeases)
+		lines.push(`${l.tenant}’s lease on ${l.unit} ends ${l.endDate} — no renewal yet.`);
+	for (const c of input.expiringCois) lines.push(`${c.vendor}’s insurance expires ${c.expiresOn}.`);
+	if (input.newLeads)
+		lines.push(`${input.newLeads} new lead${input.newLeads === 1 ? '' : 's'} to follow up with.`);
+	return {
+		subject: `Your ${input.orgName} daily digest`,
+		intro: lines.length
+			? `Here’s what needs your attention at ${input.orgName} today:`
+			: `Quiet day at ${input.orgName} — nothing needs your attention.`,
+		lines
+	};
+}
+
+function fmtCents(cents: number, currency: string | null): string {
+	const code = currency ?? 'usd';
+	try {
+		return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(
+			cents / 100
+		);
+	} catch {
+		return `$${(cents / 100).toFixed(2)}`;
+	}
+}
+
+function daysUntil(date: string): number {
+	return Math.round((Date.parse(`${date}T00:00:00Z`) - Date.now()) / 86_400_000);
+}

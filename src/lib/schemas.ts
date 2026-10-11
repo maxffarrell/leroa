@@ -126,7 +126,8 @@ export const notificationSettingsInput = v.object({
 	leaseExpiryAlerts: v.boolean(),
 	vendorInsuranceAlerts: v.boolean(),
 	newApplications: v.boolean(),
-	newLeads: v.boolean()
+	newLeads: v.boolean(),
+	aiDigest: v.boolean()
 });
 
 export const chargeInput = v.object({

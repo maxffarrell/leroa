@@ -446,6 +446,8 @@ export const document = pgTable(
 		storageKey: text('storage_key').notNull(),
 		entityType: text('entity_type'),
 		entityId: text('entity_id'),
+		/** AI-assigned document kind (lease, coi, w9, invoice, photo, …). Enterprise tier. */
+		category: text('category'),
 		uploadedBy: text('uploaded_by').references(() => user.id, { onDelete: 'set null' }),
 		...timestamps
 	},
@@ -488,6 +490,8 @@ export const notificationSettings = pgTable('notification_settings', {
 	vendorInsuranceAlerts: boolean('vendor_insurance_alerts').notNull().default(true),
 	newApplications: boolean('new_applications').notNull().default(true),
 	newLeads: boolean('new_leads').notNull().default(true),
+	/** AI morning digest to owners/admins. Enterprise tier. */
+	aiDigest: boolean('ai_digest').notNull().default(true),
 	updatedAt: timestamp('updated_at', { withTimezone: true })
 		.notNull()
 		.defaultNow()

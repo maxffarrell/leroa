@@ -13,6 +13,8 @@
 	import * as Chart from '#lib/components/ui/chart/index.js';
 	import { BarChart } from 'layerchart';
 	import { getReport } from '#lib/remote/reports.remote.ts';
+	import { aiReportSummary } from '#lib/remote/ai.remote.ts';
+	import AiSummary from '#lib/components/app/ai-summary.svelte';
 	import { getProperties } from '#lib/remote/portfolio.remote.ts';
 	import {
 		REPORTS,
@@ -151,6 +153,13 @@
 		<p class="text-sm text-muted-foreground">{meta.description}</p>
 		<p class="mt-1 text-xs text-muted-foreground">{report.subtitle}</p>
 	</div>
+
+	{#if page.data.enterprise}
+		<AiSummary
+			load={() => aiReportSummary({ key, ...params })}
+			description="An AI read of this report — what stands out and what to check first."
+		/>
+	{/if}
 
 	{#if key === 'collections' && collectionsData.some((r) => r.due || r.collected)}
 		<Card.Root>

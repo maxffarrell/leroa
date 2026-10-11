@@ -3,6 +3,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as FileDropZone from '#lib/components/ui/file-drop-zone/index.js';
 	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 	import { getDocuments, deleteDocument } from '#lib/remote/documents.remote.ts';
@@ -115,7 +116,9 @@
 										href="/api/documents/{d.id}"
 										target="_blank"
 										rel="noopener"><Icon class="size-4 text-muted-foreground" />{d.name}</a
-									></Table.Cell
+									>{#if d.category}<Badge variant="secondary" class="ml-2 capitalize"
+											>{d.category}</Badge
+										>{/if}</Table.Cell
 								>
 								<Table.Cell class="hidden text-muted-foreground tabular-nums sm:table-cell"
 									>{size(d.size)}</Table.Cell

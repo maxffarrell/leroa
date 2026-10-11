@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+	heuristicDigest,
+	heuristicDocCategory,
 	heuristicInsights,
 	heuristicLeaseExtract,
 	heuristicListingCopy,
 	heuristicReply,
-	heuristicTriage
+	heuristicReportSummary,
+	heuristicTenantSummary,
+	heuristicTriage,
+	heuristicVendorPick
 } from './heuristics.ts';
 
 describe('heuristicTriage', () => {
@@ -146,5 +151,139 @@ describe('heuristicInsights', () => {
 		expect(out.length).toBe(4);
 		expect(out[0].href).toBe('/rent');
 		expect(out[0].title).toContain('3');
+	});
+});
+
+describe('heuristicDocCategory', () => {
+	it('maps filenames and content types to categories', () => {
+		expect(heuristicDocCategory('signed lease 2026.pdf', 'application/pdf')).toBe('lease');
+		expect(heuristicDocCategory('ACME COI certificate.pdf', 'application/pdf')).toBe('insurance');
+		expect(heuristicDocCategory('w9-vendor.pdf', 'application/pdf')).toBe('tax');
+		expect(heuristicDocCategory('inv_1042.pdf', 'application/pdf')).toBe('invoice');
+		expect(heuristicDocCategory('move-in checklist.pdf', 'application/pdf')).toBe('inspection');
+		expect(heuristicDocCategory('IMG_1234.jpg', 'image/jpeg')).toBe('photo');
+		expect(heuristicDocCategory('random notes.txt', 'text/plain')).toBe('other');
+	});
+});
+
+describe('heuristicTenantSummary', () => {
+	const base = {
+		name: 'Maya Chen',
+		leases: [
+			{
+				status: 'active',
+				propertyName: 'Maple Court',
+				unitName: '101',
+				endDate: '2027-04-30',
+				balance: 0,
+				rentAmount: 145000,
+				currency: 'USD'
+			}
+		],
+		ticketCount: 1,
+		openTickets: 0,
+		paymentsLast12m: 10
+	};
+	it('summarizes a current tenant with no flags', () => {
+		const s = heuristicTenantSummary(base);
+		expect(s.summary).toContain('Maple Court');
+		expect(s.summary).toContain('current');
+		expect(s.flags).toEqual([]);
+	});
+	it('flags balance and expiring lease', () => {
+		const soon = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10);
+		const s = heuristicTenantSummary({
+			...base,
+			leases: [{ ...base.leases[0]!, balance: 300000, endDate: soon }]
+		});
+		expect(s.flags).toContain('Carries a balance');
+		expect(s.flags.some((f) => f.includes('renewal'))).toBe(true);
+	});
+});
+
+describe('heuristicReportSummary', () => {
+	it('names the worst offender', () => {
+		const s = heuristicReportSummary({
+			title: 'Delinquency',
+			subtitle: 'x',
+			columns: [
+				{ key: 'tenant', label: 'Tenant' },
+				{ key: 'balance', label: 'Balance', type: 'money' }
+			],
+			rows: [
+				{ tenant: 'A', balance: 100 },
+				{ tenant: 'B', balance: 900 },
+				{ tenant: 'C', balance: 50 }
+			],
+			totals: { balance: 1050 }
+		});
+		expect(s.summary).toContain('Delinquency');
+		expect(s.flags[0]).toContain('B');
+	});
+});
+
+describe('heuristicVendorPick', () => {
+	const vendors = [
+		{
+			id: '1',
+			name: 'Ace Plumbing',
+			trades: ['plumbing'],
+			jobsCompleted: 4,
+			avgCost: 20000,
+			insuranceExpiresOn: null
+		},
+		{
+			id: '2',
+			name: 'Best Electric',
+			trades: ['electrical'],
+			jobsCompleted: 9,
+			avgCost: 15000,
+			insuranceExpiresOn: '2030-01-01'
+		}
+	];
+	it('picks the trade-matching vendor', () => {
+		const pick = heuristicVendorPick({ vendors, trade: 'electrical' });
+		expect(pick?.vendorId).toBe('2');
+	});
+	it('skips vendors with expired insurance', () => {
+		const pick = heuristicVendorPick({
+			vendors: vendors.map((v) => ({ ...v, insuranceExpiresOn: '2020-01-01' })),
+			trade: 'electrical'
+		});
+		expect(pick).toBeNull();
+	});
+});
+
+describe('heuristicDigest', () => {
+	it('lists actionable items', () => {
+		const d = heuristicDigest({
+			orgName: 'Sunrise',
+			paymentsCount: 2,
+			paymentsTotal: 300000,
+			currency: 'USD',
+			newTickets: [{ number: 7, title: 'Leak', priority: 'urgent' }],
+			closedTickets: 1,
+			expiringLeases: [{ tenant: 'Maya', unit: '101', endDate: '2026-11-01' }],
+			expiringCois: [],
+			newLeads: 0
+		});
+		expect(d.subject).toContain('Sunrise');
+		expect(d.lines.join(' ')).toContain('#7');
+		expect(d.lines.join(' ')).toContain('urgent');
+	});
+	it('handles a quiet day', () => {
+		const d = heuristicDigest({
+			orgName: 'Sunrise',
+			paymentsCount: 0,
+			paymentsTotal: 0,
+			currency: null,
+			newTickets: [],
+			closedTickets: 0,
+			expiringLeases: [],
+			expiringCois: [],
+			newLeads: 0
+		});
+		expect(d.lines).toEqual([]);
+		expect(d.intro).toContain('Quiet day');
 	});
 });

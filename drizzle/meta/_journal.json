@@ -183,6 +183,13 @@
       "when": 1791420234024,
       "tag": "0025_roles-branding",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791678788207,
+      "tag": "0026_ai-features",
+      "breakpoints": true
     }
   ]
 }

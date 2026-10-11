@@ -5,6 +5,7 @@ import { db } from '#lib/server/db/index.ts';
 import { organization } from '#lib/server/db/schema.ts';
 import { runRentAutomation } from '#lib/server/services/leasing.ts';
 import {
+	sendAiDigest,
 	sendCriticalDateAlerts,
 	sendRentNotifications,
 	sendVendorInsuranceAlerts
@@ -34,6 +35,7 @@ export const GET: RequestHandler = async ({ request }) => {
 			emails += (await sendRentNotifications(o.id)) ?? 0;
 			emails += (await sendVendorInsuranceAlerts(o.id)) ?? 0;
 			emails += (await sendCriticalDateAlerts(o.id)) ?? 0;
+			emails += (await sendAiDigest(o.id)) ?? 0;
 			workOrders += await runDueSchedules(o.id);
 		} catch (err) {
 			failed++;

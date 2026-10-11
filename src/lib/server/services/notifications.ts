@@ -24,6 +24,7 @@ import { inboxForManagers } from '#lib/server/services/inbox.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
 import type { notificationSettingsInput } from '#lib/schemas.ts';
 import { addDays, formatDate, formatMoney, todayISO } from '#lib/format.ts';
+import { hasFeature } from '#lib/server/ee/license.ts';
 import { INSURANCE_WARNING_DAYS, insuranceState } from '#lib/vendors.ts';
 
 export type NotificationPrefs = v.InferOutput<typeof notificationSettingsInput>;
@@ -36,7 +37,8 @@ export const NOTIFICATION_DEFAULTS: NotificationPrefs = {
 	leaseExpiryAlerts: true,
 	vendorInsuranceAlerts: true,
 	newApplications: true,
-	newLeads: true
+	newLeads: true,
+	aiDigest: true
 };
 
 /** How long after the due date an overdue notice may still go out. */
@@ -54,7 +56,8 @@ export async function getNotificationPrefs(orgId: string): Promise<NotificationP
 			leaseExpiryAlerts: s.leaseExpiryAlerts,
 			vendorInsuranceAlerts: s.vendorInsuranceAlerts,
 			newApplications: s.newApplications,
-			newLeads: s.newLeads
+			newLeads: s.newLeads,
+			aiDigest: s.aiDigest
 		})
 		.from(s)
 		.where(eq(s.organizationId, orgId));
@@ -820,4 +823,33 @@ export async function notifyWaitlistOpening(
 			action: { label: 'See the home and apply', url }
 		})
 	});
+}
+
+/** AI morning digest: yesterday's activity and upcoming deadlines, for owners/admins (enterprise). */
+export async function sendAiDigest(orgId: string): Promise<number> {
+	if (!hasFeature('ai')) return 0;
+	const prefs = await getNotificationPrefs(orgId);
+	if (!prefs.aiDigest) return 0;
+	const org = await orgName(orgId);
+	const managers = await managerEmails(orgId);
+	if (!managers.length) return 0;
+	const { digestFacts, digestEmail } = await import('#lib/server/ai/index.ts');
+	const facts = await digestFacts(orgId, org);
+	const mail = await digestEmail(facts);
+	const day = todayISO();
+	let sent = 0;
+	for (const to of managers) {
+		const ok = await notifyOnce(orgId, 'ai.digest', day, {
+			to,
+			subject: mail.subject,
+			...renderEmail({
+				orgName: org,
+				heading: 'Your morning digest',
+				lines: [mail.intro, ...mail.lines.map((l) => `• ${l}`)],
+				action: { label: 'Open dashboard', url: `${appOrigin()}/` }
+			})
+		});
+		if (ok) sent++;
+	}
+	return sent;
 }

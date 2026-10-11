@@ -205,3 +205,275 @@ export async function insights(orgId: string) {
 	if (ai) return ai.insights.filter((i) => INSIGHT_HREFS.has(i.href)).slice(0, 4);
 	return heuristicInsights(facts);
 }
+
+// ---------- Paid-tier extras: summarize, classify, suggest, digest ----------
+
+import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { db } from '#lib/server/db/index.ts';
+import { lead, lease, maintenanceTicket, payment, unit, vendor } from '#lib/server/db/schema.ts';
+import { getTenant } from '#lib/server/services/portfolio.ts';
+import { getLease, outer, tenantNames } from '#lib/server/services/leasing.ts';
+import { runReport } from '#lib/server/services/reports.ts';
+import type { ReportKey, ReportParams } from '#lib/reports.ts';
+import {
+	heuristicDigest,
+	heuristicReportSummary,
+	heuristicTenantSummary,
+	heuristicVendorPick,
+	type AiSummary
+} from '#lib/ai/heuristics.ts';
+
+const summarySchema = v.object({
+	summary: v.string(),
+	flags: v.array(v.string())
+});
+
+async function chatSummary(system: string, user: string): Promise<AiSummary | null> {
+	return chatJson(system, user, (raw) => vsafe(summarySchema, raw));
+}
+
+/** One-paragraph overview + flags for a tenant page. */
+export async function tenantSummary(orgId: string, tenantId: string): Promise<AiSummary> {
+	const t = await getTenant(orgId, tenantId);
+	const name =
+		[t.firstName, t.lastName].filter(Boolean).join(' ') || t.companyName || 'this tenant';
+	const leaseRows = await Promise.all(
+		t.leases.slice(0, 3).map(async (l) => {
+			const full = await getLease(orgId, l.id);
+			const yearAgo = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
+			return {
+				status: l.status,
+				propertyName: l.propertyName,
+				unitName: l.unitName,
+				endDate: l.endDate ?? 'open-ended',
+				balance: full.balance,
+				rentAmount: l.rentAmount,
+				currency: l.currency,
+				paymentsLast12m: full.payments.filter((p) => p.receivedOn >= yearAgo).length,
+				openTickets: t.tickets.filter((x) => x.status !== 'done' && x.status !== 'cancelled').length
+			};
+		})
+	);
+	const facts = {
+		name,
+		leases: leaseRows,
+		ticketCount: t.tickets.length,
+		openTickets: t.tickets.filter((x) => x.status !== 'done' && x.status !== 'cancelled').length,
+		paymentsLast12m: leaseRows.reduce((s, l) => s + l.paymentsLast12m, 0)
+	};
+	const ai = await chatSummary(
+		`You summarize a tenant's account for their property manager in 2-3 plain sentences, then list anything needing attention in "flags" (empty if none): unpaid balance, lease ending within 90 days with no renewal, many open maintenance requests. Neutral tone, no advice on screening or pricing.`,
+		JSON.stringify(facts)
+	);
+	return ai ?? heuristicTenantSummary(facts);
+}
+
+/** Narrative + anomalies for a report. */
+export async function reportSummary(
+	orgId: string,
+	key: ReportKey,
+	params: ReportParams
+): Promise<AiSummary> {
+	const report = await runReport(orgId, key, params);
+	const facts = {
+		title: report.title,
+		subtitle: report.subtitle,
+		columns: report.columns,
+		totals: report.totals,
+		rows: report.rows.slice(0, 60),
+		rowCount: report.rows.length
+	};
+	const ai = await chatSummary(
+		`You summarize a property-management report for the manager in 1-2 sentences using the totals, then list the 0-4 most useful things to look at in "flags" (e.g. worst offender, surprising gaps). Money values are in cents. Be concrete: names and numbers, not generalities.`,
+		JSON.stringify(facts)
+	);
+	return (
+		ai ??
+		heuristicReportSummary({
+			title: report.title,
+			subtitle: report.subtitle,
+			columns: report.columns,
+			rows: report.rows,
+			totals: report.totals
+		})
+	);
+}
+
+/** Picks the best vendor for a ticket from trades, job history and COI status. */
+export async function suggestVendor(
+	orgId: string,
+	ticketId: string
+): Promise<{ vendorId: string; vendorName: string; reason: string } | null> {
+	const [t] = await db
+		.select({ title: maintenanceTicket.title, description: maintenanceTicket.description })
+		.from(maintenanceTicket)
+		.where(and(eq(maintenanceTicket.organizationId, orgId), eq(maintenanceTicket.id, ticketId)));
+	if (!t) return null;
+	const vendors = await listVendors(orgId);
+	if (!vendors.length) return null;
+	const stats = await db
+		.select({
+			vendorId: maintenanceTicket.vendorId,
+			jobs: sql<number>`count(*)`.mapWith(Number),
+			completed: sql<number>`count(*) filter (where ${maintenanceTicket.status} = 'done')`.mapWith(
+				Number
+			),
+			avgCost: sql<number | null>`avg(${maintenanceTicket.costAmount})`.mapWith((v) =>
+				v == null ? null : Number(v)
+			)
+		})
+		.from(maintenanceTicket)
+		.where(
+			and(
+				eq(maintenanceTicket.organizationId, orgId),
+				sql`${maintenanceTicket.vendorId} is not null`
+			)
+		)
+		.groupBy(maintenanceTicket.vendorId);
+	const stat = new Map(stats.map((s) => [s.vendorId, s]));
+	const candidates = vendors.map((v) => ({
+		id: v.id,
+		name: v.name,
+		trades: v.trades,
+		jobsCompleted: stat.get(v.id)?.completed ?? 0,
+		avgCost: stat.get(v.id)?.avgCost ?? null,
+		insuranceExpiresOn: v.insuranceExpiresOn
+	}));
+	const { trade } = heuristicTriage({ title: t.title, description: t.description });
+	const shortlist = candidates.slice(0, 10);
+	const ai = await chatJson(
+		`You pick the best vendor for a maintenance ticket. Prefer vendors whose trades match the work, with insurance not expired, then more completed jobs, then lower average cost. Return {"vendorId": "<id>", "reason": "<one sentence>"} — vendorId must be one of the given ids, or {"vendorId": null} if none fit.`,
+		JSON.stringify({ ticket: t, inferredTrade: trade, vendors: shortlist }),
+		(raw) => {
+			const r = v.safeParse(
+				v.object({ vendorId: v.nullable(v.string()), reason: v.string() }),
+				raw
+			);
+			if (!r.success || !r.output.vendorId) return null;
+			const found = candidates.find((c) => c.id === r.output.vendorId);
+			return found ? { vendorId: found.id, vendorName: found.name, reason: r.output.reason } : null;
+		}
+	);
+	if (ai) return ai;
+	const pick = heuristicVendorPick({ vendors: candidates, trade });
+	if (!pick) return null;
+	const v0 = candidates.find((c) => c.id === pick.vendorId)!;
+	return { vendorId: v0.id, vendorName: v0.name, reason: pick.reason };
+}
+
+export type DigestFacts = {
+	orgName: string;
+	paymentsCount: number;
+	paymentsTotal: number;
+	currency: string | null;
+	newTickets: { number: number; title: string; priority: string }[];
+	closedTickets: number;
+	expiringLeases: { tenant: string; unit: string; endDate: string }[];
+	expiringCois: { vendor: string; expiresOn: string }[];
+	newLeads: number;
+};
+
+/** Yesterday's activity + upcoming deadlines, for the daily digest email. */
+export async function digestFacts(orgId: string, orgName: string): Promise<DigestFacts> {
+	const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+	const in30 = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+	const today = new Date().toISOString().slice(0, 10);
+
+	const [pay] = await db
+		.select({
+			n: sql<number>`count(*)`.mapWith(Number),
+			total: sql<number>`coalesce(sum(${payment.amount}), 0)`.mapWith(Number)
+		})
+		.from(payment)
+		.where(and(eq(payment.organizationId, orgId), gte(payment.createdAt, since)));
+	const currencies = await db
+		.select({ c: lease.currency })
+		.from(lease)
+		.where(eq(lease.organizationId, orgId))
+		.limit(2);
+
+	const newTickets = await db
+		.select({
+			number: maintenanceTicket.number,
+			title: maintenanceTicket.title,
+			priority: maintenanceTicket.priority
+		})
+		.from(maintenanceTicket)
+		.where(
+			and(eq(maintenanceTicket.organizationId, orgId), gte(maintenanceTicket.createdAt, since))
+		)
+		.orderBy(desc(maintenanceTicket.createdAt))
+		.limit(10);
+	const [closed] = await db
+		.select({ n: sql<number>`count(*)`.mapWith(Number) })
+		.from(maintenanceTicket)
+		.where(
+			and(eq(maintenanceTicket.organizationId, orgId), gte(maintenanceTicket.closedAt, since))
+		);
+
+	const expiringLeases = await db
+		.select({
+			endDate: lease.endDate,
+			unitName: unit.name,
+			tenant: tenantNames
+		})
+		.from(lease)
+		.innerJoin(unit, eq(unit.id, lease.unitId))
+		.where(
+			and(
+				eq(lease.organizationId, orgId),
+				eq(lease.status, 'active'),
+				gte(lease.endDate, today),
+				sql`${lease.endDate} <= ${in30}`,
+				sql`not exists (select 1 from ${lease} r where r.renewed_from_id = ${outer(lease.id)} and r.status <> 'terminated')`
+			)
+		)
+		.limit(10);
+
+	const expiringCois = await db
+		.select({ name: vendor.name, expiresOn: vendor.insuranceExpiresOn })
+		.from(vendor)
+		.where(
+			and(
+				eq(vendor.organizationId, orgId),
+				gte(vendor.insuranceExpiresOn, today),
+				sql`${vendor.insuranceExpiresOn} <= ${in30}`
+			)
+		)
+		.limit(10);
+
+	const [newLeads] = await db
+		.select({ n: sql<number>`count(*)`.mapWith(Number) })
+		.from(lead)
+		.where(and(eq(lead.organizationId, orgId), gte(lead.createdAt, since)));
+
+	return {
+		orgName,
+		paymentsCount: pay?.n ?? 0,
+		paymentsTotal: pay?.total ?? 0,
+		currency: currencies.length === 1 ? (currencies[0]?.c ?? null) : null,
+		newTickets,
+		closedTickets: closed?.n ?? 0,
+		expiringLeases: expiringLeases.map((l) => ({
+			tenant: l.tenant,
+			unit: l.unitName,
+			endDate: l.endDate ?? ''
+		})),
+		expiringCois: expiringCois.map((c) => ({ vendor: c.name, expiresOn: c.expiresOn ?? '' })),
+		newLeads: newLeads?.n ?? 0
+	};
+}
+
+/** Turns digest facts into subject + intro + bullet lines (LLM or heuristic). */
+export async function digestEmail(
+	facts: DigestFacts
+): Promise<{ subject: string; intro: string; lines: string[] }> {
+	const fallback = heuristicDigest(facts);
+	const ai = await chatJson(
+		`You write a property manager's morning digest email. Given today's facts, return {"subject","intro","lines"}: a short subject, one intro sentence, and up to 8 bullet lines — each one sentence with the concrete numbers/names. No exclamation marks.`,
+		JSON.stringify(facts),
+		(raw) =>
+			vsafe(v.object({ subject: v.string(), intro: v.string(), lines: v.array(v.string()) }), raw)
+	);
+	return ai ?? fallback;
+}
