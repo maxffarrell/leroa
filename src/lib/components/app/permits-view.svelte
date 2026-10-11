@@ -13,6 +13,8 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import CircleOff from '@lucide/svelte/icons/circle-off';
 	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	const properties = $derived(await getProperties());
 	const units = $derived(await getUnits());
@@ -61,6 +63,7 @@
 		confirmDelete({
 			title: `Revoke permit ${num}?`,
 			description: 'It stays on the log as revoked.',
+			confirm: { text: 'Revoke' },
 			onConfirm: async () => {
 				await revokePermit(id).catch(() => toast.error('Could not revoke'));
 			}
@@ -70,9 +73,10 @@
 <div class="mt-4 space-y-4">
 	<div class="flex items-center gap-3">
 		<Button size="sm" onclick={() => (issuing = true)}><Plus /> Issue permit</Button>
-		<label class="flex items-center gap-2 text-sm text-muted-foreground"
-			><input type="checkbox" bind:checked={showRevoked} class="accent-primary" /> Show revoked</label
-		>
+		<span class="flex items-center gap-2 text-sm text-muted-foreground">
+			<Checkbox id="permits-show-revoked" bind:checked={showRevoked} />
+			<Label for="permits-show-revoked" class="font-normal">Show revoked</Label>
+		</span>
 	</div>
 	<div class="overflow-x-auto rounded-lg border">
 		<Table.Root>

@@ -37,6 +37,8 @@
 	import PassesView from '#lib/components/app/passes-view.svelte';
 	import EventsView from '#lib/components/app/events-view.svelte';
 	import SurveysView from '#lib/components/app/surveys-view.svelte';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	const isAdmin = $derived(page.data.role !== 'member');
 	let restab = $state('packages');
@@ -220,9 +222,10 @@
 
 		<Tabs.Content value="packages" class="mt-4 space-y-4">
 			<div class="flex items-center gap-3">
-				<label class="flex items-center gap-2 text-sm text-muted-foreground"
-					><input type="checkbox" bind:checked={showPickedUp} class="accent-primary" /> Show picked up</label
-				>
+				<span class="flex items-center gap-2 text-sm text-muted-foreground">
+					<Checkbox id="residents-show-picked-up" bind:checked={showPickedUp} />
+					<Label for="residents-show-picked-up" class="font-normal">Show picked up</Label>
+				</span>
 			</div>
 			<div class="overflow-x-auto rounded-lg border">
 				<Table.Root>

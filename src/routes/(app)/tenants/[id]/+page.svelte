@@ -58,14 +58,14 @@
 <PageHeader title={name} crumbs={[{ label: 'Tenants', href: '/tenants' }]}>
 	{#snippet actions()}
 		<Button size="sm" variant="outline" href="/messages/{id}"
-			><MessagesSquare /> <span class="hidden sm:inline">Message</span></Button
+			><MessagesSquare /> <span class="hidden lg:inline">Message</span></Button
 		>
 		<Button size="sm" variant="outline" href="/tenants/{id}/portal"
-			><MonitorSmartphone /> <span class="hidden sm:inline">Portal preview</span></Button
+			><MonitorSmartphone /> <span class="hidden lg:inline">Portal preview</span></Button
 		>
 		<Button size="sm" variant="outline" onclick={copyPortalLink}
 			><Link />
-			<span class="hidden sm:inline">{t.portalUserId ? 'Portal linked' : 'Portal invite'}</span
+			<span class="hidden lg:inline">{t.portalUserId ? 'Portal linked' : 'Portal invite'}</span
 			></Button
 		>
 		<Button size="sm" href="/leases?new=1&tenant={id}"

@@ -2,6 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import { page } from '$app/state';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
 	import { getRecordFields, writeFieldValue } from '#lib/remote/fields.remote.ts';
 	import type { FieldEntity } from '#lib/schemas.ts';
@@ -51,12 +52,11 @@
 							</NativeSelect.Root>
 						{:else if f.type === 'checkbox'}
 							<span class="flex h-8 items-center">
-								<input
-									type="checkbox"
-									class="accent-primary"
+								<Checkbox
+									aria-label={f.name}
 									checked={draft[f.id] === 'true'}
-									onchange={(e) => {
-										const v = e.currentTarget.checked ? 'true' : null;
+									onCheckedChange={(c) => {
+										const v = c === true ? 'true' : null;
 										draft[f.id] = v ?? '';
 										save(f, v);
 									}}

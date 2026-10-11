@@ -11,7 +11,7 @@
 	} from '#lib/remote/workspace.remote.ts';
 	import { formatRelative } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
-	import Copy from '@lucide/svelte/icons/copy';
+	import { CopyButton } from '#lib/components/ui/copy-button/index.js';
 	import Trash from '@lucide/svelte/icons/trash-2';
 
 	const hooks = $derived(await getWebhooks());
@@ -63,13 +63,13 @@
 						<div
 							class="flex flex-wrap items-center gap-x-4 gap-y-1 pl-12 text-xs text-muted-foreground"
 						>
-							<button
-								class="flex items-center gap-1 hover:text-foreground"
-								onclick={() =>
-									navigator.clipboard
-										.writeText(h.secret)
-										.then(() => toast.success('Secret copied'))}
-								><Copy class="size-3" /> Copy signing secret</button
+							<CopyButton
+								text={h.secret}
+								variant="ghost"
+								size="sm"
+								class="h-auto px-1 text-xs text-muted-foreground hover:text-foreground [&_svg]:size-3"
+								onCopy={(status) => status === 'success' && toast.success('Secret copied')}
+								>Copy signing secret</CopyButton
 							>
 							<span>Events: {h.events.join(', ')}</span>
 							{#if h.lastDeliveryAt}<span

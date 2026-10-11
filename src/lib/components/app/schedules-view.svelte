@@ -27,6 +27,8 @@
 	import Play from '@lucide/svelte/icons/play';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import StatusBadge from '#lib/components/app/status-badge.svelte';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	const schedules = $derived(await getSchedules());
 	const today = todayISO();
@@ -158,9 +160,10 @@
 
 <div class="flex flex-wrap items-center gap-3">
 	<Button size="sm" onclick={() => (creating = true)}><Plus /> New schedule</Button>
-	<label class="flex items-center gap-2 text-sm text-muted-foreground"
-		><input type="checkbox" bind:checked={showPaused} class="accent-primary" /> Show paused</label
-	>
+	<span class="flex items-center gap-2 text-sm text-muted-foreground">
+		<Checkbox id="schedules-show-paused" bind:checked={showPaused} />
+		<Label for="schedules-show-paused" class="font-normal">Show paused</Label>
+	</span>
 	<p class="ml-auto hidden text-xs text-muted-foreground md:block">
 		The daily job issues a work order once a run's lead time opens.
 	</p>

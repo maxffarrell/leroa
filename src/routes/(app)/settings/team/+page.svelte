@@ -73,7 +73,8 @@
 	function openScope(memberId: string, name: string) {
 		const ids = access.get(memberId)?.propertyIds ?? [];
 		scopeAll = ids.length === 0;
-		scopeDraft = new SvelteSet(ids);
+		scopeDraft.clear();
+		for (const id of ids) scopeDraft.add(id);
 		scopeFor = { memberId, name };
 	}
 

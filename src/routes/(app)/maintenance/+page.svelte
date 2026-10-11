@@ -34,6 +34,7 @@
 	import { aiSuggestVendor } from '#lib/remote/ai.remote.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
 	import BulkBar from '#lib/components/app/bulk-bar.svelte';
 	import { untrack } from 'svelte';
@@ -215,9 +216,10 @@
 		<Tabs.Content value="requests" class="flex min-h-0 flex-1 flex-col gap-4">
 			<div class="flex flex-wrap items-center gap-3">
 				<Input placeholder="Filter requests…" class="h-8 max-w-64" bind:value={search} />
-				<label class="flex items-center gap-2 text-sm text-muted-foreground"
-					><input type="checkbox" bind:checked={showClosed} class="accent-primary" /> Show all closed</label
-				>
+				<span class="flex items-center gap-2 text-sm text-muted-foreground">
+					<Checkbox id="maint-show-closed" bind:checked={showClosed} />
+					<Label for="maint-show-closed" class="font-normal">Show all closed</Label>
+				</span>
 				{#if reqView === 'kanban'}
 					<p class="ml-auto hidden text-xs text-muted-foreground md:block">
 						Drag cards between columns to change status.
