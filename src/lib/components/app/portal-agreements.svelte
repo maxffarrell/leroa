@@ -20,7 +20,7 @@
 		needsMySignature: boolean;
 		signers: { name: string; signedAt: Date | null }[];
 	};
-	let { agreements }: { agreements: Agreement[] } = $props();
+	let { agreements, preview = false }: { agreements: Agreement[]; preview?: boolean } = $props();
 
 	let names = $state<Record<string, string>>({});
 	let consent = $state<Record<string, boolean>>({});
@@ -75,32 +75,36 @@
 				<AgreementBody body={a.body} />
 			</div>
 		{/if}
-		<form class="space-y-3" onsubmit={(e) => sign(e, a)}>
-			<Field.Field>
-				<Field.Label for="sig-{a.id}">Your full name</Field.Label>
-				<Input
-					id="sig-{a.id}"
-					required
-					maxlength={200}
-					autocomplete="name"
-					class="font-serif text-lg italic"
-					bind:value={() => names[a.id] ?? '', (v) => (names[a.id] = v)}
-				/>
-			</Field.Field>
-			<Field.Field orientation="horizontal">
-				<Checkbox
-					id="consent-{a.id}"
-					bind:checked={() => consent[a.id] ?? false, (v) => (consent[a.id] = v)}
-				/>
-				<Field.Label for="consent-{a.id}" class="text-sm leading-snug font-normal"
-					>I agree to sign electronically, and that typing my name is my legal signature on this
-					document.</Field.Label
+		{#if preview}
+			<p class="text-xs text-muted-foreground">Awaiting the tenant's signature.</p>
+		{:else}
+			<form class="space-y-3" onsubmit={(e) => sign(e, a)}>
+				<Field.Field>
+					<Field.Label for="sig-{a.id}">Your full name</Field.Label>
+					<Input
+						id="sig-{a.id}"
+						required
+						maxlength={200}
+						autocomplete="name"
+						class="font-serif text-lg italic"
+						bind:value={() => names[a.id] ?? '', (v) => (names[a.id] = v)}
+					/>
+				</Field.Field>
+				<Field.Field orientation="horizontal">
+					<Checkbox
+						id="consent-{a.id}"
+						bind:checked={() => consent[a.id] ?? false, (v) => (consent[a.id] = v)}
+					/>
+					<Field.Label for="consent-{a.id}" class="text-sm leading-snug font-normal"
+						>I agree to sign electronically, and that typing my name is my legal signature on this
+						document.</Field.Label
+					>
+				</Field.Field>
+				<Button type="submit" disabled={signing !== null}
+					>{signing === a.id ? 'Signing…' : 'Sign lease'}</Button
 				>
-			</Field.Field>
-			<Button type="submit" disabled={signing !== null}
-				>{signing === a.id ? 'Signing…' : 'Sign lease'}</Button
-			>
-		</form>
+			</form>
+		{/if}
 	</div>
 {/each}
 

@@ -16,6 +16,8 @@ import {
 } from '#lib/server/db/schema.ts';
 import { emit } from './events.ts';
 
+type Tenant = typeof tenant.$inferSelect;
+
 type ClauseRow = Pick<
 	typeof leaseClause.$inferSelect,
 	'leaseId' | 'id' | 'kind' | 'title' | 'body'
@@ -64,7 +66,10 @@ export async function portalTenants(userId: string) {
 }
 
 export async function portalOverview(userId: string) {
-	const tenants = await portalTenants(userId);
+	return portalOverviewForTenants(await portalTenants(userId));
+}
+
+async function portalOverviewForTenants(tenants: { tenant: Tenant; orgName: string }[]) {
 	if (!tenants.length) return null;
 	const tenantIds = tenants.map((t) => t.tenant.id);
 	const leases = await db
@@ -262,4 +267,21 @@ export async function portalRequestPhotos(userId: string, ticketId: string, file
 		error(400, `You can add up to ${MAX_REQUEST_PHOTOS} photos to a request`);
 	for (const f of images) await saveDocument(t.orgId, userId, f, { type: 'maintenance', id: t.id });
 	return images.length;
+}
+
+/** Manager-facing read-only preview of what a tenant sees in the portal. */
+export async function portalPreview(orgId: string, tenantId: string) {
+	const [t] = await db
+		.select({ tenant, orgName: organization.name })
+		.from(tenant)
+		.innerJoin(organization, eq(organization.id, tenant.organizationId))
+		.where(and(eq(tenant.organizationId, orgId), eq(tenant.id, tenantId)));
+	if (!t) error(404, 'Tenant not found');
+	const { portalAnnouncements, tenantMessageThreads } = await import('./messaging.ts');
+	const [overview, announcements, threads] = await Promise.all([
+		portalOverviewForTenants([t]),
+		portalAnnouncements([tenantId]),
+		tenantMessageThreads([tenantId])
+	]);
+	return { overview, announcements, threads, tenant: t.tenant };
 }

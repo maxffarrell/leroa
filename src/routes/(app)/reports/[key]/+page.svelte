@@ -9,6 +9,9 @@
 	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
 	import * as Table from '#lib/components/ui/table/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import * as Chart from '#lib/components/ui/chart/index.js';
+	import { BarChart } from 'layerchart';
 	import { getReport } from '#lib/remote/reports.remote.ts';
 	import { getProperties } from '#lib/remote/portfolio.remote.ts';
 	import {
@@ -108,6 +111,29 @@
 		[numeric(c) ? 'text-right tabular-nums' : '', c.secondary ? 'hidden sm:table-cell' : '']
 			.filter(Boolean)
 			.join(' ');
+
+	const collectionsConfig = {
+		due: { label: 'Rent due', color: 'var(--chart-2)' },
+		collected: { label: 'Collected', color: 'var(--chart-4)' }
+	} satisfies Chart.ChartConfig;
+	const collectionsData = $derived(
+		key === 'collections'
+			? report.rows.map((r) => ({ month: r.month, due: r.due, collected: r.collected }))
+			: []
+	);
+	const occupancyConfig = {
+		occupied: { label: 'Occupied', color: 'var(--chart-4)' },
+		vacant: { label: 'Vacant', color: 'var(--chart-2)' }
+	} satisfies Chart.ChartConfig;
+	const occupancyData = $derived(
+		key === 'occupancy'
+			? report.rows.map((r) => ({
+					property: String(r.property ?? ''),
+					occupied: Number(r.occupied ?? 0),
+					vacant: Number(r.vacant ?? 0)
+				}))
+			: []
+	);
 </script>
 
 <PageHeader title={meta.title} crumbs={[{ label: 'Reports', href: '/reports' }]}>
@@ -125,6 +151,83 @@
 		<p class="text-sm text-muted-foreground">{meta.description}</p>
 		<p class="mt-1 text-xs text-muted-foreground">{report.subtitle}</p>
 	</div>
+
+	{#if key === 'collections' && collectionsData.some((r) => r.due || r.collected)}
+		<Card.Root>
+			<Card.Content class="px-2 pt-4 sm:px-6">
+				<Chart.Container config={collectionsConfig} class="h-56 w-full">
+					<BarChart
+						data={collectionsData}
+						x="month"
+						axis="x"
+						series={[
+							{
+								key: 'due',
+								label: collectionsConfig.due.label,
+								color: collectionsConfig.due.color
+							},
+							{
+								key: 'collected',
+								label: collectionsConfig.collected.label,
+								color: collectionsConfig.collected.color
+							}
+						]}
+						seriesLayout="group"
+						rule={{ y: true }}
+						legend
+					>
+						{#snippet tooltip()}
+							<Chart.Tooltip>
+								{#snippet formatter({ value, name })}
+									<div class="flex w-full items-center justify-between gap-2">
+										<span class="text-muted-foreground">{name}</span>
+										<span class="font-mono font-medium text-foreground tabular-nums">
+											{report.currency
+												? formatMoney(Number(value), report.currency)
+												: (Number(value) / 100).toFixed(2)}
+										</span>
+									</div>
+								{/snippet}
+							</Chart.Tooltip>
+						{/snippet}
+					</BarChart>
+				</Chart.Container>
+			</Card.Content>
+		</Card.Root>
+	{/if}
+
+	{#if key === 'occupancy' && occupancyData.some((r) => r.occupied || r.vacant)}
+		<Card.Root>
+			<Card.Content class="px-2 pt-4 sm:px-6">
+				<Chart.Container config={occupancyConfig} class="h-56 w-full">
+					<BarChart
+						data={occupancyData}
+						x="property"
+						axis="x"
+						series={[
+							{
+								key: 'occupied',
+								label: occupancyConfig.occupied.label,
+								color: occupancyConfig.occupied.color
+							},
+							{
+								key: 'vacant',
+								label: occupancyConfig.vacant.label,
+								color: occupancyConfig.vacant.color
+							}
+						]}
+						seriesLayout="stack"
+						rule={{ y: true }}
+						legend
+					>
+						{#snippet tooltip()}
+							<Chart.Tooltip />
+						{/snippet}
+					</BarChart>
+				</Chart.Container>
+			</Card.Content>
+		</Card.Root>
+	{/if}
 
 	<div class="flex flex-wrap items-center gap-3">
 		<NativeSelect.Root
