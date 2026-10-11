@@ -20,6 +20,8 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Wrench from '@lucide/svelte/icons/wrench';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	const assets = $derived(await getAssets());
 	let showArchived = $state(false);
@@ -158,9 +160,10 @@
 
 <div class="flex flex-wrap items-center gap-3">
 	<Button size="sm" onclick={() => (creating = true)}><Plus /> New asset</Button>
-	<label class="flex items-center gap-2 text-sm text-muted-foreground"
-		><input type="checkbox" bind:checked={showArchived} class="accent-primary" /> Show archived</label
-	>
+	<span class="flex items-center gap-2 text-sm text-muted-foreground">
+		<Checkbox id="assets-show-archived" bind:checked={showArchived} />
+		<Label for="assets-show-archived" class="font-normal">Show archived</Label>
+	</span>
 	<p class="ml-auto hidden text-xs text-muted-foreground md:block">
 		Track equipment, warranties and service history per property or unit.
 	</p>

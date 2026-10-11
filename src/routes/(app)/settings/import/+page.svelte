@@ -19,6 +19,8 @@
 	} from '#lib/import.ts';
 	import Download from '@lucide/svelte/icons/download';
 	import FileUp from '@lucide/svelte/icons/file-up';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	type Result = Awaited<ReturnType<typeof importCsv>>;
 	const MAX_BYTES = 2_000_000;
@@ -285,10 +287,10 @@
 					{/each}
 				</div>
 				{#if preview.counts.error}
-					<label class="flex items-center gap-2 text-sm text-muted-foreground"
-						><input type="checkbox" bind:checked={problemsOnly} class="accent-primary" /> Show problems
-						only</label
-					>
+					<span class="flex items-center gap-2 text-sm text-muted-foreground">
+						<Checkbox id="import-problems-only" bind:checked={problemsOnly} />
+						<Label for="import-problems-only" class="font-normal">Show problems only</Label>
+					</span>
 				{/if}
 				<div class="max-h-96 overflow-auto rounded-lg border">
 					<Table.Root>

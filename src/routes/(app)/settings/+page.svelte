@@ -115,9 +115,15 @@
 		></Card.Header
 	>
 	<Card.Content
-		><div class="flex items-center gap-2">
-			<code class="rounded bg-muted px-2 py-1 font-mono text-sm">{org.id}</code>
-			<CopyButton size="icon-sm" variant="ghost" aria-label="Copy workspace ID" text={org.id} />
+		><div class="flex min-w-0 items-center gap-2">
+			<code class="min-w-0 truncate rounded bg-muted px-2 py-1 font-mono text-sm">{org.id}</code>
+			<CopyButton
+				size="icon-sm"
+				variant="ghost"
+				class="shrink-0"
+				aria-label="Copy workspace ID"
+				text={org.id}
+			/>
 		</div></Card.Content
 	>
 </Card.Root>

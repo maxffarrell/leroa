@@ -12,6 +12,8 @@
 	import { getProperties, getUnits, getTenants } from '#lib/remote/portfolio.remote.ts';
 	import { closeKey, getKeys, issueKey } from '#lib/remote/residents.remote.ts';
 	import Plus from '@lucide/svelte/icons/plus';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	const properties = $derived(await getProperties());
 	const units = $derived(await getUnits());
@@ -60,9 +62,10 @@
 <div class="mt-4 space-y-4">
 	<div class="flex items-center gap-3">
 		<Button size="sm" onclick={() => (issuing = true)}><Plus /> Issue key/fob</Button>
-		<label class="flex items-center gap-2 text-sm text-muted-foreground"
-			><input type="checkbox" bind:checked={showClosed} class="accent-primary" /> Show returned/lost</label
-		>
+		<span class="flex items-center gap-2 text-sm text-muted-foreground">
+			<Checkbox id="keys-show-closed" bind:checked={showClosed} />
+			<Label for="keys-show-closed" class="font-normal">Show returned/lost</Label>
+		</span>
 	</div>
 	<div class="overflow-x-auto rounded-lg border">
 		<Table.Root>

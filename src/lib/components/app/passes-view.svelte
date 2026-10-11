@@ -12,6 +12,8 @@
 	import { closePass, createPass, getPasses } from '#lib/remote/residents.remote.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	const properties = $derived(await getProperties());
 	const units = $derived(await getUnits());
@@ -62,9 +64,10 @@
 <div class="mt-4 space-y-4">
 	<div class="flex items-center gap-3">
 		<Button size="sm" onclick={() => (creating = true)}><Plus /> New guest pass</Button>
-		<label class="flex items-center gap-2 text-sm text-muted-foreground"
-			><input type="checkbox" bind:checked={showVoid} class="accent-primary" /> Show closed</label
-		>
+		<span class="flex items-center gap-2 text-sm text-muted-foreground">
+			<Checkbox id="passes-show-void" bind:checked={showVoid} />
+			<Label for="passes-show-void" class="font-normal">Show closed</Label>
+		</span>
 	</div>
 	<div class="overflow-x-auto rounded-lg border">
 		<Table.Root>
@@ -119,6 +122,7 @@
 										confirmDelete({
 											title: `Void pass for ${p.guestName}?`,
 											description: 'It stays on the log, marked void.',
+											confirm: { text: 'Void' },
 											onConfirm: async () => {
 												await closePass({ id: p.id, status: 'void' }).catch(() =>
 													toast.error('Could not void')

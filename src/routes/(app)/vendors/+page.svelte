@@ -31,6 +31,7 @@
 	import BulkBar from '#lib/components/app/bulk-bar.svelte';
 	import Plus from '@lucide/svelte/icons/plus';
 	import HardHat from '@lucide/svelte/icons/hard-hat';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	type Row = Awaited<ReturnType<typeof getVendors>>[number];
 
@@ -169,9 +170,10 @@
 				bind:value={search}
 				oninput={() => (nav.index = -1)}
 			/>
-			<label class="flex items-center gap-2 text-sm text-muted-foreground"
-				><input type="checkbox" bind:checked={showArchived} class="accent-primary" /> Show archived</label
-			>
+			<span class="flex items-center gap-2 text-sm text-muted-foreground">
+				<Checkbox id="vendors-show-archived" bind:checked={showArchived} />
+				<Label for="vendors-show-archived" class="font-normal">Show archived</Label>
+			</span>
 			<SavedViewsMenu
 				page="vendors"
 				current={() => ({ search, showArchived, sorting })}

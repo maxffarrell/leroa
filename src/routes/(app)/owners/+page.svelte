@@ -11,6 +11,8 @@
 	import { getOwners } from '#lib/remote/owners.remote.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Landmark from '@lucide/svelte/icons/landmark';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	let showArchived = $state(false);
 	const owners = $derived(await getOwners(showArchived));
@@ -69,9 +71,10 @@
 				bind:value={search}
 				oninput={() => (nav.index = -1)}
 			/>
-			<label class="flex items-center gap-2 text-sm text-muted-foreground"
-				><input type="checkbox" bind:checked={showArchived} class="accent-primary" /> Show archived</label
-			>
+			<span class="flex items-center gap-2 text-sm text-muted-foreground">
+				<Checkbox id="owners-show-archived" bind:checked={showArchived} />
+				<Label for="owners-show-archived" class="font-normal">Show archived</Label>
+			</span>
 		</div>
 		<div class="overflow-x-auto rounded-lg border">
 			<Table.Root>

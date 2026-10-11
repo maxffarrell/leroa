@@ -14,6 +14,8 @@
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	const properties = $derived(await getProperties());
 	let showCancelled = $state(false);
@@ -60,9 +62,10 @@
 <div class="mt-4 space-y-4">
 	<div class="flex items-center gap-3">
 		<Button size="sm" onclick={() => (creating = true)}><Plus /> New event</Button>
-		<label class="flex items-center gap-2 text-sm text-muted-foreground"
-			><input type="checkbox" bind:checked={showCancelled} class="accent-primary" /> Show cancelled</label
-		>
+		<span class="flex items-center gap-2 text-sm text-muted-foreground">
+			<Checkbox id="events-show-cancelled" bind:checked={showCancelled} />
+			<Label for="events-show-cancelled" class="font-normal">Show cancelled</Label>
+		</span>
 	</div>
 	<div class="space-y-2">
 		{#each events as ev (ev.id)}
@@ -110,6 +113,7 @@
 							confirmDelete({
 								title: `Cancel ${ev.title}?`,
 								description: 'The event stays on the log as cancelled.',
+								confirm: { text: 'Cancel event' },
 								onConfirm: async () => {
 									await cancelEvent(ev.id).catch(() => toast.error('Could not cancel'));
 								}

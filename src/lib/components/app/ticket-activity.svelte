@@ -6,6 +6,8 @@
 	import { toast } from 'svelte-sonner';
 	import ImagePlus from '@lucide/svelte/icons/image-plus';
 	import Lock from '@lucide/svelte/icons/lock';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
 
 	let { ticketId }: { ticketId: string } = $props();
 	const a = $derived(await getTicketActivity(ticketId));
@@ -111,9 +113,10 @@
 			bind:value={body}
 		/>
 		<div class="flex items-center gap-3">
-			<label class="flex items-center gap-2 text-xs text-muted-foreground"
-				><input type="checkbox" bind:checked={internal} class="accent-primary" /> Internal only</label
-			>
+			<span class="flex items-center gap-2 text-xs text-muted-foreground">
+				<Checkbox id="ticket-internal" bind:checked={internal} />
+				<Label for="ticket-internal" class="font-normal">Internal only</Label>
+			</span>
 			<Button type="submit" size="sm" class="ml-auto" disabled={pending || !body.trim()}
 				>{pending ? 'Adding…' : 'Add note'}</Button
 			>
