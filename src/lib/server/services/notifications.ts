@@ -11,7 +11,6 @@ import {
 	member,
 	notificationLog,
 	notificationSettings,
-	organization,
 	payment,
 	property,
 	tenant,
@@ -22,6 +21,7 @@ import {
 import { appOrigin, sendEmail, type Email } from '#lib/server/email.ts';
 import { inboxForManagers } from '#lib/server/services/inbox.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
+import { orgBrand } from '#lib/server/branding.ts';
 import type { notificationSettingsInput } from '#lib/schemas.ts';
 import { addDays, formatDate, formatMoney, todayISO } from '#lib/format.ts';
 import { hasFeature } from '#lib/server/ee/license.ts';
@@ -94,14 +94,6 @@ async function notifyOnce(
 	}
 }
 
-async function orgName(orgId: string) {
-	const [o] = await db
-		.select({ name: organization.name })
-		.from(organization)
-		.where(eq(organization.id, orgId));
-	return o?.name ?? 'Your property manager';
-}
-
 async function managerEmails(orgId: string) {
 	const rows = await db
 		.select({ email: user.email })
@@ -120,7 +112,7 @@ export async function sendRentNotifications(orgId: string) {
 	if (!prefs.rentReminders && !prefs.overdueNotices && !prefs.leaseExpiryAlerts) return;
 
 	const today = todayISO();
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	const origin = appOrigin();
 	let sent = 0;
 
@@ -174,7 +166,8 @@ export async function sendRentNotifications(orgId: string) {
 						to: r.email,
 						subject: `${what}: ${amount} due ${when}`,
 						...renderEmail({
-							orgName: org,
+							orgName: org.name,
+							accent: org.accent,
 							heading: 'Rent reminder',
 							lines: [`Hi ${firstName(r)},`, `${what} of ${amount} is due ${when}.`],
 							action
@@ -188,7 +181,8 @@ export async function sendRentNotifications(orgId: string) {
 						to: r.email,
 						subject: `${what} is overdue`,
 						...renderEmail({
-							orgName: org,
+							orgName: org.name,
+							accent: org.accent,
 							heading: 'Your rent is overdue',
 							lines: [
 								`Hi ${firstName(r)},`,
@@ -238,7 +232,8 @@ export async function sendRentNotifications(orgId: string) {
 							to,
 							subject: `Lease ending ${formatDate(l.endDate)}: ${l.propertyName} · ${l.unitName}`,
 							...renderEmail({
-								orgName: org,
+								orgName: org.name,
+								accent: org.accent,
 								heading: 'A lease is ending soon',
 								lines: [
 									`The lease for ${l.propertyName} · ${l.unitName} ends on ${formatDate(l.endDate)} and hasn't been renewed yet.`
@@ -279,7 +274,7 @@ export async function sendVendorInsuranceAlerts(orgId: string) {
 			)
 		);
 	if (!rows.length) return 0;
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	const managers = await managerEmails(orgId);
 	let sent = 0;
 	for (const v of rows) {
@@ -308,7 +303,8 @@ export async function sendVendorInsuranceAlerts(orgId: string) {
 						? `Vendor insurance lapsed: ${v.name}`
 						: `Vendor insurance expires ${formatDate(v.insuranceExpiresOn)}: ${v.name}`,
 					...renderEmail({
-						orgName: org,
+						orgName: org.name,
+						accent: org.accent,
 						heading: expired ? 'A vendor’s insurance has lapsed' : 'Vendor insurance expiring',
 						lines: expired
 							? [
@@ -354,7 +350,7 @@ export async function sendCriticalDateAlerts(orgId: string): Promise<number> {
 			)
 		);
 	if (!rows.length) return 0;
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	const managers = await managerEmails(orgId);
 	const today = todayISO();
 	let sent = 0;
@@ -374,7 +370,8 @@ export async function sendCriticalDateAlerts(orgId: string): Promise<number> {
 				to,
 				subject: `${due ? 'Critical date due' : 'Lease critical date'} ${formatDate(d.date)}: ${d.label}`,
 				...renderEmail({
-					orgName: org,
+					orgName: org.name,
+					accent: org.accent,
 					heading: due ? 'A lease critical date is due' : 'A lease critical date is coming up',
 					lines: [
 						`${d.label} — ${formatDate(d.date)}.`,
@@ -410,11 +407,13 @@ export async function notifyTicketStatus(t: TicketRef) {
 		.from(tenant)
 		.where(eq(tenant.id, t.tenantId));
 	if (!who?.email) return;
+	const brand = await orgBrand(t.organizationId);
 	await notifyOnce(t.organizationId, `ticket.${t.status}`, t.id, {
 		to: who.email,
 		subject: `Request #${t.number} ${copy}`,
 		...renderEmail({
-			orgName: await orgName(t.organizationId),
+			orgName: brand.name,
+			accent: brand.accent,
 			heading: `Your request ${copy}`,
 			lines: [`Hi ${firstName(who)},`, `#${t.number} “${t.title}” ${copy}.`],
 			action: { label: 'View in tenant portal', url: `${appOrigin()}/portal` }
@@ -425,7 +424,7 @@ export async function notifyTicketStatus(t: TicketRef) {
 /** Tells owners and admins about a request a tenant sent from the portal. */
 export async function notifyPortalRequest(t: TicketRef, place: string) {
 	if (!(await getNotificationPrefs(t.organizationId)).maintenanceUpdates) return;
-	const org = await orgName(t.organizationId);
+	const org = await orgBrand(t.organizationId);
 	await inboxForManagers(t.organizationId, 'ticket.created', t.id, {
 		title: `New maintenance request #${t.number}`,
 		body: `A tenant at ${place} reported: \u201c${t.title}\u201d.`,
@@ -436,7 +435,8 @@ export async function notifyPortalRequest(t: TicketRef, place: string) {
 			to,
 			subject: `New maintenance request #${t.number}: ${t.title}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'New maintenance request',
 				lines: [`A tenant at ${place} reported: “${t.title}”.`],
 				action: { label: 'Open maintenance board', url: `${appOrigin()}/maintenance` }
@@ -447,7 +447,7 @@ export async function notifyPortalRequest(t: TicketRef, place: string) {
 
 /** Tells managers a new request triaged as a possible emergency. Emergencies skip pref checks. */
 export async function notifyTicketEmergency(t: TicketRef, place: string, reason: string | null) {
-	const org = await orgName(t.organizationId);
+	const org = await orgBrand(t.organizationId);
 	await inboxForManagers(t.organizationId, 'ticket.emergency', t.id, {
 		title: `Possible emergency: #${t.number} ${t.title}`,
 		body: `${place}${reason ? ` — ${reason}` : ''}`,
@@ -458,7 +458,8 @@ export async function notifyTicketEmergency(t: TicketRef, place: string, reason:
 			to,
 			subject: `Possible emergency at ${place}: #${t.number} ${t.title}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'A request reads like an emergency',
 				lines: [
 					`“${t.title}” was reported at ${place} and triaged as a possible emergency.`,
@@ -482,7 +483,7 @@ export async function notifyUrgentMessage(
 	tenantId: string,
 	excerpt: string
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await inboxForManagers(orgId, 'message.urgent', messageId, {
 		title: `Urgent-sounding message from ${tenantName}`,
 		body: `“${excerpt}”`,
@@ -493,7 +494,8 @@ export async function notifyUrgentMessage(
 			to,
 			subject: `Urgent-sounding message from ${tenantName}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'A resident message may be urgent',
 				lines: [
 					`${tenantName} wrote: “${excerpt}”`,
@@ -511,14 +513,15 @@ export async function notifyAgreementSent(
 	agreement: { id: string; title: string },
 	signers: { name: string; email: string | null }[]
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	for (const s of signers) {
 		if (!s.email) continue;
 		await notifyOnce(orgId, 'agreement.sent', agreement.id, {
 			to: s.email,
 			subject: `Please sign: ${agreement.title}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'Your lease is ready to sign',
 				lines: [
 					`Hi ${s.name.split(' ')[0] || 'there'},`,
@@ -535,7 +538,7 @@ export async function notifyAgreementSigned(
 	orgId: string,
 	agreement: { id: string; title: string; leaseId: string }
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await inboxForManagers(orgId, 'agreement.signed', agreement.id, {
 		title: `Signed: ${agreement.title}`,
 		body: 'Every tenant has signed. The signed PDF is on the lease.',
@@ -546,7 +549,8 @@ export async function notifyAgreementSigned(
 			to,
 			subject: `Signed: ${agreement.title}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'Lease signed',
 				lines: [`Every tenant has signed “${agreement.title}”. The signed PDF is on the lease.`],
 				action: { label: 'Open lease', url: `${appOrigin()}/leases/${agreement.leaseId}` }
@@ -563,12 +567,13 @@ export async function notifyApplicationReceived(
 	app: ApplicationRef,
 	listingTitle: string
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await notifyOnce(orgId, 'application.received', app.id, {
 		to: app.email,
 		subject: `We received your application: ${listingTitle}`,
 		...renderEmail({
-			orgName: org,
+			orgName: org.name,
+			accent: org.accent,
 			heading: 'Application received',
 			lines: [
 				`Hi ${app.firstName},`,
@@ -585,7 +590,7 @@ export async function notifyNewApplication(
 	listingTitle: string
 ) {
 	if (!(await getNotificationPrefs(orgId)).newApplications) return;
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await inboxForManagers(orgId, 'application.submitted', app.id, {
 		title: `New application: ${listingTitle}`,
 		body: `${app.firstName} ${app.lastName} applied.`,
@@ -596,7 +601,8 @@ export async function notifyNewApplication(
 			to,
 			subject: `New application: ${listingTitle}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'New rental application',
 				lines: [`${app.firstName} ${app.lastName} applied for “${listingTitle}”.`],
 				action: {
@@ -616,12 +622,13 @@ export async function notifyWorkOrder(
 	place: string,
 	path: string
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	return sendEmail({
 		to: to.email,
 		subject: `Work order #${t.number} from ${org}: ${t.title}`,
 		...renderEmail({
-			orgName: org,
+			orgName: org.name,
+			accent: org.accent,
 			heading: `Work order #${t.number}`,
 			lines: [
 				`Hi ${to.name},`,
@@ -644,7 +651,7 @@ export async function notifyVendorUpdate(
 	key: string
 ) {
 	if (!(await getNotificationPrefs(t.organizationId)).maintenanceUpdates) return;
-	const org = await orgName(t.organizationId);
+	const org = await orgBrand(t.organizationId);
 	await inboxForManagers(t.organizationId, 'ticket.vendor_update', key, {
 		title: `#${t.number} ${t.title}: ${vendorName} ${changes.join(', ')}`,
 		body: note ?? undefined,
@@ -655,7 +662,8 @@ export async function notifyVendorUpdate(
 			to,
 			subject: `#${t.number} ${t.title}: ${vendorName} ${changes.join(', ')}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: `${vendorName} updated #${t.number}`,
 				lines: [
 					`${vendorName} ${changes.join(', ')} on “${t.title}”.`,
@@ -676,7 +684,7 @@ export async function notifyInspectionReady(
 	i: { id: string; kind: 'move_in' | 'move_out' | 'routine' },
 	residents: { name: string; email: string | null }[]
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	const what = i.kind === 'move_in' ? 'move-in' : 'move-out';
 	for (const r of residents) {
 		if (!r.email) continue;
@@ -684,7 +692,8 @@ export async function notifyInspectionReady(
 			to: r.email,
 			subject: `Your ${what} inspection report is ready`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: `Review your ${what} inspection`,
 				lines: [
 					`Hi ${r.name.split(' ')[0] || 'there'},`,
@@ -701,7 +710,7 @@ export async function notifyInspectionAcknowledged(
 	orgId: string,
 	i: { id: string; tenantComment: string | null }
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await inboxForManagers(orgId, 'inspection.acknowledged', i.id, {
 		title: i.tenantComment
 			? 'A resident commented on an inspection report'
@@ -716,7 +725,8 @@ export async function notifyInspectionAcknowledged(
 				? 'A resident commented on an inspection report'
 				: 'A resident reviewed an inspection report',
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'Inspection report reviewed',
 				lines: i.tenantComment
 					? ['The resident reviewed the report and left comments:', `“${i.tenantComment}”`]
@@ -742,12 +752,13 @@ export async function notifyResidentMessage(
 	r: { name: string; email: string | null }
 ) {
 	if (!r.email) return;
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await notifyOnce(orgId, 'message.created', m.id, {
 		to: r.email,
 		subject: `New message from ${org}`,
 		...renderEmail({
-			orgName: org,
+			orgName: org.name,
+			accent: org.accent,
 			heading: `New message from ${org}`,
 			lines: [`Hi ${r.name.split(' ')[0] || 'there'},`, ...paragraphs(m.body)],
 			action: { label: 'Reply in the resident portal', url: `${appOrigin()}/portal#messages` }
@@ -761,7 +772,7 @@ export async function notifyStaffMessage(
 	m: { id: string; body: string },
 	from: { tenantId: string; name: string }
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await inboxForManagers(orgId, 'message.created', m.id, {
 		title: `New message from ${from.name}`,
 		body: paragraphs(m.body)[0],
@@ -772,7 +783,8 @@ export async function notifyStaffMessage(
 			to,
 			subject: `New message from ${from.name}`,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: `${from.name} sent a message`,
 				lines: paragraphs(m.body),
 				action: { label: 'Reply', url: `${appOrigin()}/messages/${from.tenantId}` }
@@ -787,7 +799,7 @@ export async function notifyAnnouncement(
 	a: { id: string; subject: string; body: string },
 	residents: { name: string; email: string | null }[]
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	let sent = 0;
 	for (const r of residents) {
 		if (!r.email) continue;
@@ -795,7 +807,8 @@ export async function notifyAnnouncement(
 			to: r.email,
 			subject: a.subject,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: a.subject,
 				lines: [`Hi ${r.name.split(' ')[0] || 'there'},`, ...paragraphs(a.body)],
 				action: { label: 'Open the resident portal', url: `${appOrigin()}/portal` }
@@ -817,7 +830,7 @@ export async function notifyLeadActivity(
 	line: string
 ) {
 	if (!(await getNotificationPrefs(orgId)).newLeads) return;
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await inboxForManagers(orgId, 'lead.activity', key, {
 		title: subject,
 		body: line,
@@ -828,7 +841,8 @@ export async function notifyLeadActivity(
 			to,
 			subject,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: subject,
 				lines: [line],
 				action: { label: 'Open lead', url: `${appOrigin()}/leasing/leads/${lead.id}` }
@@ -845,12 +859,13 @@ export async function notifyTourConfirmed(
 	when: string,
 	place: string
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	await notifyOnce(orgId, 'tour.confirmed', tourId, {
 		to: lead.email,
 		subject: `Tour booked: ${place}, ${when}`,
 		...renderEmail({
-			orgName: org,
+			orgName: org.name,
+			accent: org.accent,
 			heading: 'Your tour is booked',
 			lines: [
 				`Hi ${lead.firstName},`,
@@ -869,12 +884,13 @@ export async function notifyWaitlistOpening(
 	listingTitle: string,
 	url: string
 ) {
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	return notifyOnce(orgId, 'waitlist.opening', listingId, {
 		to: lead.email,
 		subject: `Now available: ${listingTitle}`,
 		...renderEmail({
-			orgName: org,
+			orgName: org.name,
+			accent: org.accent,
 			heading: 'A home you were waiting for is available',
 			lines: [
 				`Hi ${lead.firstName},`,

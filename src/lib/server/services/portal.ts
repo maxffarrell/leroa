@@ -61,7 +61,12 @@ export async function claimPortal(token: string, userId: string) {
 
 export async function portalTenants(userId: string) {
 	return db
-		.select({ tenant, orgName: organization.name })
+		.select({
+			tenant,
+			orgName: organization.name,
+			portalTitle: organization.portalTitle,
+			orgAccent: organization.accentColor
+		})
 		.from(tenant)
 		.innerJoin(organization, eq(organization.id, tenant.organizationId))
 		.where(eq(tenant.portalUserId, userId));
@@ -71,7 +76,14 @@ export async function portalOverview(userId: string) {
 	return portalOverviewForTenants(await portalTenants(userId));
 }
 
-async function portalOverviewForTenants(tenants: { tenant: Tenant; orgName: string }[]) {
+async function portalOverviewForTenants(
+	tenants: {
+		tenant: Tenant;
+		orgName: string;
+		portalTitle?: string | null;
+		orgAccent?: string | null;
+	}[]
+) {
 	if (!tenants.length) return null;
 	const tenantIds = tenants.map((t) => t.tenant.id);
 	const leases = await db
@@ -172,7 +184,8 @@ async function portalOverviewForTenants(tenants: { tenant: Tenant; orgName: stri
 
 	return {
 		name: tenants[0]!.tenant.firstName || tenants[0]!.tenant.companyName || '',
-		orgName: tenants[0]!.orgName,
+		orgName: tenants[0]!.portalTitle ?? tenants[0]!.orgName,
+		orgAccent: tenants[0]!.orgAccent,
 		leases: leases.map((l, i) => ({
 			...l,
 			provisions: provisions.get(l.id),
@@ -293,7 +306,12 @@ export async function portalRequestPhotos(userId: string, ticketId: string, file
 /** Manager-facing read-only preview of what a tenant sees in the portal. */
 export async function portalPreview(orgId: string, tenantId: string) {
 	const [t] = await db
-		.select({ tenant, orgName: organization.name })
+		.select({
+			tenant,
+			orgName: organization.name,
+			portalTitle: organization.portalTitle,
+			orgAccent: organization.accentColor
+		})
 		.from(tenant)
 		.innerJoin(organization, eq(organization.id, tenant.organizationId))
 		.where(and(eq(tenant.organizationId, orgId), eq(tenant.id, tenantId)));

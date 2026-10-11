@@ -221,9 +221,12 @@
 				<h1 class="text-xl font-semibold tracking-tight">{name}</h1>
 				<StatusBadge status={l.stage} />
 				{#if l.waitlist}<StatusBadge status="waitlist" />{/if}
-				{#if l.aiScore}<LeadScoreBadge score={l.aiScore} reason={l.aiScoreReason} />{/if}
+				{#if l.aiScore && page.data.enterprise}<LeadScoreBadge
+						score={l.aiScore}
+						reason={l.aiScoreReason}
+					/>{/if}
 			</div>
-			{#if l.aiScoreReason}
+			{#if l.aiScoreReason && page.data.enterprise}
 				<p class="text-xs text-muted-foreground">AI intake score — {l.aiScoreReason}</p>
 			{/if}
 			<p class="text-sm text-muted-foreground">

@@ -180,29 +180,30 @@ const watchSchema = v.array(
 export async function delinquencyWatch(
 	orgId: string
 ): Promise<{ leaseId: string; reason: string }[]> {
+	const lid = sql.raw('"lease"."id"');
 	const rows = await db
 		.select({
 			leaseId: lease.id,
+			// ${lease.id} renders as bare "id" inside these correlated subqueries —
+			// ambiguous against charge.id/payment.id. Qualify the lease id literally.
 			balanceCents:
-				sql<number>`coalesce((select sum(c.amount) from ${charge} c where c.lease_id = ${lease.id} and c.due_date <= current_date), 0)
-					- coalesce((select sum(p.amount) from ${payment} p where p.lease_id = ${lease.id}), 0)`.mapWith(
-					Number
-				),
+				sql<number>`coalesce((select sum(c.amount) from ${charge} c where c.lease_id = ${lid} and c.due_date <= current_date), 0)
+					- coalesce((select sum(p.amount) from ${payment} p where p.lease_id = ${lid}), 0)`.mapWith(Number),
 			monthlyRentCents:
-				sql<number>`coalesce((select c.amount from ${charge} c where c.lease_id = ${lease.id} and c.kind = 'rent' order by c.due_date desc limit 1), 0)`.mapWith(
+				sql<number>`coalesce((select c.amount from ${charge} c where c.lease_id = ${lid} and c.kind = 'rent' order by c.due_date desc limit 1), 0)`.mapWith(
 					Number
 				),
 			lateCount6m:
-				sql<number>`(select count(*) from ${payment} p join ${charge} c on c.id = p.charge_id where p.lease_id = ${lease.id} and c.due_date >= current_date - 180 and p.created_at::date > c.due_date + 7)`.mapWith(
+				sql<number>`(select count(*) from ${payment} p join ${charge} c on c.id = p.charge_id where p.lease_id = ${lid} and c.due_date >= current_date - 180 and p.created_at::date > c.due_date + 7)`.mapWith(
 					Number
 				),
 			dueCount6m:
-				sql<number>`(select count(*) from ${charge} c where c.lease_id = ${lease.id} and c.due_date >= current_date - 180)`.mapWith(
+				sql<number>`(select count(*) from ${charge} c where c.lease_id = ${lid} and c.due_date >= current_date - 180)`.mapWith(
 					Number
 				),
 			lastPaymentAt: sql<
 				string | null
-			>`(select max(p.created_at)::text from ${payment} p where p.lease_id = ${lease.id})`
+			>`(select max(p.created_at)::text from ${payment} p where p.lease_id = ${lid})`
 		})
 		.from(lease)
 		.where(and(eq(lease.organizationId, orgId), eq(lease.status, 'active')));

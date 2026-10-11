@@ -20,6 +20,7 @@ import {
 } from '#lib/server/db/schema.ts';
 import { appOrigin, sendEmail } from '#lib/server/email.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
+import { orgBrand } from '#lib/server/branding.ts';
 import type { OrgContext } from '#lib/server/context.ts';
 import type {
 	amenityInput,
@@ -281,15 +282,20 @@ export async function logPackage(ctx: OrgContext, input: Out<typeof packageInput
 	});
 
 	if (resident?.email) {
-		const [u] = input.unitId
-			? await db.select({ name: unit.name }).from(unit).where(eq(unit.id, input.unitId))
-			: [null];
+		const [uRows, brand] = await Promise.all([
+			input.unitId
+				? db.select({ name: unit.name }).from(unit).where(eq(unit.id, input.unitId))
+				: Promise.resolve([] as { name: string }[]),
+			orgBrand(ctx.orgId)
+		]);
+		const u = uRows[0];
 		const place = u?.name ? `unit ${u.name}` : p.name;
 		void sendEmail({
 			to: resident.email,
 			subject: `A package arrived for you at ${p.name}`,
 			...renderEmail({
-				orgName: p.name,
+				orgName: brand.name,
+				accent: brand.accent,
 				heading: 'Package pickup ready',
 				lines: [
 					`Hi ${resident.name}, a package${input.carrier ? ` from ${input.carrier}` : ''} was received for ${place}.`,

@@ -10,6 +10,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { getLeads, updateLead } from '#lib/remote/crm.remote.ts';
 	import { bulkSetLeadStage } from '#lib/remote/bulk.remote.ts';
@@ -231,7 +232,7 @@
 									<div class="flex items-start justify-between gap-2">
 										<span class="text-sm leading-snug font-medium">{leadName(l)}</span>
 										<span class="flex shrink-0 items-center gap-1">
-											{#if l.aiScore}<LeadScoreBadge
+											{#if l.aiScore && page.data.enterprise}<LeadScoreBadge
 													score={l.aiScore}
 													reason={l.aiScoreReason}
 												/>{/if}
@@ -296,7 +297,10 @@
 									<a href="/leasing/leads/{l.id}" class="block truncate font-medium"
 										>{leadName(l)}</a
 									>
-									{#if l.aiScore}<LeadScoreBadge score={l.aiScore} reason={l.aiScoreReason} />{/if}
+									{#if l.aiScore && page.data.enterprise}<LeadScoreBadge
+											score={l.aiScore}
+											reason={l.aiScoreReason}
+										/>{/if}
 								</span>
 								<span class="block truncate text-xs text-muted-foreground"
 									>{l.email ?? l.phone ?? ''}</span

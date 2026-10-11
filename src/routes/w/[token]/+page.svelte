@@ -94,7 +94,7 @@
 
 <header class="border-b bg-background">
 	<div class="mx-auto flex h-14 max-w-2xl items-center justify-between gap-2 px-4">
-		<span class="truncate font-medium">{w.orgName}</span>
+		<span class="truncate font-medium" style:color={w.orgAccent}>{w.orgName}</span>
 		<span class="text-sm text-muted-foreground">Work order for {w.vendorName}</span>
 	</div>
 </header>

@@ -240,11 +240,11 @@ export async function portalMessages(userId: string) {
 			)
 		);
 	const out = [];
-	for (const { tenant: t, orgName } of tenants) {
+	for (const { tenant: t, orgName, portalTitle } of tenants) {
 		const thread = threads.find((x) => x.tenantId === t.id);
 		out.push({
 			tenantId: t.id,
-			orgName,
+			orgName: portalTitle ?? orgName,
 			lastReadAt: thread?.tenantReadAt ?? null,
 			messages: thread ? await threadMessages(thread.id) : []
 		});
