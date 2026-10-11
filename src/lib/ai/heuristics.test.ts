@@ -94,7 +94,6 @@ describe('heuristicListingCopy', () => {
 		expect(copy.description).toContain('Available now');
 	});
 });
-<<<<<<< HEAD
 
 describe('heuristicLeaseExtract', () => {
 	const SAMPLE = `

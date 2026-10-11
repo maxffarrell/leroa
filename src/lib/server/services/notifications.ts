@@ -906,11 +906,11 @@ export async function sendAiDigest(orgId: string): Promise<number> {
 	if (!hasFeature('ai')) return 0;
 	const prefs = await getNotificationPrefs(orgId);
 	if (!prefs.aiDigest) return 0;
-	const org = await orgName(orgId);
+	const org = await orgBrand(orgId);
 	const managers = await managerEmails(orgId);
 	if (!managers.length) return 0;
 	const { digestFacts, digestEmail } = await import('#lib/server/ai/index.ts');
-	const facts = await digestFacts(orgId, org);
+	const facts = await digestFacts(orgId, org.name);
 	const mail = await digestEmail(facts);
 	const day = todayISO();
 	let sent = 0;
@@ -919,7 +919,8 @@ export async function sendAiDigest(orgId: string): Promise<number> {
 			to,
 			subject: mail.subject,
 			...renderEmail({
-				orgName: org,
+				orgName: org.name,
+				accent: org.accent,
 				heading: 'Your morning digest',
 				lines: [mail.intro, ...mail.lines.map((l) => `• ${l}`)],
 				action: { label: 'Open dashboard', url: `${appOrigin()}/` }
