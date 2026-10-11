@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { requireOrg } from '#lib/server/context.ts';
 import { hasFeature } from '#lib/server/ee/license.ts';
-import { idSchema } from '#lib/schemas.ts';
+import { idSchema, reportParams } from '#lib/schemas.ts';
 import * as ai from '#lib/server/ai/index.ts';
 import { askAssistant } from '#lib/server/ai/assistant.ts';
 
@@ -59,4 +59,19 @@ export const aiMapCsv = command(
 export const aiInsights = query(async () => {
 	const ctx = await requireEnterprise();
 	return ai.insights(ctx.orgId);
+});
+
+export const aiTenantSummary = query(idSchema, async (tenantId) => {
+	const ctx = await requireEnterprise();
+	return ai.tenantSummary(ctx.orgId, tenantId);
+});
+
+export const aiReportSummary = command(reportParams, async ({ key, ...params }) => {
+	const ctx = await requireEnterprise();
+	return ai.reportSummary(ctx.orgId, key, params);
+});
+
+export const aiSuggestVendor = command(idSchema, async (ticketId) => {
+	const ctx = await requireEnterprise();
+	return ai.suggestVendor(ctx.orgId, ticketId);
 });

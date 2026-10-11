@@ -31,6 +31,7 @@
 	} from '#lib/remote/maintenance.remote.ts';
 	import { getVendors } from '#lib/remote/vendors.remote.ts';
 	import { bulkUpdateTickets } from '#lib/remote/bulk.remote.ts';
+	import { aiSuggestVendor } from '#lib/remote/ai.remote.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
@@ -135,6 +136,24 @@
 
 	let addingVendor = $state(false);
 	let sending = $state(false);
+	let suggesting = $state(false);
+
+	async function suggestVendor(t: Ticket) {
+		suggesting = true;
+		try {
+			const pick = await aiSuggestVendor(t.id);
+			if (!pick) {
+				toast.info('No vendor matches this kind of work');
+				return;
+			}
+			await patch(t.id, { vendorId: pick.vendorId });
+			toast.success(`Suggested ${pick.vendorName} — ${pick.reason}`);
+		} catch (err) {
+			toast.error(errMsg(err, 'Could not suggest a vendor'));
+		} finally {
+			suggesting = false;
+		}
+	}
 	let cost = $state<number | null>(null);
 	const selectedVendor = $derived(vendors.find((v) => v.id === selected?.vendorId) ?? null);
 
@@ -438,10 +457,20 @@
 					<Field.Field>
 						<div class="flex items-center justify-between">
 							<Field.Label>Vendor</Field.Label>
-							{#if selected.vendorId}<a
-									href="/vendors/{selected.vendorId}"
-									class="text-xs text-muted-foreground hover:underline">View vendor</a
-								>{/if}
+							<div class="flex items-center gap-3">
+								{#if page.data.enterprise}
+									<button
+										class="text-xs text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
+										disabled={suggesting}
+										onclick={() => suggestVendor(selected!)}
+										>{suggesting ? 'Thinking…' : 'Ask AI'}</button
+									>
+								{/if}
+								{#if selected.vendorId}<a
+										href="/vendors/{selected.vendorId}"
+										class="text-xs text-muted-foreground hover:underline">View vendor</a
+									>{/if}
+							</div>
 						</div>
 						<Select.Root
 							type="single"

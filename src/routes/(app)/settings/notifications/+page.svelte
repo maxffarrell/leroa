@@ -167,5 +167,12 @@
 			'Vendor insurance expiring',
 			'An alert when a vendor’s certificate of insurance is about to lapse, and again once it has.'
 		)}
+		{#if page.data.enterprise}
+			{@render toggle(
+				'aiDigest',
+				'AI morning digest',
+				'A daily email summarizing yesterday’s payments, new requests, and upcoming deadlines.'
+			)}
+		{/if}
 	</Card.Content>
 </Card.Root>

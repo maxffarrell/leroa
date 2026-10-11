@@ -11,6 +11,8 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { getTenant, updateTenant, deleteTenant } from '#lib/remote/portfolio.remote.ts';
 	import { createPortalLink } from '#lib/remote/portal.remote.ts';
+	import { aiTenantSummary } from '#lib/remote/ai.remote.ts';
+	import AiSummary from '#lib/components/app/ai-summary.svelte';
 	import Link from '@lucide/svelte/icons/link';
 	import { formatDate, formatMoney, formatRelative, initials, tenantName } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
@@ -142,6 +144,12 @@
 			<RecordFields entity="tenant" recordId={t.id} />
 			{#snippet pending()}{/snippet}
 		</svelte:boundary>
+		{#if page.data.enterprise}
+			<AiSummary
+				load={() => aiTenantSummary(id)}
+				description="An AI overview of this tenant’s lease, balance, payments and requests."
+			/>
+		{/if}
 		{#if t.leases.length === 0}<Button
 				variant="ghost"
 				size="sm"
