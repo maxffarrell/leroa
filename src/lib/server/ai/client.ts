@@ -1,28 +1,64 @@
-import { AI_API_KEY, AI_BASE_URL, AI_MODEL } from '$app/env/private';
+import {
+	AI_API_KEY,
+	AI_BASE_URL,
+	AI_DECISION_API_KEY,
+	AI_DECISION_BASE_URL,
+	AI_DECISION_MODEL,
+	AI_MODEL
+} from '$app/env/private';
 
 /**
- * Provider-agnostic OpenAI-compatible client. When AI_API_KEY is unset every
- * call returns null and the feature falls back to its local heuristic, so all
- * AI features work (deterministically) without any provider configured.
+ * Provider-agnostic OpenAI-compatible client. When the provider's key is unset
+ * every call returns null and the feature falls back to its local heuristic,
+ * so all AI features work (deterministically) without any provider configured.
+ *
+ * Two providers share this client:
+ * - feature (`AI_API_KEY`/`AI_BASE_URL`/`AI_MODEL`): generative features —
+ *   assistant, drafting, summaries, extraction, classification.
+ * - decision (`AI_DECISION_*`): the structured snap decisions in decisions.ts.
+ *   Each `AI_DECISION_*` var falls back to its `AI_*` counterpart when unset,
+ *   so a single-key install drives both — set them to route decisions at a
+ *   different (e.g. cheaper/faster) provider or model.
  */
+type Provider = {
+	apiKey: string | undefined;
+	baseUrl: string;
+	model: string;
+};
+
+const feature: Provider = { apiKey: AI_API_KEY, baseUrl: AI_BASE_URL, model: AI_MODEL };
+const decision: Provider = {
+	apiKey: AI_DECISION_API_KEY ?? AI_API_KEY,
+	baseUrl: AI_DECISION_BASE_URL ?? AI_BASE_URL,
+	model: AI_DECISION_MODEL ?? AI_MODEL
+};
+
 export function aiConfigured(): boolean {
-	return !!AI_API_KEY;
+	return !!feature.apiKey;
+}
+
+export function decisionConfigured(): boolean {
+	return !!decision.apiKey;
 }
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
-async function chat(messages: ChatMessage[], json: boolean): Promise<string | null> {
-	if (!AI_API_KEY) return null;
+async function chat(
+	provider: Provider,
+	messages: ChatMessage[],
+	json: boolean
+): Promise<string | null> {
+	if (!provider.apiKey) return null;
 	try {
-		const res = await fetch(`${AI_BASE_URL.replace(/\/+$/, '')}/chat/completions`, {
+		const res = await fetch(`${provider.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/json',
-				authorization: `Bearer ${AI_API_KEY}`
+				authorization: `Bearer ${provider.apiKey}`
 			},
 			signal: AbortSignal.timeout(30_000),
 			body: JSON.stringify({
-				model: AI_MODEL,
+				model: provider.model,
 				temperature: 0.4,
 				...(json ? { response_format: { type: 'json_object' } } : {}),
 				messages
@@ -40,6 +76,7 @@ async function chat(messages: ChatMessage[], json: boolean): Promise<string | nu
 
 export function chatText(system: string, user: string): Promise<string | null> {
 	return chat(
+		feature,
 		[
 			{ role: 'system', content: system },
 			{ role: 'user', content: user }
@@ -48,12 +85,25 @@ export function chatText(system: string, user: string): Promise<string | null> {
 	);
 }
 
-export async function chatJson<T>(
+export function decisionChatText(system: string, user: string): Promise<string | null> {
+	return chat(
+		decision,
+		[
+			{ role: 'system', content: system },
+			{ role: 'user', content: user }
+		],
+		false
+	);
+}
+
+async function json<T>(
+	provider: Provider,
 	system: string,
 	user: string,
 	parse: (value: unknown) => T | null
 ): Promise<T | null> {
 	const text = await chat(
+		provider,
 		[
 			{ role: 'system', content: `${system}\nRespond with a single JSON object only.` },
 			{ role: 'user', content: user }
@@ -69,4 +119,20 @@ export async function chatJson<T>(
 	} catch {
 		return null;
 	}
+}
+
+export function chatJson<T>(
+	system: string,
+	user: string,
+	parse: (value: unknown) => T | null
+): Promise<T | null> {
+	return json(feature, system, user, parse);
+}
+
+export function decisionChatJson<T>(
+	system: string,
+	user: string,
+	parse: (value: unknown) => T | null
+): Promise<T | null> {
+	return json(decision, system, user, parse);
 }

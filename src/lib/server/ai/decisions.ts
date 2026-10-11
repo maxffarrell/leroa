@@ -1,7 +1,9 @@
 /**
  * Snap decisions for the enterprise tier — one fast classification call that
- * routes, flags and prioritizes incoming work. Each feature falls back to a
- * deterministic local heuristic when AI_API_KEY is unset.
+ * routes, flags and prioritizes incoming work. These calls go through the
+ * decision provider (`AI_DECISION_*`, falling back to `AI_*`), so they can run
+ * on a cheaper/faster model than the generative features. Each feature falls
+ * back to a deterministic local heuristic when the provider is unconfigured.
  *
  * Deliberately imports no services so any service can call these without
  * creating import cycles.
@@ -10,7 +12,7 @@ import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
 import { charge, lease, maintenanceTicket, payment } from '#lib/server/db/schema.ts';
-import { chatJson } from './client.ts';
+import { decisionChatJson } from './client.ts';
 import {
 	heuristicDelinquency,
 	heuristicIntake,
@@ -75,7 +77,7 @@ export async function intakeTicket(
 	}
 ): Promise<IntakeDecision> {
 	const candidates = await dupCandidates(orgId, input.unitId ?? null, input.propertyId ?? null);
-	const parsed = await chatJson(
+	const parsed = await decisionChatJson(
 		`You decide on an incoming maintenance request for a property manager — fast, two calls. "emergency": true only for immediate safety or active-damage risk (gas, fire, flooding, no heat or water, break-in, sparking). "duplicateId": the id of one of the open requests below when this clearly reports the same issue, else null. Give a one-clause reason for each decision you make, null otherwise.`,
 		JSON.stringify({
 			title: input.title,
@@ -127,7 +129,7 @@ export async function scoreLead(
 	}
 ): Promise<LeadScore> {
 	void orgId;
-	const parsed = await chatJson(
+	const parsed = await decisionChatJson(
 		`You score leasing inquiries for a property manager. "hot" = likely to lease soon: reachable, near-term move-in, named a home, already applied, or wrote with urgency. "warm" = a couple of those signals. "cold" = thin or vague. Judge sales-readiness only — never demographics, family status, or anything about who the person is. "reason" is one short clause an agent can act on.`,
 		JSON.stringify({
 			source: input.source,
@@ -151,7 +153,7 @@ const messageSchema = v.object({
 
 /** Routes a tenant's portal message and flags emergencies for faster handling. */
 export async function classifyMessage(body: string): Promise<MessageClass> {
-	const parsed = await chatJson(
+	const parsed = await decisionChatJson(
 		`You classify a tenant's message to their property manager. Categories: maintenance (repairs or problems with the home), payment (rent, charges, deposits), lease (renewals, move-outs, roommates, pets, parking, keys), other. "urgent" is true only for immediate safety or active-damage emergencies, not mere unhappiness.`,
 		JSON.stringify({ body: body.slice(0, 2000) }),
 		(raw) => vsafe(messageSchema, raw)
@@ -220,7 +222,7 @@ export async function delinquencyWatch(
 		.filter((f) => f.balanceCents > 0 || f.lateCount6m > 0);
 	if (!facts.length) return [];
 
-	const parsed = await chatJson(
+	const parsed = await decisionChatJson(
 		`You flag leases a property manager should watch for late payment, from payment facts only. "watch": true when the pattern is deteriorating — a growing balance, repeated lates, or long silence with money owed. A small current balance with an otherwise on-time history is not a watch. "reason" is one short clause. Judge payment history only.`,
 		JSON.stringify({ leases: facts }),
 		(raw) => vsafe(watchSchema, raw)
