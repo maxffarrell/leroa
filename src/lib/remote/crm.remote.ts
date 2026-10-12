@@ -1,8 +1,12 @@
+import { staffOrgForRecord } from '#lib/server/access.ts';
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { inScope } from '#lib/remote/scope.ts';
 import { command, getRequestEvent, query } from '$app/server';
 import { getOrg, requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/crm.ts';
+import * as svcRaw from '#lib/server/services/crm.ts';
+import { crmPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, crmPolicy);
 import {
 	idSchema,
 	inquiryInput,
@@ -128,7 +132,10 @@ function meta() {
 }
 
 export const getTourSlots = query(tourSlotsInput, async (input) =>
-	svc.publicTourSlots(input, (await getOrg())?.orgId ?? null)
+	svc.publicTourSlots(
+		input,
+		await staffOrgForRecord(await getOrg(), 'properties', 'properties', input.propertyId)
+	)
 );
 export const submitInquiry = command(inquiryInput, async (input) =>
 	svc.submitInquiry(input, meta())

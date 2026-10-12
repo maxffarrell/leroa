@@ -1,7 +1,10 @@
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { command, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/vendors.ts';
+import * as svcRaw from '#lib/server/services/vendors.ts';
+import { vendorsPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, vendorsPolicy);
 import { idSchema, vendorInput, vendorUpdate } from '#lib/schemas.ts';
 
 export const getVendors = query(v.optional(v.boolean(), false), async (includeArchived) =>

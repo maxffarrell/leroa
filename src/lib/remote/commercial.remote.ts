@@ -1,6 +1,9 @@
+import { secureServices } from '#lib/server/access.ts';
 import { command, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/commercial.ts';
+import * as svcRaw from '#lib/server/services/commercial.ts';
+import { commercialPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, commercialPolicy);
 import {
 	clauseInput,
 	criticalDateDoneInput,

@@ -1,3 +1,4 @@
+import { assertWorkspaceDataAccess } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { randomBytes } from 'node:crypto';
 import { and, asc, desc, eq } from 'drizzle-orm';
@@ -20,9 +21,17 @@ import { appOrigin } from '#lib/server/email.ts';
 import { idSchema, webhookInput } from '#lib/schemas.ts';
 import { hasFeature } from '#lib/server/features.ts';
 
-export const getDashboard = query(async () => dashboard((await requireOrg()).orgId));
+export const getDashboard = query(async () =>
+	(async () => {
+		const ctx = await requireOrg();
+		return dashboard(ctx.orgId, ctx);
+	})()
+);
 export const searchAll = query(v.pipe(v.string(), v.maxLength(100)), async (q) =>
-	search((await requireOrg()).orgId, q)
+	(async () => {
+		const ctx = await requireOrg();
+		return search(ctx.orgId, q, ctx);
+	})()
 );
 
 export const getMembers = query(async () => {
@@ -184,7 +193,9 @@ export const disconnectIntegration = command(v.string(), async (id) => {
 });
 
 export const getSyncIssues = query(v.string(), async (id) => {
-	const { orgId } = await requireOrg();
+	const ctx = await requireOrg();
+	assertWorkspaceDataAccess(ctx);
+	const { orgId } = ctx;
 	return syncIssues(orgId, id);
 });
 

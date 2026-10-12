@@ -1,3 +1,4 @@
+import { staffOrgForRecord } from '#lib/server/access.ts';
 import type { RequestHandler } from './$types';
 import { getOrg, requireUser } from '#lib/server/context.ts';
 import { agreementFile } from '#lib/server/services/agreements.ts';
@@ -6,7 +7,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const { user } = requireUser();
 	const ctx = await getOrg();
 	const { name, data } = await agreementFile(params.id, {
-		orgId: ctx?.orgId ?? null,
+		orgId: await staffOrgForRecord(ctx, 'leases', 'agreement', params.id),
 		userId: user.id
 	});
 	const disposition = url.searchParams.has('download') ? 'attachment' : 'inline';

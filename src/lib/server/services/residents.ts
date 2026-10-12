@@ -731,6 +731,7 @@ export async function listSurveyResponses(orgId: string, surveyId: string) {
 }
 
 export async function createSurvey(ctx: OrgContext, input: Out<typeof surveyInput>) {
+	if (ctx.propertyIds && !input.propertyId) error(403, 'Select an assigned property');
 	if (input.propertyId) {
 		const [p] = await db
 			.select({ id: property.id })

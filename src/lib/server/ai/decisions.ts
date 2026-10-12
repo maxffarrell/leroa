@@ -1,3 +1,5 @@
+import type { OrgContext } from '#lib/server/context.ts';
+import { filterRecords } from '#lib/server/access.ts';
 /**
  * Snap decisions for the self-hosted core — one fast classification call that
  * routes, flags and prioritizes incoming work. These calls go through the
@@ -180,7 +182,8 @@ const watchSchema = v.array(
  * nothing about the tenant themselves.
  */
 export async function delinquencyWatch(
-	orgId: string
+	orgId: string,
+	ctx?: OrgContext
 ): Promise<{ leaseId: string; reason: string }[]> {
 	const lid = sql.raw('"lease"."id"');
 	const rows = await db
@@ -210,7 +213,8 @@ export async function delinquencyWatch(
 		.from(lease)
 		.where(and(eq(lease.organizationId, orgId), eq(lease.status, 'active')));
 
-	const facts: LeaseFacts[] = rows
+	const scopedRows = ctx ? await filterRecords(ctx, 'leases', rows, 'leaseId') : rows;
+	const facts: LeaseFacts[] = scopedRows
 		.map((r) => ({
 			leaseId: r.leaseId,
 			balanceCents: r.balanceCents,

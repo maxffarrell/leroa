@@ -120,6 +120,7 @@ const clean = <T extends { email?: string | null }>(data: T) => ({
 
 export async function createOwner(ctx: OrgContext, input: Out<typeof ownerInput>) {
 	const { propertyIds = [], ...data } = input;
+	if (ctx.propertyIds && !propertyIds.length) error(403, 'Select an assigned property');
 	const [row] = await db
 		.insert(owner)
 		.values({ ...clean(data), organizationId: ctx.orgId })
@@ -140,6 +141,7 @@ export async function updateOwner(
 	ctx: OrgContext,
 	{ id, archived, propertyIds, ...data }: Out<typeof ownerUpdate>
 ) {
+	if (ctx.propertyIds && propertyIds?.length === 0) error(403, 'Select an assigned property');
 	const [row] = await db
 		.update(owner)
 		.set({

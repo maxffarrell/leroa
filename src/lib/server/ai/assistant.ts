@@ -1,3 +1,6 @@
+import type { OrgContext } from '#lib/server/context.ts';
+import { allows, type ApiResource } from '#lib/api-permissions.ts';
+import { filterRecords } from '#lib/server/access.ts';
 /**
  * Workspace assistant: answers questions grounded in live org data and drafts
  * work orders / tenant replies. Uses the configured provider when AI_API_KEY
@@ -69,17 +72,20 @@ const answerSchema = v.object({
 	action: v.optional(v.nullable(actionSchema), null)
 });
 
-async function loadPack(orgId: string) {
+async function loadPack(orgId: string, ctx?: OrgContext) {
+	const permitted = (resource: ApiResource) => !ctx?.perms || allows(ctx.perms, resource, 'read');
+	const rows = async <T>(resource: ApiResource, load: () => Promise<T[]>) =>
+		permitted(resource) ? (ctx ? filterRecords(ctx, resource, await load()) : load()) : [];
 	const [properties, units, leases, tickets, tenants, listings, vendors, leads] = await Promise.all(
 		[
-			listProperties(orgId),
-			listUnits(orgId),
-			listLeases(orgId),
-			listTickets(orgId),
-			listTenants(orgId),
-			listListings(orgId),
-			listVendors(orgId),
-			listLeads(orgId)
+			rows('properties', () => listProperties(orgId)),
+			rows('units', () => listUnits(orgId)),
+			rows('leases', () => listLeases(orgId)),
+			rows('tickets', () => listTickets(orgId)),
+			rows('tenants', () => listTenants(orgId)),
+			rows('listings', () => listListings(orgId)),
+			rows('vendors', () => listVendors(orgId)),
+			rows('leads', () => listLeads(orgId))
 		]
 	);
 	return { properties, units, leases, tickets, tenants, listings, vendors, leads };
@@ -87,8 +93,12 @@ async function loadPack(orgId: string) {
 
 type Pack = Awaited<ReturnType<typeof loadPack>>;
 
-export async function askAssistant(orgId: string, question: string): Promise<AssistantAnswer> {
-	const pack = await loadPack(orgId);
+export async function askAssistant(
+	orgId: string,
+	question: string,
+	ctx?: OrgContext
+): Promise<AssistantAnswer> {
+	const pack = await loadPack(orgId, ctx);
 	if (aiConfigured()) {
 		const ai = await chatJson(
 			`You are the assistant inside Leroa, a property-management workspace. Answer ONLY from the JSON data given — if the data doesn't cover it, say so briefly. Be terse: lead with the direct answer, then a compact list (one item per line, "- " bullets). Never advise on approving/denying applicants, steering, or protected classes — decline and offer to open the application instead. Return {"reply": "...", "sources": [{"label", "href"}]} with hrefs like /maintenance /leases /tenants. When asked to draft a work order add "action": {"type": "create_ticket", "input": {propertyId, unitId, tenantId, title, description, priority}} using real ids from the data. When asked to draft a message to a tenant add {"type": "draft_reply", tenantId, tenantName, body} — body is the short reply text only.`,
@@ -97,7 +107,7 @@ export async function askAssistant(orgId: string, question: string): Promise<Ass
 		);
 		if (ai && ai.reply.trim()) return ai;
 	}
-	return heuristicAsk(orgId, pack, question);
+	return heuristicAsk(orgId, pack, question, ctx);
 }
 
 function snapshot(pack: Pack) {
@@ -183,7 +193,12 @@ const VENDOR_Q = /\b(vendor|plumber|electrician|hvac|contractor|handyman|pest)/i
 const LEAD_Q = /\b(lead|applicant|application|prospect|waitlist|tour)/i;
 const LEASE_OF = /\blease\b/i;
 
-async function heuristicAsk(orgId: string, pack: Pack, question: string): Promise<AssistantAnswer> {
+async function heuristicAsk(
+	orgId: string,
+	pack: Pack,
+	question: string,
+	ctx?: OrgContext
+): Promise<AssistantAnswer> {
 	const q = question.trim();
 	const unit = findUnit(pack, q);
 	const tenant = findTenant(pack, q);
@@ -224,6 +239,8 @@ async function heuristicAsk(orgId: string, pack: Pack, question: string): Promis
 	}
 
 	if (DRAFT_MSG_VERB.test(q) && DRAFT_MSG.test(q)) {
+		if (ctx?.perms && !allows(ctx.perms, 'messages', 'read'))
+			return { reply: 'Your role cannot read tenant messages.', sources: [], action: null };
 		if (!tenant) {
 			return {
 				reply:

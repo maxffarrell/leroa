@@ -1,3 +1,6 @@
+import { canAccessRecord } from '#lib/server/access.ts';
+import { allows } from '#lib/api-permissions.ts';
+import type { OrgContext } from '#lib/server/context.ts';
 import { and, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
 import { maintenanceTicket, property, tenant, unit, vendor } from '#lib/server/db/schema.ts';
@@ -10,7 +13,7 @@ export type SearchHit = {
 	href: string;
 };
 
-export async function search(orgId: string, q: string): Promise<SearchHit[]> {
+export async function search(orgId: string, q: string, ctx?: OrgContext): Promise<SearchHit[]> {
 	const term = `%${q.trim()}%`;
 	if (q.trim().length < 1) return [];
 	const [props, units, tenants, tickets, vendorRows] = await Promise.all([
@@ -96,7 +99,7 @@ export async function search(orgId: string, q: string): Promise<SearchHit[]> {
 			)
 			.limit(5)
 	]);
-	return [
+	const hits: SearchHit[] = [
 		...props.map((p) => ({
 			type: 'property' as const,
 			id: p.id,
@@ -136,4 +139,20 @@ export async function search(orgId: string, q: string): Promise<SearchHit[]> {
 			href: `/vendors/${v.id}`
 		}))
 	];
+	if (!ctx) return hits;
+	const resources = {
+		property: 'properties',
+		unit: 'units',
+		tenant: 'tenants',
+		ticket: 'tickets',
+		vendor: 'vendors'
+	} as const;
+	const visible = await Promise.all(
+		hits.map(async (hit) => {
+			const resource = resources[hit.type];
+			if (ctx.perms && !allows(ctx.perms, resource, 'read')) return false;
+			return canAccessRecord(ctx, resource, hit.id);
+		})
+	);
+	return hits.filter((_, i) => visible[i]);
 }

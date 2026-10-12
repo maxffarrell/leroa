@@ -1,8 +1,11 @@
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { inScope } from '#lib/remote/scope.ts';
 import { command, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope, requireUser } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/inspections.ts';
+import * as svcRaw from '#lib/server/services/inspections.ts';
+import { inspectionsPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, inspectionsPolicy);
 import {
 	idSchema,
 	inspectionAcknowledge,

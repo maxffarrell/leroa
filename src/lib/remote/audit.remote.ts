@@ -1,3 +1,4 @@
+import { assertWorkspaceDataAccess } from '#lib/server/access.ts';
 import { query } from '$app/server';
 import * as v from 'valibot';
 import { requireOrg } from '#lib/server/context.ts';
@@ -15,7 +16,9 @@ const auditFilter = v.object({
 });
 
 export const getAuditLog = query(auditFilter, async (f) => {
-	const { orgId } = await requireOrg();
+	const ctx = await requireOrg();
+	assertWorkspaceDataAccess(ctx);
+	const { orgId } = ctx;
 	const [{ rows, hasMore }, facets, total] = await Promise.all([
 		listAudit(orgId, f),
 		auditFacets(orgId),

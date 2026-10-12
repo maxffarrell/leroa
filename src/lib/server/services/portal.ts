@@ -129,7 +129,12 @@ async function portalOverviewForTenants(
 			createdAt: maintenanceTicket.createdAt
 		})
 		.from(maintenanceTicket)
-		.where(inArray(maintenanceTicket.tenantId, tenantIds))
+		.where(
+			and(
+				inArray(maintenanceTicket.tenantId, tenantIds),
+				sql`exists (select 1 from ${tenant} linked where linked.id=${maintenanceTicket.tenantId} and linked.organization_id=${maintenanceTicket.organizationId})`
+			)
+		)
 		.orderBy(desc(maintenanceTicket.createdAt))
 		.limit(20);
 	const { portalSurveys } = await import('./residents.ts');

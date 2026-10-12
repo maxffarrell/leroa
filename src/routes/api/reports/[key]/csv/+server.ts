@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { requireOrg } from '#lib/server/context.ts';
+import { requirePerm } from '#lib/server/context.ts';
 import { runReport } from '#lib/server/services/reports.ts';
 import { reportParams } from '#lib/schemas.ts';
 import { toCsv, type CsvValue } from '#lib/csv.ts';
@@ -17,7 +17,7 @@ function exportValue(c: ReportColumn, value: ReportValue): CsvValue {
 }
 
 export const GET: RequestHandler = async ({ params, url }) => {
-	const ctx = await requireOrg();
+	const ctx = await requirePerm('reports');
 	const q = url.searchParams;
 	const parsed = v.safeParse(reportParams, {
 		key: params.key,
@@ -29,7 +29,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	});
 	if (!parsed.success) error(400, parsed.issues[0].message);
 	const { key, ...rest } = parsed.output;
-	const report = await runReport(ctx.orgId, key, rest);
+	const report = await runReport(ctx.orgId, key, rest, ctx);
 	const columns = report.columns;
 	const search = (q.get('q') ?? '').slice(0, 200).trim();
 	const rows = search ? report.rows.filter((r) => matchesQuery(r, search)) : report.rows;

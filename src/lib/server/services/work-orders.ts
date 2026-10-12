@@ -71,10 +71,29 @@ async function load(token: string) {
 			unitName: unit.name
 		})
 		.from(maintenanceTicket)
-		.innerJoin(vendor, eq(vendor.id, maintenanceTicket.vendorId))
-		.innerJoin(property, eq(property.id, maintenanceTicket.propertyId))
+		.innerJoin(
+			vendor,
+			and(
+				eq(vendor.id, maintenanceTicket.vendorId),
+				eq(vendor.organizationId, maintenanceTicket.organizationId)
+			)
+		)
+		.innerJoin(
+			property,
+			and(
+				eq(property.id, maintenanceTicket.propertyId),
+				eq(property.organizationId, maintenanceTicket.organizationId)
+			)
+		)
 		.innerJoin(organization, eq(organization.id, maintenanceTicket.organizationId))
-		.leftJoin(unit, eq(unit.id, maintenanceTicket.unitId))
+		.leftJoin(
+			unit,
+			and(
+				eq(unit.id, maintenanceTicket.unitId),
+				eq(unit.organizationId, maintenanceTicket.organizationId),
+				eq(unit.propertyId, maintenanceTicket.propertyId)
+			)
+		)
 		.where(
 			and(eq(maintenanceTicket.id, ids.ticketId), eq(maintenanceTicket.vendorId, ids.vendorId))
 		);

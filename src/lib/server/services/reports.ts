@@ -1,3 +1,5 @@
+import { assertPermission, assertRecordAccess } from '#lib/server/access.ts';
+import type { OrgContext } from '#lib/server/context.ts';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
 import {
@@ -20,6 +22,8 @@ import {
 } from '#lib/reports.ts';
 import { balanceSql, outer, runRentAutomation, tenantNames } from './leasing.ts';
 
+type ScopedReportParams = ReportParams & { propertyIds?: string[] };
+
 type Built = Omit<ReportResult, 'key' | 'title' | 'subtitle' | 'totals'> & {
 	note?: string;
 	/** Totals that aren't a plain sum (rates, labels). */
@@ -28,11 +32,12 @@ type Built = Omit<ReportResult, 'key' | 'title' | 'subtitle' | 'totals'> & {
 
 const human = (s: string) => (s.charAt(0).toUpperCase() + s.slice(1)).replaceAll('_', ' ');
 
-const inProperty = (orgId: string, propertyId?: string | null) =>
+const inProperty = (orgId: string, propertyId?: string | null, propertyIds?: string[]) =>
 	and(
 		eq(property.organizationId, orgId),
 		isNull(property.archivedAt),
-		propertyId ? eq(property.id, propertyId) : undefined
+		propertyId ? eq(property.id, propertyId) : undefined,
+		propertyIds ? inArray(property.id, propertyIds) : undefined
 	);
 
 /** The lease in force on each unit today: skips renewals that haven't started and leases they replaced. */
@@ -42,17 +47,23 @@ const currentLease = and(
 	sql`not exists (select 1 from ${lease} r where r.renewed_from_id = ${outer(lease.id)} and r.status = 'active' and r.start_date <= current_date)`
 );
 
-async function orgCurrencies(orgId: string) {
+async function orgCurrencies(orgId: string, propertyIds?: string[]) {
 	const rows = await db
 		.selectDistinct({ currency: lease.currency })
 		.from(lease)
-		.where(eq(lease.organizationId, orgId));
+		.innerJoin(unit, eq(unit.id, lease.unitId))
+		.where(
+			and(
+				eq(lease.organizationId, orgId),
+				propertyIds ? inArray(unit.propertyId, propertyIds) : undefined
+			)
+		);
 	return rows.map((r) => r.currency);
 }
 
 const single = (currencies: string[]) => (currencies.length <= 1 ? (currencies[0] ?? 'USD') : null);
 
-async function unitRows(orgId: string, propertyId?: string | null) {
+async function unitRows(orgId: string, propertyId?: string | null, propertyIds?: string[]) {
 	const [units, leases] = await Promise.all([
 		db
 			.select({
@@ -68,7 +79,7 @@ async function unitRows(orgId: string, propertyId?: string | null) {
 			})
 			.from(unit)
 			.innerJoin(property, eq(property.id, unit.propertyId))
-			.where(inProperty(orgId, propertyId))
+			.where(inProperty(orgId, propertyId, propertyIds))
 			.orderBy(asc(property.name), sql`length(${unit.name})`, asc(unit.name)),
 		db
 			.select({
@@ -91,9 +102,9 @@ async function unitRows(orgId: string, propertyId?: string | null) {
 	return units.map((u) => ({ ...u, lease: byUnit.get(u.unitId) ?? null }));
 }
 
-async function rentRollReport(orgId: string, p: ReportParams): Promise<Built> {
+async function rentRollReport(orgId: string, p: ScopedReportParams): Promise<Built> {
 	await runRentAutomation(orgId);
-	const units = await unitRows(orgId, p.propertyId);
+	const units = await unitRows(orgId, p.propertyId, p.propertyIds);
 	const currencies = [...new Set(units.flatMap((u) => (u.lease ? [u.lease.currency] : [])))];
 	return {
 		columns: [
@@ -127,12 +138,12 @@ async function rentRollReport(orgId: string, p: ReportParams): Promise<Built> {
 			balance: u.lease ? Math.max(0, u.lease.balance) : null
 		})),
 		links: units.map((u) => (u.lease ? `/leases/${u.lease.id}` : `/properties/${u.propertyId}`)),
-		currency: single(currencies.length ? currencies : await orgCurrencies(orgId))
+		currency: single(currencies.length ? currencies : await orgCurrencies(orgId, p.propertyIds))
 	};
 }
 
-async function occupancyReport(orgId: string, p: ReportParams): Promise<Built> {
-	const units = await unitRows(orgId, p.propertyId);
+async function occupancyReport(orgId: string, p: ScopedReportParams): Promise<Built> {
+	const units = await unitRows(orgId, p.propertyId, p.propertyIds);
 	const groups = new Map<string, { id: string; name: string; units: typeof units }>();
 	for (const u of units) {
 		const g = groups.get(u.propertyId) ?? { id: u.propertyId, name: u.propertyName, units: [] };
@@ -172,7 +183,7 @@ async function occupancyReport(orgId: string, p: ReportParams): Promise<Built> {
 		})),
 		links: list.map((g) => `/properties/${g.id}`),
 		totalOverrides: { occupancy: rate(units) },
-		currency: single(await orgCurrencies(orgId)),
+		currency: single(await orgCurrencies(orgId, p.propertyIds)),
 		note: 'Occupancy counts occupied and on-notice units. Vacant market rent uses each unit’s market rent.'
 	};
 }
@@ -184,7 +195,7 @@ const BUCKETS = [
 	{ key: 'd90', label: 'Over 90 days', max: Infinity }
 ] as const;
 
-async function delinquencyReport(orgId: string, p: ReportParams): Promise<Built> {
+async function delinquencyReport(orgId: string, p: ScopedReportParams): Promise<Built> {
 	await runRentAutomation(orgId);
 	const today = todayISO();
 	const charges = await db
@@ -200,7 +211,7 @@ async function delinquencyReport(orgId: string, p: ReportParams): Promise<Built>
 		.innerJoin(lease, eq(lease.id, charge.leaseId))
 		.innerJoin(unit, eq(unit.id, lease.unitId))
 		.innerJoin(property, eq(property.id, unit.propertyId))
-		.where(and(inProperty(orgId, p.propertyId), lte(charge.dueDate, today)))
+		.where(and(inProperty(orgId, p.propertyId, p.propertyIds), lte(charge.dueDate, today)))
 		.orderBy(asc(charge.dueDate));
 	const leaseIds = [...new Set(charges.map((c) => c.leaseId))];
 	if (!leaseIds.length)
@@ -208,7 +219,7 @@ async function delinquencyReport(orgId: string, p: ReportParams): Promise<Built>
 			columns: delinquencyColumns(),
 			rows: [],
 			links: [],
-			currency: single(await orgCurrencies(orgId))
+			currency: single(await orgCurrencies(orgId, p.propertyIds))
 		};
 
 	const [unallocated, leases] = await Promise.all([
@@ -295,7 +306,7 @@ function delinquencyColumns(): ReportColumn[] {
 	];
 }
 
-async function expiringReport(orgId: string, p: ReportParams): Promise<Built> {
+async function expiringReport(orgId: string, p: ScopedReportParams): Promise<Built> {
 	const today = todayISO();
 	const days = p.days ?? 90;
 	const rows = await db
@@ -315,7 +326,7 @@ async function expiringReport(orgId: string, p: ReportParams): Promise<Built> {
 		.innerJoin(property, eq(property.id, unit.propertyId))
 		.where(
 			and(
-				inProperty(orgId, p.propertyId),
+				inProperty(orgId, p.propertyId, p.propertyIds),
 				eq(lease.status, 'active'),
 				gte(lease.endDate, today),
 				lte(lease.endDate, addDays(today, days))
@@ -348,7 +359,7 @@ async function expiringReport(orgId: string, p: ReportParams): Promise<Built> {
 	};
 }
 
-async function collectionsReport(orgId: string, p: ReportParams): Promise<Built> {
+async function collectionsReport(orgId: string, p: ScopedReportParams): Promise<Built> {
 	await runRentAutomation(orgId);
 	const months = p.months ?? 12;
 	const current = monthKey();
@@ -373,7 +384,7 @@ async function collectionsReport(orgId: string, p: ReportParams): Promise<Built>
 		.innerJoin(property, eq(property.id, unit.propertyId))
 		.where(
 			and(
-				inProperty(orgId, p.propertyId),
+				inProperty(orgId, p.propertyId, p.propertyIds),
 				eq(charge.kind, 'rent'),
 				gte(charge.dueDate, `${first}-01`),
 				lte(charge.dueDate, end)
@@ -426,12 +437,12 @@ async function collectionsReport(orgId: string, p: ReportParams): Promise<Built>
 		})),
 		links: list.map(() => '/rent'),
 		totalOverrides: { rate: currencies.length > 1 ? null : pct(got, due) },
-		currency: single(currencies.length ? currencies : await orgCurrencies(orgId)),
+		currency: single(currencies.length ? currencies : await orgCurrencies(orgId, p.propertyIds)),
 		note: 'Collected counts payments applied to each month’s rent charge, capped at the charge amount.'
 	};
 }
 
-async function maintenanceReport(orgId: string, p: ReportParams): Promise<Built> {
+async function maintenanceReport(orgId: string, p: ScopedReportParams): Promise<Built> {
 	const to = p.to ?? todayISO();
 	const from = p.from ?? `${to.slice(0, 4)}-01-01`;
 	const rows = await db
@@ -454,7 +465,8 @@ async function maintenanceReport(orgId: string, p: ReportParams): Promise<Built>
 		.leftJoin(vendor, eq(vendor.id, maintenanceTicket.vendorId))
 		.where(
 			and(
-				inProperty(orgId, p.propertyId),
+				inProperty(orgId, p.propertyId, p.propertyIds),
+				eq(maintenanceTicket.organizationId, orgId),
 				sql`${maintenanceTicket.createdAt}::date between ${from}::date and ${to}::date`
 			)
 		)
@@ -491,12 +503,12 @@ async function maintenanceReport(orgId: string, p: ReportParams): Promise<Built>
 		})),
 		links: rows.map((r) => `/maintenance?ticket=${r.id}`),
 		totalOverrides: { number: null },
-		currency: single(await orgCurrencies(orgId)),
+		currency: single(await orgCurrencies(orgId, p.propertyIds)),
 		note: `Requests opened ${formatDate(from)} – ${formatDate(to)}. Cost is what staff or the vendor recorded on the job.`
 	};
 }
 
-const builders: Record<ReportKey, (orgId: string, p: ReportParams) => Promise<Built>> = {
+const builders: Record<ReportKey, (orgId: string, p: ScopedReportParams) => Promise<Built>> = {
 	'rent-roll': rentRollReport,
 	occupancy: occupancyReport,
 	delinquency: delinquencyReport,
@@ -524,10 +536,16 @@ function totalsRow(b: Built): ReportRow | null {
 export async function runReport(
 	orgId: string,
 	key: ReportKey,
-	params: ReportParams
+	params: ReportParams,
+	ctx?: OrgContext
 ): Promise<ReportResult & { note?: string; propertyName: string | null }> {
+	if (ctx) {
+		assertPermission(ctx, 'reports');
+		if (params.propertyId) await assertRecordAccess(ctx, 'properties', params.propertyId);
+	}
+	const scoped: ScopedReportParams = { ...params, propertyIds: ctx?.propertyIds ?? undefined };
 	const [built, prop] = await Promise.all([
-		builders[key](orgId, params),
+		builders[key](orgId, scoped),
 		params.propertyId
 			? db.query.property.findFirst({
 					columns: { name: true },
