@@ -32,7 +32,14 @@ const ctx: OrgContext = {
 	orgId: orgs[0],
 	userId: 'resolver-test',
 	role: 'member',
-	org: { id: orgs[0], name: 'Test', slug: orgs[0], logo: null },
+	org: {
+		id: orgs[0],
+		name: 'Test',
+		slug: orgs[0],
+		logo: null,
+		accentColor: null,
+		portalTitle: null
+	},
 	perms: null,
 	propertyIds: [properties[0]]
 };
@@ -50,67 +57,57 @@ describe.runIf(Boolean(process.env.DATABASE_URL))(
 				.values(
 					properties.map((id, i) => ({ id, organizationId: orgFor(i), name: `Property ${i}` }))
 				);
-			await db
-				.insert(unit)
-				.values(
-					units.map((id, i) => ({
-						id,
-						organizationId: orgFor(i),
-						propertyId: properties[i],
-						name: 'Unit'
-					}))
-				);
+			await db.insert(unit).values(
+				units.map((id, i) => ({
+					id,
+					organizationId: orgFor(i),
+					propertyId: properties[i],
+					name: 'Unit'
+				}))
+			);
 			await db
 				.insert(tenant)
 				.values(tenants.map((id, i) => ({ id, organizationId: orgFor(i), firstName: 'Tenant' })));
-			await db
-				.insert(lease)
-				.values(
-					leases.map((id, i) => ({
-						id,
-						organizationId: orgFor(i),
-						unitId: units[i === 3 ? 2 : i],
-						startDate: '2026-01-01',
-						rentAmount: 1000
-					}))
-				);
+			await db.insert(lease).values(
+				leases.map((id, i) => ({
+					id,
+					organizationId: orgFor(i),
+					unitId: units[i === 3 ? 2 : i],
+					startDate: '2026-01-01',
+					rentAmount: 1000
+				}))
+			);
 			await db
 				.insert(leaseTenant)
 				.values(tenants.slice(0, 3).map((tenantId, i) => ({ tenantId, leaseId: leases[i] })));
-			await db
-				.insert(charge)
-				.values(
-					charges.map((id, i) => ({
-						id,
-						organizationId: orgFor(i),
-						leaseId: leases[i],
-						amount: 1000,
-						dueDate: '2026-01-01'
-					}))
-				);
-			await db
-				.insert(payment)
-				.values(
-					payments.map((id, i) => ({
-						id,
-						organizationId: orgFor(i),
-						leaseId: leases[i],
-						chargeId: charges[i],
-						amount: 100,
-						receivedOn: '2026-01-01'
-					}))
-				);
-			await db
-				.insert(maintenanceTicket)
-				.values(
-					tickets.map((id, i) => ({
-						id,
-						organizationId: orgFor(i),
-						propertyId: properties[i],
-						number: i + 1,
-						title: 'Ticket'
-					}))
-				);
+			await db.insert(charge).values(
+				charges.map((id, i) => ({
+					id,
+					organizationId: orgFor(i),
+					leaseId: leases[i],
+					amount: 1000,
+					dueDate: '2026-01-01'
+				}))
+			);
+			await db.insert(payment).values(
+				payments.map((id, i) => ({
+					id,
+					organizationId: orgFor(i),
+					leaseId: leases[i],
+					chargeId: charges[i],
+					amount: 100,
+					receivedOn: '2026-01-01'
+				}))
+			);
+			await db.insert(maintenanceTicket).values(
+				tickets.map((id, i) => ({
+					id,
+					organizationId: orgFor(i),
+					propertyId: properties[i],
+					number: i + 1,
+					title: 'Ticket'
+				}))
+			);
 		});
 		afterAll(async () => {
 			await db.delete(lease).where(inArray(lease.id, leases));
