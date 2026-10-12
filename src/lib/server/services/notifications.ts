@@ -405,7 +405,7 @@ export async function notifyTicketStatus(t: TicketRef) {
 	const [who] = await db
 		.select({ email: tenant.email, firstName: tenant.firstName, companyName: tenant.companyName })
 		.from(tenant)
-		.where(eq(tenant.id, t.tenantId));
+		.where(and(eq(tenant.id, t.tenantId), eq(tenant.organizationId, t.organizationId)));
 	if (!who?.email) return;
 	const brand = await orgBrand(t.organizationId);
 	await notifyOnce(t.organizationId, `ticket.${t.status}`, t.id, {

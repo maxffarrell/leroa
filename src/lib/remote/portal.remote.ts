@@ -1,3 +1,4 @@
+import { assertEntityAccess, assertPortalDelegation } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { command, query } from '$app/server';
 import { requireUser, requireOrg } from '#lib/server/context.ts';
@@ -17,7 +18,10 @@ export const getPortal = query(async () => portalOverview(requireUser().user.id)
 
 /** Manager-side read-only preview of a tenant's portal. */
 export const previewPortal = query(idSchema, async (tenantId) => {
-	const { orgId } = await requireOrg();
+	const ctx = await requireOrg();
+	assertPortalDelegation(ctx);
+	await assertEntityAccess(ctx, 'tenant', tenantId);
+	const { orgId } = ctx;
 	return portalPreview(orgId, tenantId);
 });
 
@@ -36,7 +40,10 @@ export const submitRequest = command(
 
 /** Staff action: generate a portal invite link for a tenant. */
 export const createPortalLink = command(v.string(), async (tenantId) => {
-	const { orgId } = await requireOrg();
+	const ctx = await requireOrg();
+	assertPortalDelegation(ctx);
+	await assertEntityAccess(ctx, 'tenant', tenantId, 'write');
+	const { orgId } = ctx;
 	const t = await db.query.tenant.findFirst({
 		where: (t, { and, eq }) => and(eq(t.organizationId, orgId), eq(t.id, tenantId))
 	});

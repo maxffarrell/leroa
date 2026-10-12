@@ -1,3 +1,4 @@
+import { filterRecords, assertRecordAccess } from '#lib/server/access.ts';
 import { and, count, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
@@ -94,7 +95,11 @@ export async function listThreads(orgId: string) {
 	}));
 }
 
-export async function unreadThreadCount(orgId: string) {
+export async function unreadThreadCount(orgId: string, ctx?: OrgContext) {
+	if (ctx?.propertyIds)
+		return (await filterRecords(ctx, 'tenants', await listThreads(orgId), 'tenantId')).filter(
+			(t) => t.unread
+		).length;
 	const [row] = await db
 		.select({ n: count() })
 		.from(messageThread)
@@ -298,7 +303,7 @@ export async function sendPortalMessage(userId: string, input: Out<typeof messag
 }
 
 /** Tenants on an active lease, at one property or across the workspace. */
-async function audience(orgId: string, propertyId: string | null) {
+async function audience(orgId: string, propertyId: string | null, ctx?: OrgContext) {
 	const rows = await db
 		.selectDistinct({
 			id: tenant.id,
@@ -313,7 +318,11 @@ async function audience(orgId: string, propertyId: string | null) {
 		.innerJoin(unit, eq(unit.id, lease.unitId))
 		.innerJoin(tenant, eq(tenant.id, leaseTenant.tenantId))
 		.where(
-			and(eq(lease.organizationId, orgId), propertyId ? eq(unit.propertyId, propertyId) : undefined)
+			and(
+				eq(lease.organizationId, orgId),
+				propertyId ? eq(unit.propertyId, propertyId) : undefined,
+				ctx?.propertyIds ? inArray(unit.propertyId, ctx.propertyIds) : undefined
+			)
 		);
 	return rows.map((r) => ({ name: tenantName(r), email: r.email }));
 }
@@ -326,9 +335,14 @@ async function assertProperty(orgId: string, propertyId: string | null | undefin
 	if (!p) error(404, 'Property not found');
 }
 
-export async function announcementAudience(orgId: string, propertyId: string | null) {
+export async function announcementAudience(
+	orgId: string,
+	propertyId: string | null,
+	ctx?: OrgContext
+) {
 	await assertProperty(orgId, propertyId);
-	const rs = await audience(orgId, propertyId);
+	if (ctx && propertyId) await assertRecordAccess(ctx, 'properties', propertyId);
+	const rs = await audience(orgId, propertyId, ctx);
 	return { residents: rs.length, withEmail: rs.filter((r) => r.email).length };
 }
 
@@ -354,6 +368,7 @@ export async function listAnnouncements(orgId: string) {
 }
 
 export async function createAnnouncement(ctx: OrgContext, input: Out<typeof announcementCreate>) {
+	if (ctx.propertyIds && !input.propertyId) error(403, 'Select an assigned property');
 	const propertyId = input.propertyId ?? null;
 	await assertProperty(ctx.orgId, propertyId);
 	const residents = await audience(ctx.orgId, propertyId);

@@ -1,7 +1,10 @@
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { command, query } from '$app/server';
 import { requireOrg } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/residents.ts';
+import * as svcRaw from '#lib/server/services/residents.ts';
+import { residentsPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, residentsPolicy);
 import {
 	amenityInput,
 	bookingInput,

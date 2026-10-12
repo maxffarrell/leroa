@@ -1,3 +1,5 @@
+import { allows } from '#lib/api-permissions.ts';
+import { assertRecordAccess } from '#lib/server/access.ts';
 import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { error } from '@sveltejs/kit';
@@ -253,7 +255,12 @@ type CaptureOptions = {
  * inquiries, tour bookings and applications land on one record. Existing values win; empty
  * fields are filled in. References must already be validated.
  */
-async function captureLead(orgId: string, data: Out<typeof leadInput>, opts: CaptureOptions = {}) {
+async function captureLead(
+	orgId: string,
+	data: Out<typeof leadInput>,
+	opts: CaptureOptions = {},
+	ctx?: OrgContext
+) {
 	const email = data.email?.toLowerCase() || null;
 	const [existing] = email
 		? await db
@@ -272,6 +279,7 @@ async function captureLead(orgId: string, data: Out<typeof leadInput>, opts: Cap
 	const now = new Date();
 	let row: LeadRow;
 	if (existing) {
+		if (ctx) await assertRecordAccess(ctx, 'leads', existing.id);
 		const fill = <K extends keyof LeadRow>(k: K, value: LeadRow[K] | undefined) =>
 			existing[k] == null && value != null ? { [k]: value } : {};
 		const stage = opts.advanceTo ? advanceStage(existing.stage, opts.advanceTo) : existing.stage;
@@ -370,6 +378,8 @@ async function captureLead(orgId: string, data: Out<typeof leadInput>, opts: Cap
 
 /** Adds a lead from the app or the API. A lead with the same email that's still open is reused. */
 export async function createLead(ctx: OrgContext, input: Out<typeof leadInput>) {
+	if (ctx.propertyIds && !input.propertyId && !input.listingId)
+		error(403, 'Select an assigned property');
 	const refs = await checkRefs(ctx.orgId, {
 		propertyId: input.propertyId,
 		listingId: input.listingId,
@@ -381,7 +391,8 @@ export async function createLead(ctx: OrgContext, input: Out<typeof leadInput>) 
 		{
 			actorId: ctx.userId,
 			note: input.message?.trim() ? { kind: 'inquiry', body: input.message } : undefined
-		}
+		},
+		ctx
 	);
 	return { ...l, existing };
 }
@@ -402,6 +413,10 @@ export async function updateLead(ctx: OrgContext, input: Out<typeof leadUpdate>)
 				rest.listingId === undefined
 			)
 		: {};
+	const finalPropertyId = 'propertyId' in refs ? refs.propertyId : current.propertyId;
+	if (ctx.propertyIds && !finalPropertyId) error(403, 'Select an assigned property');
+	if (ctx.propertyIds && finalPropertyId)
+		await assertRecordAccess(ctx, 'properties', finalPropertyId);
 	const [row] = await db
 		.update(lead)
 		.set({
@@ -623,7 +638,7 @@ function dayBounds(tz: string, now = new Date()) {
 }
 
 /** What needs doing today: new leads, follow-ups that are due and today's tours. */
-export async function leasingAttention(orgId: string) {
+export async function leasingAttention(orgId: string, ctx?: OrgContext) {
 	const { timezone } = await getLeasingSettings(orgId);
 	const { today, start, end } = dayBounds(timezone);
 	const [followUps, newLeads, tours] = await Promise.all([
@@ -641,6 +656,7 @@ export async function leasingAttention(orgId: string) {
 			.where(
 				and(
 					eq(lead.organizationId, orgId),
+					ctx?.propertyIds ? inArray(lead.propertyId, ctx.propertyIds) : undefined,
 					inArray(lead.stage, OPEN_LEAD_STAGES),
 					lte(lead.nextFollowUpOn, today)
 				)
@@ -649,20 +665,33 @@ export async function leasingAttention(orgId: string) {
 		db
 			.select({ n: sql<number>`count(*)`.mapWith(Number) })
 			.from(lead)
-			.where(and(eq(lead.organizationId, orgId), eq(lead.stage, 'new'))),
+			.where(
+				and(
+					eq(lead.organizationId, orgId),
+					ctx?.propertyIds ? inArray(lead.propertyId, ctx.propertyIds) : undefined,
+					eq(lead.stage, 'new')
+				)
+			),
 		toursQuery().where(
 			and(
 				eq(tour.organizationId, orgId),
+				ctx?.propertyIds ? inArray(tour.propertyId, ctx.propertyIds) : undefined,
 				eq(tour.status, 'scheduled'),
 				gte(tour.startsAt, start),
 				lt(tour.startsAt, end)
 			)
 		)
 	]);
-	return { today, timezone, followUps, newLeads: newLeads[0]?.n ?? 0, tours };
+	return {
+		today,
+		timezone,
+		followUps,
+		newLeads: newLeads[0]?.n ?? 0,
+		tours: ctx?.perms && !allows(ctx.perms, 'tours', 'read') ? [] : tours
+	};
 }
 
-export async function leasingBadge(orgId: string) {
+export async function leasingBadge(orgId: string, ctx?: OrgContext) {
 	const { today } = dayBounds((await getLeasingSettings(orgId)).timezone);
 	const [row] = await db
 		.select({ n: sql<number>`count(*)`.mapWith(Number) })
@@ -670,6 +699,7 @@ export async function leasingBadge(orgId: string) {
 		.where(
 			and(
 				eq(lead.organizationId, orgId),
+				ctx?.propertyIds ? inArray(lead.propertyId, ctx.propertyIds) : undefined,
 				sql`(${lead.stage} = 'new' or (${inArray(lead.stage, OPEN_LEAD_STAGES)} and ${lead.nextFollowUpOn} <= ${today}))`
 			)
 		);

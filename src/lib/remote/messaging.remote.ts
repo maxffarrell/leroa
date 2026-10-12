@@ -1,7 +1,10 @@
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { command, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope, requireUser } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/messaging.ts';
+import * as svcRaw from '#lib/server/services/messaging.ts';
+import { messagingPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, messagingPolicy);
 import { portalTenants } from '#lib/server/services/portal.ts';
 import { announcementCreate, idSchema, messageSend } from '#lib/schemas.ts';
 
@@ -33,7 +36,7 @@ export const getAudience = query(v.nullable(idSchema), async (propertyId) =>
 
 export const sendAnnouncement = command(announcementCreate, async (input) => {
 	const a = await svc.createAnnouncement(
-		await assertScope(await requirePerm('messages', 'write'), input),
+		await assertScope(await requirePerm('announcements', 'write'), input),
 		input
 	);
 	void getAnnouncements().refresh();
@@ -41,7 +44,7 @@ export const sendAnnouncement = command(announcementCreate, async (input) => {
 });
 
 export const deleteAnnouncement = command(idSchema, async (id) => {
-	await svc.deleteAnnouncement(await requirePerm('messages', 'write'), id);
+	await svc.deleteAnnouncement(await requirePerm('announcements', 'write'), id);
 	void getAnnouncements().refresh();
 });
 

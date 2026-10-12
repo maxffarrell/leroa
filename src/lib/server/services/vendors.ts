@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { filterRecords, hasReadAccess } from '#lib/server/access.ts';
+import { inArray, and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
@@ -11,7 +12,11 @@ type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
 const OPEN = sql`${maintenanceTicket.status} in ('open', 'in_progress', 'on_hold')`;
 
-export async function listVendors(orgId: string, opts: { includeArchived?: boolean } = {}) {
+export async function listVendors(
+	orgId: string,
+	opts: { includeArchived?: boolean } = {},
+	ctx?: OrgContext
+) {
 	const yearStart = `${new Date().getUTCFullYear()}-01-01`;
 	return db
 		.select({
@@ -32,7 +37,14 @@ export async function listVendors(orgId: string, opts: { includeArchived?: boole
 			lastJobAt: sql<string | null>`max(${maintenanceTicket.createdAt})`
 		})
 		.from(vendor)
-		.leftJoin(maintenanceTicket, eq(maintenanceTicket.vendorId, vendor.id))
+		.leftJoin(
+			maintenanceTicket,
+			and(
+				eq(maintenanceTicket.vendorId, vendor.id),
+				ctx && !hasReadAccess(ctx, 'tickets') ? sql`false` : undefined,
+				ctx?.propertyIds ? inArray(maintenanceTicket.propertyId, ctx.propertyIds) : undefined
+			)
+		)
 		.where(
 			and(
 				eq(vendor.organizationId, orgId),
@@ -45,7 +57,7 @@ export async function listVendors(orgId: string, opts: { includeArchived?: boole
 
 export type VendorRow = Awaited<ReturnType<typeof listVendors>>[number];
 
-export async function getVendor(orgId: string, id: string) {
+export async function getVendor(orgId: string, id: string, ctx?: OrgContext) {
 	const [row] = await db
 		.select()
 		.from(vendor)
@@ -70,7 +82,7 @@ export async function getVendor(orgId: string, id: string) {
 		.where(and(eq(maintenanceTicket.organizationId, orgId), eq(maintenanceTicket.vendorId, id)))
 		.orderBy(desc(maintenanceTicket.createdAt))
 		.limit(200);
-	return { ...row, jobs };
+	return { ...row, jobs: ctx ? await filterRecords(ctx, 'tickets', jobs) : jobs };
 }
 
 const clean = (data: Partial<Out<typeof vendorInput>>) => ({

@@ -1,7 +1,10 @@
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { command, getRequestEvent, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope, requireUser } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/agreements.ts';
+import * as svcRaw from '#lib/server/services/agreements.ts';
+import { agreementsPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, agreementsPolicy);
 import {
 	agreementCreate,
 	agreementSign,

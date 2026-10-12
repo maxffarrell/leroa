@@ -1,8 +1,11 @@
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope, requireUser } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/owners.ts';
+import * as svcRaw from '#lib/server/services/owners.ts';
+import { ownersPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, ownersPolicy);
 import { idSchema, ownerInput, ownerUpdate } from '#lib/schemas.ts';
 
 export const getOwners = query(v.optional(v.boolean(), false), async (includeArchived) =>

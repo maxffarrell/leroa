@@ -1,3 +1,4 @@
+import { outboundFetch } from '#lib/server/outbound-http.ts';
 import { and, eq } from 'drizzle-orm';
 import type { IntegrationDefinition, LeroaEvent } from '@leroa/integration-sdk';
 import { toManifest } from '@leroa/integration-sdk';
@@ -17,7 +18,7 @@ export function getIntegration(id: string) {
 }
 
 export const boundedFetch: typeof fetch = (input, init) =>
-	fetch(input, {
+	outboundFetch(input, {
 		...init,
 		headers: { 'user-agent': 'Leroa-Integrations/1.0', ...(init?.headers ?? {}) },
 		signal: init?.signal ?? AbortSignal.timeout(10_000)

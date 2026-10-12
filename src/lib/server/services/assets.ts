@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { filterRecords, hasReadAccess } from '#lib/server/access.ts';
+import { inArray, and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { db } from '#lib/server/db/index.ts';
@@ -14,7 +15,8 @@ const OPEN = sql`${maintenanceTicket.status} in ('open', 'in_progress', 'on_hold
 
 export async function listAssets(
 	orgId: string,
-	opts: { propertyId?: string; unitId?: string; includeArchived?: boolean } = {}
+	opts: { propertyId?: string; unitId?: string; includeArchived?: boolean } = {},
+	ctx?: OrgContext
 ) {
 	return db
 		.select({
@@ -43,7 +45,14 @@ export async function listAssets(
 		.innerJoin(property, eq(property.id, asset.propertyId))
 		.leftJoin(unit, eq(unit.id, asset.unitId))
 		.leftJoin(vendor, eq(vendor.id, asset.vendorId))
-		.leftJoin(maintenanceTicket, eq(maintenanceTicket.assetId, asset.id))
+		.leftJoin(
+			maintenanceTicket,
+			and(
+				eq(maintenanceTicket.assetId, asset.id),
+				ctx && !hasReadAccess(ctx, 'tickets') ? sql`false` : undefined,
+				ctx?.propertyIds ? inArray(maintenanceTicket.propertyId, ctx.propertyIds) : undefined
+			)
+		)
 		.where(
 			and(
 				eq(asset.organizationId, orgId),
@@ -68,7 +77,7 @@ async function assetInOrg(orgId: string, id: string) {
 }
 
 /** An asset with its service history — every work order logged against it. */
-export async function getAsset(orgId: string, id: string) {
+export async function getAsset(orgId: string, id: string, ctx?: OrgContext) {
 	const row = await assetInOrg(orgId, id);
 	const [history, p, u, v] = await Promise.all([
 		db
@@ -101,7 +110,13 @@ export async function getAsset(orgId: string, id: string) {
 					.where(eq(vendor.id, row.vendorId))
 			: []
 	]);
-	return { ...row, history, property: p[0] ?? null, unit: u[0] ?? null, vendor: v[0] ?? null };
+	return {
+		...row,
+		history: ctx ? await filterRecords(ctx, 'tickets', history) : history,
+		property: p[0] ?? null,
+		unit: u[0] ?? null,
+		vendor: v[0] ?? null
+	};
 }
 
 /** Throws unless the asset exists in this workspace. */

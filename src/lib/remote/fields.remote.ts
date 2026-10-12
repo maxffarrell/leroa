@@ -1,3 +1,5 @@
+import { assertEntityAccess, assertPermission } from '#lib/server/access.ts';
+import { db } from '#lib/server/db/index.ts';
 import { command, query } from '$app/server';
 import * as v from 'valibot';
 import { error } from '@sveltejs/kit';
@@ -16,7 +18,18 @@ const entity = v.picklist(FIELD_ENTITIES);
 const fieldId = v.pipe(v.string(), v.minLength(1));
 
 export const getFields = query(entity, async (e) => {
-	const { orgId } = await requireOrg();
+	const ctx = await requireOrg();
+	const resources = {
+		property: 'properties',
+		unit: 'units',
+		tenant: 'tenants',
+		lease: 'leases',
+		vendor: 'vendors',
+		owner: 'owners',
+		ticket: 'tickets'
+	} as const;
+	assertPermission(ctx, resources[e]);
+	const { orgId } = ctx;
 	// Include archived so admins can restore them; record views filter them out.
 	return listFields(orgId, e, true);
 });
@@ -24,7 +37,9 @@ export const getFields = query(entity, async (e) => {
 export const getRecordFields = query(
 	v.object({ entity, recordId: v.pipe(v.string(), v.minLength(1)) }),
 	async ({ entity: e, recordId }) => {
-		const { orgId } = await requireOrg();
+		const ctx = await requireOrg();
+		await assertEntityAccess(ctx, e, recordId);
+		const { orgId } = ctx;
 		return recordFields(orgId, e, recordId);
 	}
 );
@@ -74,7 +89,14 @@ export const writeFieldValue = command(
 		value: v.nullable(v.pipe(v.string(), v.maxLength(500)))
 	}),
 	async ({ entity: e, fieldId: fId, recordId, value }) => {
-		const { orgId } = await requireOrg();
+		const ctx = await requireOrg();
+		const field = await db.query.customField.findFirst({
+			where: (f, { and, eq }) =>
+				and(eq(f.id, fId), eq(f.organizationId, ctx.orgId), eq(f.entity, e))
+		});
+		if (!field) error(404, 'Field not found');
+		await assertEntityAccess(ctx, field.entity, recordId, 'write');
+		const { orgId } = ctx;
 		await setFieldValue(orgId, fId, recordId, value);
 		void getRecordFields({ entity: e, recordId }).refresh();
 	}

@@ -1,3 +1,4 @@
+import type { OrgContext } from '#lib/server/context.ts';
 /**
  * AI features for the self-hosted core. Each feature calls the configured
  * OpenAI-compatible provider and falls back to a deterministic local heuristic
@@ -182,8 +183,8 @@ const INSIGHT_HREFS = new Set([
 ]);
 
 /** Plain-language "what needs attention" cards for the dashboard. */
-export async function insights(orgId: string) {
-	const d = await dashboard(orgId);
+export async function insights(orgId: string, ctx?: OrgContext) {
+	const d = await dashboard(orgId, ctx);
 	const facts = {
 		overdueCount: d.rent.overdue.length,
 		overdueAmount: d.rent.overdue.reduce((s, r) => s + Math.max(0, r.amount - r.paid), 0),
@@ -208,7 +209,7 @@ export async function insights(orgId: string) {
 
 // ---------- Paid-tier extras: summarize, classify, suggest, digest ----------
 
-import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { inArray, and, desc, eq, gte, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
 import { lead, lease, maintenanceTicket, payment, unit, vendor } from '#lib/server/db/schema.ts';
 import { getTenant } from '#lib/server/services/portfolio.ts';
@@ -233,8 +234,12 @@ async function chatSummary(system: string, user: string): Promise<AiSummary | nu
 }
 
 /** One-paragraph overview + flags for a tenant page. */
-export async function tenantSummary(orgId: string, tenantId: string): Promise<AiSummary> {
-	const t = await getTenant(orgId, tenantId);
+export async function tenantSummary(
+	orgId: string,
+	tenantId: string,
+	ctx?: OrgContext
+): Promise<AiSummary> {
+	const t = await getTenant(orgId, tenantId, ctx);
 	const name =
 		[t.firstName, t.lastName].filter(Boolean).join(' ') || t.companyName || 'this tenant';
 	const leaseRows = await Promise.all(
@@ -272,9 +277,10 @@ export async function tenantSummary(orgId: string, tenantId: string): Promise<Ai
 export async function reportSummary(
 	orgId: string,
 	key: ReportKey,
-	params: ReportParams
+	params: ReportParams,
+	ctx?: OrgContext
 ): Promise<AiSummary> {
-	const report = await runReport(orgId, key, params);
+	const report = await runReport(orgId, key, params, ctx);
 	const facts = {
 		title: report.title,
 		subtitle: report.subtitle,
@@ -302,14 +308,15 @@ export async function reportSummary(
 /** Picks the best vendor for a ticket from trades, job history and COI status. */
 export async function suggestVendor(
 	orgId: string,
-	ticketId: string
+	ticketId: string,
+	ctx?: OrgContext
 ): Promise<{ vendorId: string; vendorName: string; reason: string } | null> {
 	const [t] = await db
 		.select({ title: maintenanceTicket.title, description: maintenanceTicket.description })
 		.from(maintenanceTicket)
 		.where(and(eq(maintenanceTicket.organizationId, orgId), eq(maintenanceTicket.id, ticketId)));
 	if (!t) return null;
-	const vendors = await listVendors(orgId);
+	const vendors = await listVendors(orgId, {}, ctx);
 	if (!vendors.length) return null;
 	const stats = await db
 		.select({
@@ -326,7 +333,8 @@ export async function suggestVendor(
 		.where(
 			and(
 				eq(maintenanceTicket.organizationId, orgId),
-				sql`${maintenanceTicket.vendorId} is not null`
+				sql`${maintenanceTicket.vendorId} is not null`,
+				ctx?.propertyIds ? inArray(maintenanceTicket.propertyId, ctx.propertyIds) : undefined
 			)
 		)
 		.groupBy(maintenanceTicket.vendorId);

@@ -1,3 +1,4 @@
+import { staffOrgForRecord } from '#lib/server/access.ts';
 import type { PageServerLoad } from './$types';
 import { getOrg } from '#lib/server/context.ts';
 import { publicListing } from '#lib/server/services/listings.ts';
@@ -7,7 +8,11 @@ import { applicationPrefill } from '#lib/profile.ts';
 
 export const load: PageServerLoad = async ({ params, setHeaders, cookies }) => {
 	const viewer = await getOrg();
-	const data = await publicListing(params.org, params.listing, viewer?.orgId ?? null);
+	const data = await publicListing(
+		params.org,
+		params.listing,
+		await staffOrgForRecord(viewer, 'listings', 'listings', params.listing)
+	);
 	const { selfBooking } = await getLeasingSettings(data.org.id);
 	const shared = takePrefill(cookies);
 	setHeaders({

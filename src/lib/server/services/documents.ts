@@ -1,3 +1,4 @@
+import { assertEntityAccess } from '#lib/server/access.ts';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { randomUUID } from 'node:crypto';
@@ -76,7 +77,12 @@ export async function saveDocument(
 	return doc!;
 }
 
-export function uploadDocument(ctx: OrgContext, file: File, entity?: { type: string; id: string }) {
+export async function uploadDocument(
+	ctx: OrgContext,
+	file: File,
+	entity?: { type: string; id: string }
+) {
+	await assertEntityAccess(ctx, entity?.type ?? null, entity?.id ?? null, 'write');
 	return saveDocument(ctx.orgId, ctx.userId, file, entity);
 }
 
@@ -109,7 +115,41 @@ export async function readDocument(orgId: string, id: string) {
 	return { doc, data };
 }
 
+export async function authorizeDocument(
+	ctx: OrgContext,
+	id: string,
+	action: 'read' | 'write' = 'read'
+) {
+	const doc = await db.query.document.findFirst({
+		where: (d, { and, eq }) => and(eq(d.organizationId, ctx.orgId), eq(d.id, id))
+	});
+	if (!doc) error(404, 'Document not found');
+	await assertEntityAccess(ctx, doc.entityType, doc.entityId, action);
+	return doc;
+}
+
+export async function listAuthorizedDocuments(ctx: OrgContext) {
+	const rows = await listDocuments(ctx.orgId);
+	const visible = await Promise.all(
+		rows.map(async (row) => {
+			try {
+				await assertEntityAccess(ctx, row.entityType, row.entityId);
+				return true;
+			} catch (e) {
+				if (
+					(e as { status?: number }).status &&
+					[400, 403, 404].includes((e as { status: number }).status)
+				)
+					return false;
+				throw e;
+			}
+		})
+	);
+	return rows.filter((_, i) => visible[i]);
+}
+
 export async function deleteDocument(ctx: OrgContext, id: string) {
+	await authorizeDocument(ctx, id, 'write');
 	const [doc] = await db
 		.delete(document)
 		.where(and(eq(document.organizationId, ctx.orgId), eq(document.id, id)))

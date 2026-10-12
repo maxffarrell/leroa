@@ -6,6 +6,7 @@ import { db } from '#lib/server/db/index.ts';
 import {
 	asset,
 	maintenanceTicket,
+	member,
 	property,
 	tenant,
 	ticketNote,
@@ -66,10 +67,35 @@ export async function listTickets(
 			dupTitle: dupTicket.title
 		})
 		.from(maintenanceTicket)
-		.innerJoin(property, eq(property.id, maintenanceTicket.propertyId))
-		.leftJoin(unit, eq(unit.id, maintenanceTicket.unitId))
-		.leftJoin(tenant, eq(tenant.id, maintenanceTicket.tenantId))
-		.leftJoin(user, eq(user.id, maintenanceTicket.assigneeId))
+		.innerJoin(
+			property,
+			and(
+				eq(property.id, maintenanceTicket.propertyId),
+				eq(property.organizationId, maintenanceTicket.organizationId)
+			)
+		)
+		.leftJoin(
+			unit,
+			and(
+				eq(unit.id, maintenanceTicket.unitId),
+				eq(unit.organizationId, maintenanceTicket.organizationId),
+				eq(unit.propertyId, maintenanceTicket.propertyId)
+			)
+		)
+		.leftJoin(
+			tenant,
+			and(
+				eq(tenant.id, maintenanceTicket.tenantId),
+				eq(tenant.organizationId, maintenanceTicket.organizationId)
+			)
+		)
+		.leftJoin(
+			user,
+			and(
+				eq(user.id, maintenanceTicket.assigneeId),
+				sql`exists (select 1 from ${member} m where m.user_id=${user.id} and m.organization_id=${maintenanceTicket.organizationId})`
+			)
+		)
 		.leftJoin(vendor, eq(vendor.id, maintenanceTicket.vendorId))
 		.leftJoin(asset, eq(asset.id, maintenanceTicket.assetId))
 		.leftJoin(dupTicket, eq(dupTicket.id, maintenanceTicket.duplicateOf))
@@ -90,14 +116,52 @@ export async function listTickets(
 
 export type Ticket = Awaited<ReturnType<typeof listTickets>>[number];
 
-export async function createTicket(
-	ctx: { orgId: string; userId: string | null },
-	input: Out<typeof ticketInput> & { scheduleId?: string | null }
+/** Validate the final relationship state before any ticket write or notification. */
+async function validateTicketReferences(
+	orgId: string,
+	input: {
+		propertyId: string;
+		unitId?: string | null;
+		tenantId?: string | null;
+		assigneeId?: string | null;
+	}
 ) {
 	const p = await db.query.property.findFirst({
-		where: (p, { and, eq }) => and(eq(p.organizationId, ctx.orgId), eq(p.id, input.propertyId))
+		where: (p, { and, eq }) => and(eq(p.organizationId, orgId), eq(p.id, input.propertyId))
 	});
 	if (!p) error(404, 'Property not found');
+	if (input.unitId) {
+		const u = await db.query.unit.findFirst({
+			where: (u, { and, eq }) =>
+				and(
+					eq(u.organizationId, orgId),
+					eq(u.propertyId, input.propertyId),
+					eq(u.id, input.unitId!)
+				)
+		});
+		if (!u) error(404, 'Unit not found');
+	}
+	if (input.tenantId) {
+		const t = await db.query.tenant.findFirst({
+			where: (t, { and, eq }) => and(eq(t.organizationId, orgId), eq(t.id, input.tenantId!))
+		});
+		if (!t) error(404, 'Tenant not found');
+	}
+	if (input.assigneeId) {
+		const [m] = await db
+			.select({ id: member.id })
+			.from(member)
+			.where(and(eq(member.organizationId, orgId), eq(member.userId, input.assigneeId)));
+		if (!m) error(404, 'Assignee not found');
+	}
+	return p;
+}
+
+export async function createTicket(
+	ctx: { orgId: string; userId: string | null; workflowCreated?: boolean },
+	input: Out<typeof ticketInput> & { scheduleId?: string | null }
+) {
+	const p = await validateTicketReferences(ctx.orgId, input);
 	if (input.vendorId) await assertVendor(ctx.orgId, input.vendorId);
 	if (input.assetId) await assertAsset(ctx.orgId, input.assetId);
 	const intake = hasFeature('ai')
@@ -134,7 +198,7 @@ export async function createTicket(
 		entityId: created.id,
 		action: 'created',
 		summary: `#${created.number} ${created.title} · ${p.name}`,
-		data: { priority: created.priority }
+		data: { priority: created.priority, workflowCreated: ctx.workflowCreated === true }
 	});
 	if (intake && (intake.emergency || intake.duplicateOf))
 		await applyTicketIntake(ctx.orgId, created, intake, p.name);
@@ -185,6 +249,11 @@ export async function applyTicketIntake(
 }
 
 export async function updateTicket(ctx: OrgContext, { id, ...data }: Out<typeof ticketUpdate>) {
+	const current = await db.query.maintenanceTicket.findFirst({
+		where: (t, { and, eq }) => and(eq(t.organizationId, ctx.orgId), eq(t.id, id))
+	});
+	if (!current) error(404, 'Ticket not found');
+	await validateTicketReferences(ctx.orgId, { ...current, ...data });
 	const closing = data.status === 'done' || data.status === 'cancelled';
 	if (data.vendorId) await assertVendor(ctx.orgId, data.vendorId);
 	if (data.assetId) await assertAsset(ctx.orgId, data.assetId);
@@ -292,8 +361,21 @@ async function assignedVendor(orgId: string, id: string) {
 			unitName: unit.name
 		})
 		.from(maintenanceTicket)
-		.innerJoin(property, eq(property.id, maintenanceTicket.propertyId))
-		.leftJoin(unit, eq(unit.id, maintenanceTicket.unitId))
+		.innerJoin(
+			property,
+			and(
+				eq(property.id, maintenanceTicket.propertyId),
+				eq(property.organizationId, maintenanceTicket.organizationId)
+			)
+		)
+		.leftJoin(
+			unit,
+			and(
+				eq(unit.id, maintenanceTicket.unitId),
+				eq(unit.organizationId, maintenanceTicket.organizationId),
+				eq(unit.propertyId, maintenanceTicket.propertyId)
+			)
+		)
 		.leftJoin(vendor, eq(vendor.id, maintenanceTicket.vendorId))
 		.where(and(eq(maintenanceTicket.organizationId, orgId), eq(maintenanceTicket.id, id)));
 	if (!row) error(404, 'Ticket not found');

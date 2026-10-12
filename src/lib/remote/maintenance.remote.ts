@@ -1,7 +1,10 @@
+import { secureServices } from '#lib/server/access.ts';
 import { inScope } from '#lib/remote/scope.ts';
 import { command, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/maintenance.ts';
+import * as svcRaw from '#lib/server/services/maintenance.ts';
+import { maintenancePolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, maintenancePolicy);
 import { idSchema, ticketInput, ticketNoteInput, ticketUpdate } from '#lib/schemas.ts';
 
 export const getTickets = query(async () => {

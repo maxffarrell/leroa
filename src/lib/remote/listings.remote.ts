@@ -1,8 +1,11 @@
+import { secureServices } from '#lib/server/access.ts';
 import * as v from 'valibot';
 import { inScope } from '#lib/remote/scope.ts';
 import { command, getRequestEvent, query } from '$app/server';
 import { requireOrg, requirePerm, assertScope } from '#lib/server/context.ts';
-import * as svc from '#lib/server/services/listings.ts';
+import * as svcRaw from '#lib/server/services/listings.ts';
+import { listingsPolicy } from '#lib/server/access-policies.ts';
+const svc = secureServices(svcRaw, listingsPolicy);
 import { deleteDocument } from '#lib/server/services/documents.ts';
 import {
 	applicationApprove,

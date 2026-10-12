@@ -1,9 +1,16 @@
+import { secureServices } from '#lib/server/access.ts';
 import { inScope } from '#lib/remote/scope.ts';
 import { command, query } from '$app/server';
 import { requireOrg, requirePerm } from '#lib/server/context.ts';
-import * as assets from '#lib/server/services/assets.ts';
-import * as schedules from '#lib/server/services/schedules.ts';
-import * as turns from '#lib/server/services/turns.ts';
+import * as assetsRaw from '#lib/server/services/assets.ts';
+import { assetsPolicy } from '#lib/server/access-policies.ts';
+const assets = secureServices(assetsRaw, assetsPolicy);
+import * as schedulesRaw from '#lib/server/services/schedules.ts';
+import { schedulesPolicy } from '#lib/server/access-policies.ts';
+const schedules = secureServices(schedulesRaw, schedulesPolicy);
+import * as turnsRaw from '#lib/server/services/turns.ts';
+import { turnsPolicy } from '#lib/server/access-policies.ts';
+const turns = secureServices(turnsRaw, turnsPolicy);
 import { assetInput, assetUpdate, idSchema, scheduleInput, scheduleUpdate } from '#lib/schemas.ts';
 import { turnInput, turnUpdate } from '#lib/schemas.ts';
 

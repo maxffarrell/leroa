@@ -1,3 +1,4 @@
+import { filterRecords } from '#lib/server/access.ts';
 import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
@@ -289,7 +290,7 @@ export async function listTenants(orgId: string, q?: string) {
 		.orderBy(asc(tenant.lastName), asc(tenant.firstName));
 }
 
-export async function getTenant(orgId: string, id: string) {
+export async function getTenant(orgId: string, id: string, ctx?: OrgContext) {
 	const t = await db.query.tenant.findFirst({
 		where: (t, { and, eq }) => and(eq(t.organizationId, orgId), eq(t.id, id))
 	});
@@ -324,7 +325,11 @@ export async function getTenant(orgId: string, id: string) {
 		.where(and(eq(maintenanceTicket.organizationId, orgId), eq(maintenanceTicket.tenantId, id)))
 		.orderBy(desc(maintenanceTicket.createdAt))
 		.limit(20);
-	return { ...t, leases, tickets };
+	return {
+		...t,
+		leases: ctx ? await filterRecords(ctx, 'leases', leases) : leases,
+		tickets: ctx ? await filterRecords(ctx, 'tickets', tickets) : tickets
+	};
 }
 
 export async function createTenant(ctx: OrgContext, input: Out<typeof tenantInput>) {

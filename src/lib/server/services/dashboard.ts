@@ -1,3 +1,10 @@
+import { allows, type ApiResource } from '#lib/api-permissions.ts';
+import { filterRecords } from '#lib/server/access.ts';
+import type { OrgContext } from '#lib/server/context.ts';
+import { listUnits } from './portfolio.ts';
+import { listLeases } from './leasing.ts';
+import { listTurns } from './turns.ts';
+import { listVendors } from './vendors.ts';
 import { and, desc, eq, gte, isNotNull, isNull, lte, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
 import { activity, lease, unit, unitTurn, user, vendor } from '#lib/server/db/schema.ts';
@@ -7,7 +14,8 @@ import { rentRoll } from './leasing.ts';
 import { listTickets } from './maintenance.ts';
 import { leasingAttention } from './crm.ts';
 
-export async function dashboard(orgId: string) {
+export async function dashboard(orgId: string, ctx?: OrgContext) {
+	if (ctx) return scopedDashboard(ctx);
 	const month = monthKey();
 	const today = todayISO();
 	const in60 = new Date(Date.now() + 60 * 86400_000).toISOString().slice(0, 10);
@@ -103,6 +111,69 @@ export async function dashboard(orgId: string) {
 		insuranceAlerts: insurance,
 		openTurns: turns[0]?.n ?? 0,
 		feed,
+		followUps: leasing.followUps.slice(0, 6),
+		toursToday: leasing.tours,
+		timezone: leasing.timezone
+	};
+}
+
+async function scopedDashboard(ctx: OrgContext) {
+	if (!ctx.perms && !ctx.propertyIds) return dashboard(ctx.orgId);
+	const permitted = (r: ApiResource) => !ctx.perms || allows(ctx.perms, r, 'read');
+	const month = monthKey();
+	const today = todayISO();
+	const [roll, units, leases, tickets, vendors, turns, leasing] = await Promise.all([
+		permitted('charges') ? filterRecords(ctx, 'charges', await rentRoll(ctx.orgId, month)) : [],
+		permitted('units') ? filterRecords(ctx, 'units', await listUnits(ctx.orgId)) : [],
+		permitted('leases') ? filterRecords(ctx, 'leases', await listLeases(ctx.orgId)) : [],
+		permitted('tickets') ? filterRecords(ctx, 'tickets', await listTickets(ctx.orgId)) : [],
+		permitted('vendors') ? listVendors(ctx.orgId, {}, ctx) : [],
+		permitted('turns') ? filterRecords(ctx, 'turns', await listTurns(ctx.orgId)) : [],
+		permitted('leads')
+			? leasingAttention(ctx.orgId, ctx)
+			: { followUps: [], tours: [], timezone: 'UTC' }
+	]);
+	const rent = roll.filter((r) => r.kind === 'rent');
+	const expiring = leases
+		.filter(
+			(l) =>
+				l.status === 'active' && l.endDate && l.endDate >= today && l.endDate <= addDays(today, 60)
+		)
+		.sort((a, b) => a.endDate!.localeCompare(b.endDate!));
+	// Activity summaries may embed multiple resources. Unclassified feed rows stay owner/admin-only.
+	return {
+		month,
+		rent: {
+			due: rent.reduce((n, r) => n + r.amount, 0),
+			collected: rent.reduce((n, r) => n + Math.min(r.paid, r.amount), 0),
+			overdue: roll.filter(
+				(r) => r.status === 'overdue' || (r.status === 'partial' && r.dueDate < today)
+			),
+			paidCount: rent.filter((r) => r.status === 'paid').length,
+			count: rent.length
+		},
+		occupancy: {
+			total: units.length,
+			occupied: units.filter((u) => u.status === 'occupied').length,
+			vacant: units.filter((u) => u.status === 'vacant').length
+		},
+		expiringLeases: expiring.length,
+		nextLeaseExpiryDays: expiring[0]
+			? Math.ceil(
+					(new Date(expiring[0].endDate! + 'T00:00:00Z').getTime() - Date.now()) / 86400_000
+				)
+			: null,
+		openTickets: tickets
+			.filter((t) => ['open', 'in_progress', 'on_hold'].includes(t.status))
+			.slice(0, 6),
+		urgentTickets: tickets.filter(
+			(t) => t.priority === 'urgent' && !['done', 'cancelled'].includes(t.status)
+		).length,
+		insuranceAlerts: vendors.filter(
+			(v) => v.insuranceExpiresOn && v.insuranceExpiresOn <= addDays(today, INSURANCE_WARNING_DAYS)
+		),
+		openTurns: turns.filter((t) => !t.completedAt).length,
+		feed: !ctx.perms && !ctx.propertyIds ? (await dashboard(ctx.orgId)).feed : [],
 		followUps: leasing.followUps.slice(0, 6),
 		toursToday: leasing.tours,
 		timezone: leasing.timezone
