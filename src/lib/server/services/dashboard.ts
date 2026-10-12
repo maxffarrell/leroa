@@ -15,7 +15,10 @@ import { listTickets } from './maintenance.ts';
 import { leasingAttention } from './crm.ts';
 
 export async function dashboard(orgId: string, ctx?: OrgContext) {
-	if (ctx) return scopedDashboard(ctx);
+	return ctx ? scopedDashboard(ctx) : unscopedDashboard(orgId);
+}
+
+async function unscopedDashboard(orgId: string) {
 	const month = monthKey();
 	const today = todayISO();
 	const in60 = new Date(Date.now() + 60 * 86400_000).toISOString().slice(0, 10);
@@ -118,7 +121,7 @@ export async function dashboard(orgId: string, ctx?: OrgContext) {
 }
 
 async function scopedDashboard(ctx: OrgContext) {
-	if (!ctx.perms && !ctx.propertyIds) return dashboard(ctx.orgId);
+	if (!ctx.perms && !ctx.propertyIds) return unscopedDashboard(ctx.orgId);
 	const permitted = (r: ApiResource) => !ctx.perms || allows(ctx.perms, r, 'read');
 	const month = monthKey();
 	const today = todayISO();
@@ -173,7 +176,7 @@ async function scopedDashboard(ctx: OrgContext) {
 			(v) => v.insuranceExpiresOn && v.insuranceExpiresOn <= addDays(today, INSURANCE_WARNING_DAYS)
 		),
 		openTurns: turns.filter((t) => !t.completedAt).length,
-		feed: !ctx.perms && !ctx.propertyIds ? (await dashboard(ctx.orgId)).feed : [],
+		feed: !ctx.perms && !ctx.propertyIds ? (await unscopedDashboard(ctx.orgId)).feed : [],
 		followUps: leasing.followUps.slice(0, 6),
 		toursToday: leasing.tours,
 		timezone: leasing.timezone

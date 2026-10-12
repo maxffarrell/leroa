@@ -414,9 +414,11 @@ export async function updateLead(ctx: OrgContext, input: Out<typeof leadUpdate>)
 			)
 		: {};
 	const finalPropertyId = 'propertyId' in refs ? refs.propertyId : current.propertyId;
-	if (ctx.propertyIds && !finalPropertyId) error(403, 'Select an assigned property');
-	if (ctx.propertyIds && finalPropertyId)
+	if (ctx.propertyIds) {
+		if (typeof finalPropertyId !== 'string' || !finalPropertyId)
+			error(403, 'Select an assigned property');
 		await assertRecordAccess(ctx, 'properties', finalPropertyId);
+	}
 	const [row] = await db
 		.update(lead)
 		.set({
