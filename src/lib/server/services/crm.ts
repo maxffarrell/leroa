@@ -20,7 +20,7 @@ import {
 	user
 } from '#lib/server/db/schema.ts';
 import type { OrgContext } from '#lib/server/context.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 import { scoreLead } from '#lib/server/ai/decisions.ts';
 import type {
 	inquiryInput,

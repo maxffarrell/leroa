@@ -232,7 +232,7 @@
 									<div class="flex items-start justify-between gap-2">
 										<span class="text-sm leading-snug font-medium">{leadName(l)}</span>
 										<span class="flex shrink-0 items-center gap-1">
-											{#if l.aiScore && page.data.enterprise}<LeadScoreBadge
+											{#if l.aiScore && page.data.ai}<LeadScoreBadge
 													score={l.aiScore}
 													reason={l.aiScoreReason}
 												/>{/if}
@@ -297,7 +297,7 @@
 									<a href="/leasing/leads/{l.id}" class="block truncate font-medium"
 										>{leadName(l)}</a
 									>
-									{#if l.aiScore && page.data.enterprise}<LeadScoreBadge
+									{#if l.aiScore && page.data.ai}<LeadScoreBadge
 											score={l.aiScore}
 											reason={l.aiScoreReason}
 										/>{/if}

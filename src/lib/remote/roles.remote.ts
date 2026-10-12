@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { command, query } from '$app/server';
 import { error } from '@sveltejs/kit';
 import { requireOrg } from '#lib/server/context.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 import { assertNotDemo } from '#lib/server/demo-mode.ts';
 import { apiPermissionsSchema } from '#lib/api-permissions.ts';
 import { idSchema } from '#lib/schemas.ts';

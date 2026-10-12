@@ -25,7 +25,8 @@ Properties, units, tenants, leases, rent tracking, maintenance, documents and a 
 - **Resident portal**: balance, charges and maintenance requests for tenants
 - **Command palette** (<kbd>⌘K</kbd>), `g`+key navigation, `j`/`k` lists, `c` to create
 - **REST API + API keys**, signed **webhooks**, and an open **integrations** SDK
-- **Enterprise** (Cloud or license key): SAML & OIDC single sign-on, passkeys
+- **Basic SAML/OIDC SSO and passkeys**: included in the free self-hosted core; connect your own identity provider
+- **BYOK AI**: included in the free self-hosted core; use your own API key or a compatible local model endpoint
 
 Out of scope by design: general ledger and bookkeeping. Export payments to your accounting tool through integrations instead.
 
@@ -57,6 +58,10 @@ Open http://localhost:5173, create an account, then click **Explore with demo da
 | PikaPods     | Not yet in their app catalog — once submitted, a `Run on PikaPods` badge goes here (~$1.50/mo managed).        |
 
 Environment variables are documented in [`src/env.ts`](src/env.ts).
+
+### Self-hosted SSO and AI
+
+Basic SAML/OIDC SSO, passkeys and BYOK AI are included without an enterprise key or Cloud subscription. See [the configuration guide](docs/self-hosted-sso-ai.md). You supply your identity provider and any model-provider credentials; provider usage fees are separate. Credentials stay on the server. Public demos continue to block SSO/passkey configuration.
 
 ## Email and scheduled jobs
 
@@ -211,7 +216,7 @@ SvelteKit 3 · Svelte 5 (remote functions, async) · Tailwind 4 · shadcn-svelte
 
 Leroa is open core:
 
-- Core: [AGPLv3](LICENSE-AGPL.txt)
+- Core, including basic SSO, passkeys and BYOK AI: [AGPLv3](LICENSE-AGPL.txt)
 - `src/lib/server/ee/` and files marked `/* @license Enterprise */`: [Leroa Enterprise License](ee/LICENSE)
 - Integration SDK and integrations: MIT
 

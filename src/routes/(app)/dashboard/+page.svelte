@@ -17,7 +17,7 @@
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 
 	const d = $derived(await getDashboard());
-	const insights = $derived(page.data.enterprise ? await aiInsights().catch(() => []) : []);
+	const insights = $derived(page.data.ai ? await aiInsights().catch(() => []) : []);
 	let seeding = $state(false);
 
 	async function demo() {

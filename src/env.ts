@@ -12,7 +12,7 @@ export const variables = defineEnvVars({
 	},
 	LEROA_ENTERPRISE_KEY: {
 		description:
-			'Enterprise license key. Unlocks SAML/OIDC SSO and passkeys on self-hosted installs.',
+			'Enterprise license key for paid administrative features. Basic SSO, passkeys and BYOK AI do not require a license.',
 		schema: (value) => value || undefined
 	},
 	LEROA_DEMO: {
@@ -200,7 +200,7 @@ export const variables = defineEnvVars({
 	},
 	AI_API_KEY: {
 		description:
-			'API key for an OpenAI-compatible chat-completions endpoint powering generative AI features (enterprise tier), and the fallback key for structured AI decision calls when AI_DECISION_API_KEY is unset. Unset, the features use deterministic local fallbacks.',
+			'API key for an OpenAI-compatible chat-completions endpoint powering generative BYOK AI features, and the fallback key for structured AI decision calls when AI_DECISION_API_KEY is unset. Without a key or a custom endpoint, the features use deterministic local fallbacks.',
 		schema: (value) => value || undefined
 	},
 	AI_BASE_URL: {

@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireOrg } from '#lib/server/context.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 import { exportAudit } from '#lib/server/services/audit.ts';
 import { toCsv, type CsvValue } from '#lib/csv.ts';
 import { todayISO } from '#lib/format.ts';

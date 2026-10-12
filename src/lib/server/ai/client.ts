@@ -8,7 +8,7 @@ import {
 } from '$app/env/private';
 
 /**
- * Provider-agnostic OpenAI-compatible client. When the provider's key is unset
+ * Provider-agnostic OpenAI-compatible client. Without a configured provider,
  * every call returns null and the feature falls back to its local heuristic,
  * so all AI features work (deterministically) without any provider configured.
  *
@@ -33,12 +33,19 @@ const decision: Provider = {
 	model: AI_DECISION_MODEL ?? AI_MODEL
 };
 
+function configured(provider: Provider): boolean {
+	return !!(
+		provider.model &&
+		(provider.apiKey || provider.baseUrl.replace(/\/+$/, '') !== 'https://api.openai.com/v1')
+	);
+}
+
 export function aiConfigured(): boolean {
-	return !!feature.apiKey;
+	return configured(feature);
 }
 
 export function decisionConfigured(): boolean {
-	return !!decision.apiKey;
+	return configured(decision);
 }
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
@@ -48,13 +55,13 @@ async function chat(
 	messages: ChatMessage[],
 	json: boolean
 ): Promise<string | null> {
-	if (!provider.apiKey) return null;
+	if (!configured(provider)) return null;
 	try {
 		const res = await fetch(`${provider.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/json',
-				authorization: `Bearer ${provider.apiKey}`
+				...(provider.apiKey ? { authorization: `Bearer ${provider.apiKey}` } : {})
 			},
 			signal: AbortSignal.timeout(30_000),
 			body: JSON.stringify({

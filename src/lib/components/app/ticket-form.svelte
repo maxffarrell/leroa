@@ -161,7 +161,7 @@
 				<Field.Field>
 					<div class="flex items-center justify-between">
 						<Field.Label>Priority</Field.Label>
-						{#if page.data.enterprise}
+						{#if page.data.ai}
 							<Button
 								type="button"
 								size="xs"

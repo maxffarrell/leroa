@@ -474,7 +474,7 @@
 						<div class="flex items-center justify-between">
 							<Field.Label>Vendor</Field.Label>
 							<div class="flex items-center gap-3">
-								{#if page.data.enterprise}
+								{#if page.data.ai}
 									<button
 										class="text-xs text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
 										disabled={suggesting}

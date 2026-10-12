@@ -1,5 +1,5 @@
 /**
- * AI features for the enterprise tier. Each feature calls the configured
+ * AI features for the self-hosted core. Each feature calls the configured
  * OpenAI-compatible provider and falls back to a deterministic local heuristic
  * when AI_API_KEY is unset, so everything works (and is demoable) keyless.
  */

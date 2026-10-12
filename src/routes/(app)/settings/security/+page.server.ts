@@ -1,4 +1,4 @@
 import type { PageServerLoad } from './$types';
-import { isEnterpriseEnabled } from '#lib/server/ee/license.ts';
+import { isDemo } from '#lib/server/demo-mode.ts';
 
-export const load: PageServerLoad = () => ({ enterprise: isEnterpriseEnabled() });
+export const load: PageServerLoad = () => ({ security: !isDemo() });

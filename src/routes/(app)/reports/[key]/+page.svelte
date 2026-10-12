@@ -154,7 +154,7 @@
 		<p class="mt-1 text-xs text-muted-foreground">{report.subtitle}</p>
 	</div>
 
-	{#if page.data.enterprise}
+	{#if page.data.ai}
 		<AiSummary
 			load={() => aiReportSummary({ key, ...params })}
 			description="An AI read of this report — what stands out and what to check first."

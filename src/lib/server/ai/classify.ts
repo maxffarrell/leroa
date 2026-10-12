@@ -1,5 +1,5 @@
 /**
- * Document classification for the enterprise tier. Standalone module (no
+ * Document classification for the self-hosted core. Standalone module (no
  * service imports) so services/documents.ts can call it without cycles.
  */
 import * as v from 'valibot';

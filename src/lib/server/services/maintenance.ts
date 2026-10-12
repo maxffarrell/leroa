@@ -18,7 +18,7 @@ import type { ticketInput, ticketNoteInput, ticketUpdate } from '#lib/schemas.ts
 import { isDemo } from '#lib/server/demo-mode.ts';
 import { emit } from './events.ts';
 import { notifyTicketEmergency, notifyTicketStatus, notifyWorkOrder } from './notifications.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 import { intakeTicket, type IntakeDecision } from '#lib/server/ai/decisions.ts';
 import { entityImages } from './documents.ts';
 import { assertAsset } from './assets.ts';

@@ -41,7 +41,7 @@
 
 	/** Fills columns the alias table missed; autoMap stays authoritative. */
 	async function aiFill() {
-		if (!page.data.enterprise || !headers.length) return;
+		if (!page.data.ai || !headers.length) return;
 		const gen = ++mappingGen;
 		const unmapped = spec.fields.filter((f) => mapping[f.key] == null).map((f) => f.key);
 		if (!unmapped.length) return;

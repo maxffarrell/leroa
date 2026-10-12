@@ -24,7 +24,7 @@ import { renderEmail } from '#lib/server/email-template.ts';
 import { orgBrand } from '#lib/server/branding.ts';
 import type { notificationSettingsInput } from '#lib/schemas.ts';
 import { addDays, formatDate, formatMoney, todayISO } from '#lib/format.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
+import { hasFeature } from '#lib/server/features.ts';
 import { INSURANCE_WARNING_DAYS, insuranceState } from '#lib/vendors.ts';
 
 export type NotificationPrefs = v.InferOutput<typeof notificationSettingsInput>;
@@ -901,7 +901,7 @@ export async function notifyWaitlistOpening(
 	});
 }
 
-/** AI morning digest: yesterday's activity and upcoming deadlines, for owners/admins (enterprise). */
+/** AI morning digest: yesterday's activity and upcoming deadlines, for owners/admins (BYOK). */
 export async function sendAiDigest(orgId: string): Promise<number> {
 	if (!hasFeature('ai')) return 0;
 	const prefs = await getNotificationPrefs(orgId);

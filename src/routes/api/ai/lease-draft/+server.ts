@@ -1,7 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireOrg } from '#lib/server/context.ts';
-import { hasFeature } from '#lib/server/ee/license.ts';
 import { extractLeaseFields } from '#lib/server/ai/index.ts';
 import { extractText } from 'unpdf';
 
@@ -9,7 +8,6 @@ const MAX_PDF_BYTES = 20 * 1024 * 1024;
 
 /** POST a lease PDF (FormData 'file'); get back extracted draft-lease fields. */
 export const POST: RequestHandler = async ({ request }) => {
-	if (!hasFeature('ai')) error(403, 'AI features are part of the enterprise tier');
 	await requireOrg();
 	const form = await request.formData();
 	const file = form.get('file');

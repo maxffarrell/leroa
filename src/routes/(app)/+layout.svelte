@@ -51,6 +51,6 @@
 <CommandPalette bind:open={paletteOpen} />
 <ConfirmDeleteDialog />
 <TourGuide userId={data.user.id} />
-{#if data.enterprise}
+{#if data.ai}
 	<Assistant />
 {/if}
