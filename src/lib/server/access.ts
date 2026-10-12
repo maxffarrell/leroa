@@ -214,6 +214,22 @@ export function assertPortalDelegation(ctx: OrgContext) {
 		assertPermission(ctx, resource);
 }
 
+/** Owner links delegate the full financial and maintenance report, not just contact access. */
+export function assertOwnerDelegation(ctx: OrgContext) {
+	if (ctx.propertyIds) error(403, 'Owner access requires all properties');
+	for (const resource of [
+		'owners',
+		'properties',
+		'units',
+		'leases',
+		'tenants',
+		'charges',
+		'payments',
+		'tickets'
+	] as const)
+		assertPermission(ctx, resource);
+}
+
 export async function filterRecords<T>(
 	ctx: OrgContext,
 	entity: RecordEntity,

@@ -10,6 +10,7 @@ vi.mock('./context.ts', () => ({
 import {
 	assertPermission,
 	assertPortalDelegation,
+	assertOwnerDelegation,
 	assertRecordAccess,
 	assertReferences,
 	filterRecords,
@@ -178,5 +179,18 @@ describe('nested resource permissions', () => {
 	it('preserves full portal access for an ordinary unscoped role', () => {
 		state.ctx.propertyIds = null;
 		expect(() => assertPortalDelegation(state.ctx)).not.toThrow();
+	});
+});
+
+describe('owner report delegation', () => {
+	it('denies owner contacts-only writers minting full financial report capability', () => {
+		state.ctx.propertyIds = null;
+		state.ctx.perms = { owners: ['read', 'write'], properties: ['read'] };
+		expect(() => assertOwnerDelegation(state.ctx)).toThrowError();
+	});
+	it('denies property-scoped owner delegation and preserves ordinary full access', () => {
+		expect(() => assertOwnerDelegation(state.ctx)).toThrowError();
+		state.ctx.propertyIds = null;
+		expect(() => assertOwnerDelegation(state.ctx)).not.toThrow();
 	});
 });
