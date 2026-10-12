@@ -31,6 +31,7 @@ const tickets = Array.from({ length: 3 }, () => randomUUID());
 const ctx: OrgContext = {
 	orgId: orgs[0],
 	userId: 'resolver-test',
+	memberId: 'resolver-test',
 	role: 'member',
 	org: {
 		id: orgs[0],
