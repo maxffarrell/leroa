@@ -305,7 +305,24 @@ type FunctionKeys<T> = {
 export type ServicePolicy<T> = Record<FunctionKeys<T>, OperationRule>;
 
 /** Explicit contracts at the browser entrypoint, leaving public and background service callers unchanged. */
-export function secureServices<T extends object>(services: T, policy: ServicePolicy<T>): T {
+export function canReadOperation(ctx: OrgContext, rule: OperationRule) {
+	if (rule === 'public') return true;
+	if (rule === 'internal') return false;
+	return (
+		(!ctx.perms ||
+			(rule.anyRead
+				? rule.anyRead.some((r) => allows(ctx.perms, r, 'read'))
+				: allows(ctx.perms, rule.resource, 'read'))) &&
+		(rule.reads ?? []).every((r) => !ctx.perms || allows(ctx.perms, r, 'read'))
+	);
+}
+
+/** An explicit context keeps REST/assistant grants separate from browser session authority. */
+export function secureServices<T extends object>(
+	services: T,
+	policy: ServicePolicy<T>,
+	context?: OrgContext
+): T {
 	const wrapped = { ...services };
 	for (const [name, value] of Object.entries(services)) {
 		if (typeof value !== 'function') continue;
@@ -314,9 +331,12 @@ export function secureServices<T extends object>(services: T, policy: ServicePol
 		if (rule === 'public') continue;
 		(wrapped as Record<string, unknown>)[name] = async (...args: unknown[]) => {
 			if (rule === 'internal') error(403, 'Internal operation');
-			const ctx = rule.anyRead
-				? await requireOrg()
-				: await requirePerm(rule.resource, rule.action ?? 'read');
+			const ctx =
+				context ??
+				(rule.anyRead
+					? await requireOrg()
+					: await requirePerm(rule.resource, rule.action ?? 'read'));
+			if (!rule.anyRead) assertPermission(ctx, rule.resource, rule.action ?? 'read');
 			if (rule.anyRead && ctx.perms && !rule.anyRead.some((r) => allows(ctx.perms, r, 'read')))
 				error(403, 'Insufficient permissions');
 			for (const resource of rule.reads ?? []) assertPermission(ctx, resource);

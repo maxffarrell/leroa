@@ -1,5 +1,14 @@
+import { canReadOperation } from '#lib/server/access.ts';
+import {
+	portfolioPolicy,
+	leasingPolicy,
+	maintenancePolicy,
+	listingsPolicy,
+	vendorsPolicy,
+	crmPolicy
+} from '#lib/server/access-policies.ts';
 import type { OrgContext } from '#lib/server/context.ts';
-import { allows, type ApiResource } from '#lib/api-permissions.ts';
+import { allows } from '#lib/api-permissions.ts';
 import { filterRecords } from '#lib/server/access.ts';
 /**
  * Workspace assistant: answers questions grounded in live org data and drafts
@@ -73,8 +82,19 @@ const answerSchema = v.object({
 });
 
 async function loadPack(orgId: string, ctx?: OrgContext) {
-	const permitted = (resource: ApiResource) => !ctx?.perms || allows(ctx.perms, resource, 'read');
-	const rows = async <T>(resource: ApiResource, load: () => Promise<T[]>) =>
+	const rules = {
+		properties: portfolioPolicy.listProperties,
+		units: portfolioPolicy.listUnits,
+		leases: leasingPolicy.listLeases,
+		tickets: maintenancePolicy.listTickets,
+		tenants: portfolioPolicy.listTenants,
+		listings: listingsPolicy.listListings,
+		vendors: vendorsPolicy.listVendors,
+		leads: crmPolicy.listLeads
+	};
+	const permitted = (resource: keyof typeof rules) =>
+		!ctx || canReadOperation(ctx, rules[resource]);
+	const rows = async <T>(resource: keyof typeof rules, load: () => Promise<T[]>) =>
 		permitted(resource) ? (ctx ? filterRecords(ctx, resource, await load()) : load()) : [];
 	const [properties, units, leases, tickets, tenants, listings, vendors, leads] = await Promise.all(
 		[
@@ -84,7 +104,7 @@ async function loadPack(orgId: string, ctx?: OrgContext) {
 			rows('tickets', () => listTickets(orgId)),
 			rows('tenants', () => listTenants(orgId)),
 			rows('listings', () => listListings(orgId)),
-			rows('vendors', () => listVendors(orgId)),
+			rows('vendors', () => listVendors(orgId, {}, ctx)),
 			rows('leads', () => listLeads(orgId))
 		]
 	);
