@@ -2,7 +2,7 @@ import { error, type RequestEvent } from '@sveltejs/kit';
 import { auth } from '#lib/server/auth.ts';
 import { db } from '#lib/server/db/index.ts';
 import type { OrgContext } from '#lib/server/context.ts';
-import { allows, type ApiAction } from '#lib/api-permissions.ts';
+import { allows, API_RESOURCES, API_ACTIONS, type ApiAction } from '#lib/api-permissions.ts';
 
 /**
  * Authenticates `Authorization: Bearer lr_…` against organization-scoped API keys and checks the
@@ -41,7 +41,12 @@ export async function apiContext(event: RequestEvent, action: ApiAction): Promis
 		orgId,
 		role: 'admin',
 		memberId: actor.id,
-		perms: null,
+		perms: Object.fromEntries(
+			API_RESOURCES.map((r) => [
+				r,
+				API_ACTIONS.filter((a) => allows(result.key!.permissions, r, a))
+			])
+		),
 		propertyIds: null,
 		org: {
 			id: org.id,

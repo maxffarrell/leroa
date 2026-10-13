@@ -1,5 +1,14 @@
+import { canReadOperation } from '#lib/server/access.ts';
+import {
+	portfolioPolicy,
+	leasingPolicy,
+	maintenancePolicy,
+	listingsPolicy,
+	vendorsPolicy,
+	crmPolicy
+} from '#lib/server/access-policies.ts';
 import type { OrgContext } from '#lib/server/context.ts';
-import { allows, type ApiResource } from '#lib/api-permissions.ts';
+import { allows } from '#lib/api-permissions.ts';
 import { filterRecords } from '#lib/server/access.ts';
 /**
  * Workspace assistant: answers questions grounded in live org data and drafts
@@ -73,8 +82,19 @@ const answerSchema = v.object({
 });
 
 async function loadPack(orgId: string, ctx?: OrgContext) {
-	const permitted = (resource: ApiResource) => !ctx?.perms || allows(ctx.perms, resource, 'read');
-	const rows = async <T>(resource: ApiResource, load: () => Promise<T[]>) =>
+	const rules = {
+		properties: portfolioPolicy.listProperties,
+		units: portfolioPolicy.listUnits,
+		leases: leasingPolicy.listLeases,
+		tickets: maintenancePolicy.listTickets,
+		tenants: portfolioPolicy.listTenants,
+		listings: listingsPolicy.listListings,
+		vendors: vendorsPolicy.listVendors,
+		leads: crmPolicy.listLeads
+	};
+	const permitted = (resource: keyof typeof rules) =>
+		!ctx || canReadOperation(ctx, rules[resource]);
+	const rows = async <T>(resource: keyof typeof rules, load: () => Promise<T[]>) =>
 		permitted(resource) ? (ctx ? filterRecords(ctx, resource, await load()) : load()) : [];
 	const [properties, units, leases, tickets, tenants, listings, vendors, leads] = await Promise.all(
 		[
@@ -84,11 +104,21 @@ async function loadPack(orgId: string, ctx?: OrgContext) {
 			rows('tickets', () => listTickets(orgId)),
 			rows('tenants', () => listTenants(orgId)),
 			rows('listings', () => listListings(orgId)),
-			rows('vendors', () => listVendors(orgId)),
+			rows('vendors', () => listVendors(orgId, {}, ctx)),
 			rows('leads', () => listLeads(orgId))
 		]
 	);
-	return { properties, units, leases, tickets, tenants, listings, vendors, leads };
+	return {
+		properties,
+		units,
+		leases,
+		tickets,
+		tenants,
+		listings,
+		vendors,
+		leads,
+		leasesAvailable: permitted('leases')
+	};
 }
 
 type Pack = Awaited<ReturnType<typeof loadPack>>;
@@ -202,6 +232,16 @@ async function heuristicAsk(
 	const q = question.trim();
 	const unit = findUnit(pack, q);
 	const tenant = findTenant(pack, q);
+	if (
+		!pack.leasesAvailable &&
+		(EXPIRING.test(q) || DELINQUENT.test(q) || WHO_IN.test(q) || LEASE_OF.test(q))
+	) {
+		return {
+			reply: 'Your permissions do not include the lease data needed to answer this question.',
+			sources: [],
+			action: null
+		};
+	}
 
 	// Drafts first — they combine an intent verb with an entity.
 	if ((DRAFT_VERB.test(q) || OPEN_TICKET.test(q)) && DRAFT_TICKET.test(q)) {
