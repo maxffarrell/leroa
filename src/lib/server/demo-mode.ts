@@ -1,10 +1,10 @@
 import { error } from '@sveltejs/kit';
 import { randomBytes } from 'node:crypto';
-import { and, inArray, like, lt } from 'drizzle-orm';
+import { and, eq, inArray, like, lt } from 'drizzle-orm';
 import { LEROA_DEMO } from '$app/env/private';
 import { auth } from '#lib/server/auth.ts';
 import { db } from '#lib/server/db/index.ts';
-import { lease, member, organization, user } from '#lib/server/db/schema.ts';
+import { lease, member, organization, tenant, user } from '#lib/server/db/schema.ts';
 import { loadDemoData } from '#lib/server/services/demo.ts';
 
 const DEMO_EMAIL_DOMAIN = '@demo.leroa.invalid';
@@ -112,4 +112,16 @@ export async function startDemo(ip: string) {
 			portalTitle: null
 		}
 	});
+
+	// Every demo visitor can explore the portal in their own sample workspace.
+	const [profile] = await db
+		.select({ id: tenant.id })
+		.from(tenant)
+		.where(eq(tenant.organizationId, org.id))
+		.limit(1);
+	if (!profile) error(500, 'Could not create demo portal profile');
+	await db
+		.update(tenant)
+		.set({ portalUserId: demoUser.id })
+		.where(and(eq(tenant.id, profile.id), eq(tenant.organizationId, org.id)));
 }
