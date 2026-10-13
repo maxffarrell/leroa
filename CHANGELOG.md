@@ -1,5 +1,11 @@
 # leroa
 
+## 0.1.2
+
+### Patch Changes
+
+- 56e039d: Link every public demo account to a sample portal profile in its own workspace so the admin sidebar portal opens successfully. Match the shared error page layout to Freeweight.
+
 ## 0.1.1
 
 ### Patch Changes
