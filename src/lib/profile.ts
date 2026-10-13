@@ -1,10 +1,14 @@
 import * as v from 'valibot';
 
 /** What a resident can share from their Leroa Profile. Nothing sensitive (SSN, DOB, screening) lives here. */
-export const PROFILE_SCOPES = ['contact', 'household', 'pets', 'application'] as const;
+export const PROFILE_SCOPES = ['identity', 'contact', 'household', 'pets', 'application'] as const;
 export type ProfileScope = (typeof PROFILE_SCOPES)[number];
 
 export const PROFILE_SCOPE_LABELS: Record<ProfileScope, { label: string; description: string }> = {
+	identity: {
+		label: 'Sign-in identity',
+		description: 'Your account id, name and email — lets the install sign you in'
+	},
 	contact: { label: 'Contact details', description: 'Name, email and phone' },
 	household: { label: 'Household', description: 'People who would live with you' },
 	pets: { label: 'Pets', description: 'Type, name, breed and weight' },
@@ -46,15 +50,26 @@ export const profileData = v.object({
 	application
 });
 export type ProfileData = v.InferOutput<typeof profileData>;
-export type SharedProfile = Partial<ProfileData>;
+
+/** Returned only when the resident grants the `identity` scope: a stable subject for unified sign-in. */
+export const identityClaims = v.object({
+	sub: v.pipe(v.string(), v.minLength(1)),
+	name: text(200),
+	email: v.pipe(v.string(), v.trim(), v.email('Enter a valid email'), v.maxLength(200)),
+	emailVerified: v.boolean()
+});
+export type IdentityClaims = v.InferOutput<typeof identityClaims>;
 
 /** What a hub returns: only the sections the resident agreed to share. */
 export const sharedProfile = v.object({
 	contact: v.optional(contact),
 	household: v.optional(v.object({ members: v.pipe(v.array(member), v.maxLength(19)) })),
 	pets: v.optional(v.pipe(v.array(pet), v.maxLength(10))),
-	application: v.optional(application)
+	application: v.optional(application),
+	identity: v.optional(identityClaims)
 });
+
+export type SharedProfile = v.InferOutput<typeof sharedProfile>;
 
 export const blankProfile = (): ProfileData => ({
 	contact: { firstName: '', lastName: '', email: '', phone: '' },
@@ -154,12 +169,15 @@ export function validClientId(raw: string | null): string | null {
 
 export const PROFILE_CALLBACK_PATH = '/api/profile/callback';
 
-/** Installs register nothing: the redirect must be the client's own callback route. */
+/**
+ * Installs register nothing: the redirect must stay on the install's own origin.
+ * Any path is allowed (the profile callback for sharing, the auth callback for
+ * unified sign-in); codes are single-use and PKCE-bound either way.
+ */
 export function validRedirect(clientId: string, raw: string | null): boolean {
 	if (!raw) return false;
 	try {
-		const u = new URL(raw);
-		return u.origin === clientId && u.pathname === PROFILE_CALLBACK_PATH && !u.search && !u.hash;
+		return new URL(raw).origin === clientId;
 	} catch {
 		return false;
 	}

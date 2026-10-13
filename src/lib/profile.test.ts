@@ -73,12 +73,12 @@ describe('client ids and redirects', () => {
 		expect(validClientId(null)).toBeNull();
 	});
 
-	it('only redirects to the client’s own callback', () => {
+	it('only redirects to the client’s own origin', () => {
 		const c = 'https://pm.example.com';
 		expect(validRedirect(c, `${c}/api/profile/callback`)).toBe(true);
+		expect(validRedirect(c, `${c}/api/auth/callback/leroa`)).toBe(true);
 		expect(validRedirect(c, 'https://evil.example/api/profile/callback')).toBe(false);
-		expect(validRedirect(c, `${c}/api/profile/callback?x=1`)).toBe(false);
-		expect(validRedirect(c, `${c}/elsewhere`)).toBe(false);
+		expect(validRedirect(c, 'http://pm.example.com/api/profile/callback')).toBe(false);
 	});
 
 	it('rejects open redirects in next', () => {
