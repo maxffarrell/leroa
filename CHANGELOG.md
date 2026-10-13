@@ -1,5 +1,11 @@
 # leroa
 
+## 0.1.1
+
+### Patch Changes
+
+- bbe4b15: Close resource permission, tenant reference, and public data exposure gaps found in the release audit.
+
 ## 0.1.0
 
 ### Minor Changes
