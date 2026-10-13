@@ -108,7 +108,17 @@ async function loadPack(orgId: string, ctx?: OrgContext) {
 			rows('leads', () => listLeads(orgId))
 		]
 	);
-	return { properties, units, leases, tickets, tenants, listings, vendors, leads };
+	return {
+		properties,
+		units,
+		leases,
+		tickets,
+		tenants,
+		listings,
+		vendors,
+		leads,
+		leasesAvailable: permitted('leases')
+	};
 }
 
 type Pack = Awaited<ReturnType<typeof loadPack>>;
@@ -222,6 +232,16 @@ async function heuristicAsk(
 	const q = question.trim();
 	const unit = findUnit(pack, q);
 	const tenant = findTenant(pack, q);
+	if (
+		!pack.leasesAvailable &&
+		(EXPIRING.test(q) || DELINQUENT.test(q) || WHO_IN.test(q) || LEASE_OF.test(q))
+	) {
+		return {
+			reply: 'Your permissions do not include the lease data needed to answer this question.',
+			sources: [],
+			action: null
+		};
+	}
 
 	// Drafts first — they combine an intent verb with an entity.
 	if ((DRAFT_VERB.test(q) || OPEN_TICKET.test(q)) && DRAFT_TICKET.test(q)) {

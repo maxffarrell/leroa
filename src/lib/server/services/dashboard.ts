@@ -1,3 +1,5 @@
+import { canReadOperation } from '#lib/server/access.ts';
+import { leasingPolicy } from '#lib/server/access-policies.ts';
 import { allows, type ApiResource } from '#lib/api-permissions.ts';
 import { filterRecords } from '#lib/server/access.ts';
 import type { OrgContext } from '#lib/server/context.ts';
@@ -126,9 +128,13 @@ async function scopedDashboard(ctx: OrgContext) {
 	const month = monthKey();
 	const today = todayISO();
 	const [roll, units, leases, tickets, vendors, turns, leasing] = await Promise.all([
-		permitted('charges') ? filterRecords(ctx, 'charges', await rentRoll(ctx.orgId, month)) : [],
+		canReadOperation(ctx, leasingPolicy.rentRoll)
+			? filterRecords(ctx, 'charges', await rentRoll(ctx.orgId, month))
+			: [],
 		permitted('units') ? filterRecords(ctx, 'units', await listUnits(ctx.orgId)) : [],
-		permitted('leases') ? filterRecords(ctx, 'leases', await listLeases(ctx.orgId)) : [],
+		canReadOperation(ctx, leasingPolicy.listLeases)
+			? filterRecords(ctx, 'leases', await listLeases(ctx.orgId))
+			: [],
 		permitted('tickets') ? filterRecords(ctx, 'tickets', await listTickets(ctx.orgId)) : [],
 		permitted('vendors') ? listVendors(ctx.orgId, {}, ctx) : [],
 		permitted('turns') ? filterRecords(ctx, 'turns', await listTurns(ctx.orgId)) : [],

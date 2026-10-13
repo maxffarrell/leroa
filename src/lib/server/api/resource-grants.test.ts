@@ -215,6 +215,8 @@ describe('assistant composite data grants', () => {
 			delete c.perms![missing];
 			const answer = await askAssistant('org', 'Anyone behind on rent?', c);
 			expect(JSON.stringify(answer)).not.toContain('PRIVATE RESIDENT');
+			expect(answer.reply).toContain('permissions');
+			expect(answer.reply).not.toContain('paid up');
 			expect(state.lease).not.toHaveBeenCalled();
 			state.ai = true;
 			state.provider.mockResolvedValue({ reply: 'Okay', sources: [], action: null });
