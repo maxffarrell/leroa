@@ -78,8 +78,12 @@ export async function findGrant(userId: string, clientId: string) {
 }
 
 export async function approve(userId: string, req: AuthorizeRequest, chosen: ProfileScope[]) {
-	const scopes = chosen.filter((s) => req.scopes.includes(s));
-	if (!scopes.length) error(400, 'Choose at least one thing to share');
+	const picked = chosen.filter((s) => req.scopes.includes(s));
+	if (!picked.length) error(400, 'Choose at least one thing to share');
+	// Consent accumulates: a later sign-in flow (identity only) must not shrink an
+	// earlier profile-sharing grant, and vice versa.
+	const existing = await findGrant(userId, req.clientId);
+	const scopes = [...new Set([...(existing?.scopes ?? []), ...picked])] as ProfileScope[];
 	const [grant] = await db
 		.insert(profileGrant)
 		.values({ userId, clientId: req.clientId, scopes })
@@ -158,11 +162,22 @@ export async function profileForToken(token: string) {
 		.where(eq(profileGrant.id, grant.id));
 	const { data, updatedAt } = await getProfile(grant.userId);
 	const scopes = parseScopes(grant.scopes.join(' '));
+	const profile = shareProfile(data, scopes);
+	if (scopes.includes('identity')) {
+		const u = await db.query.user.findFirst({ where: (t, { eq }) => eq(t.id, grant.userId) });
+		if (!u) return null;
+		profile.identity = {
+			sub: u.id,
+			name: u.name,
+			email: u.email.toLowerCase(),
+			emailVerified: u.emailVerified
+		};
+	}
 	return {
 		sub: grant.id,
 		scope: scopes.join(' '),
 		updatedAt: updatedAt?.toISOString() ?? null,
-		profile: shareProfile(data, scopes)
+		profile
 	};
 }
 

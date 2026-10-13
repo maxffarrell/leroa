@@ -49,3 +49,45 @@ describe('core authentication routing', () => {
 		expect(mocks.getSession).not.toHaveBeenCalled();
 	});
 });
+
+describe('cross-site form check (kit checkOrigin is off; re-applied here)', () => {
+	function formPost(path: string, origin?: string): Parameters<Handle>[0] {
+		const headers: Record<string, string> = {
+			'content-type': 'application/x-www-form-urlencoded'
+		};
+		if (origin) headers.origin = origin;
+		return {
+			event: {
+				url: new URL(path, 'https://app.example.com'),
+				request: new Request(new URL(path, 'https://app.example.com'), {
+					method: 'POST',
+					headers
+				}),
+				locals: {}
+			},
+			resolve: vi.fn()
+		} as unknown as Parameters<Handle>[0];
+	}
+
+	it('rejects cross-site form POSTs on app routes', async () => {
+		const result = await handle(formPost('/dashboard', 'https://evil.example.com'));
+		expect(result.status).toBe(403);
+		expect(mocks.authHandler).not.toHaveBeenCalled();
+	});
+
+	it('rejects form POSTs with no Origin on app routes', async () => {
+		const result = await handle(formPost('/dashboard'));
+		expect(result.status).toBe(403);
+	});
+
+	it('allows same-origin form POSTs', async () => {
+		const result = await handle(formPost('/dashboard', 'https://app.example.com'));
+		expect(result.status).toBe(200);
+	});
+
+	it('exempts /id/* so installs can call the OAuth API without Origin', async () => {
+		const result = await handle(formPost('/id/token'));
+		expect(result.status).toBe(200);
+		expect(mocks.authHandler).toHaveBeenCalledOnce();
+	});
+});

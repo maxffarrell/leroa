@@ -8,6 +8,7 @@ import { apiKey } from '@better-auth/api-key';
 import { db } from '#lib/server/db/index.ts';
 import { authPlugins } from '#lib/server/auth-plugins.ts';
 import { appOrigin, sendEmail } from '#lib/server/email.ts';
+import { suiteSignInPlugins } from '#lib/server/profile/signin.ts';
 import { renderEmail } from '#lib/server/email-template.ts';
 import { socialProviders } from '#lib/server/social.ts';
 
@@ -42,6 +43,7 @@ export const auth = betterAuth({
 		}),
 		apiKey({ references: 'organization', defaultPrefix: 'lr_', enableMetadata: true }),
 		...authPlugins,
+		...suiteSignInPlugins(),
 		sveltekitCookies(getRequestEvent) // must be last
 	]
 });

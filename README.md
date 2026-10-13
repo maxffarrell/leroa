@@ -142,6 +142,7 @@ Bilt is only offered on self-hosted installs and for leases in USD. Tenants must
   - Applicants get **Fill from my Leroa profile** on listing pages, a one-time read whose token is revoked straight away.
   - Residents can connect their profile in the portal and choose which leases keep their contact details in sync. The daily cron and portal visits refresh it.
 - **How sharing works:** OAuth 2.0 with PKCE. The install's own origin is its client ID, so there's nothing to register, and each share needs the resident's consent.
+- **Unified sign-in:** installs with `LEROA_PROFILE_URL` set also show **Continue with Leroa** on the login and signup pages. Granting the `identity` scope signs the resident in with their hub account (stable subject + verified email), so one Leroa Profile works across installs and across the product suite (tredaro, freeweight).
 
 ## Public demo
 

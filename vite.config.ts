@@ -16,6 +16,9 @@ export default defineConfig({
 			},
 			// Vercel sets VERCEL=1 during builds; everything else (Docker, Railway, Hostinger) uses Node.
 			adapter: process.env.VERCEL ? adapterVercel() : adapterNode(),
+			// Disabled globally and re-applied per-route in hooks.server.ts: /id/* is a
+			// server-to-server OAuth API whose clients never send an Origin header.
+			csrf: { trustedOrigins: ['*'] },
 			experimental: { remoteFunctions: true }
 		})
 	],

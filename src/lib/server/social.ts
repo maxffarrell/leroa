@@ -4,11 +4,12 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET,
 	LEROA_DEMO,
+	LEROA_PROFILE_URL,
 	X_CLIENT_ID,
 	X_CLIENT_SECRET
 } from '$app/env/private';
 
-export type SocialProvider = 'google' | 'facebook' | 'twitter';
+export type SocialProvider = 'google' | 'facebook' | 'twitter' | 'leroa';
 
 /** Each provider is on only when its keys are set; self-hosters register their own apps. */
 export function socialProviders() {
@@ -33,5 +34,7 @@ export function socialProviders() {
 
 export function enabledSocialProviders(): SocialProvider[] {
 	if (LEROA_DEMO) return [];
-	return Object.keys(socialProviders()) as SocialProvider[];
+	const providers = Object.keys(socialProviders()) as SocialProvider[];
+	if (LEROA_PROFILE_URL) providers.push('leroa');
+	return providers;
 }
