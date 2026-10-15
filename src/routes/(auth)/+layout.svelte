@@ -16,11 +16,10 @@
 		<div class="max-w-md px-10 text-neutral-200">
 			<Logo class="mb-6 size-10 text-white" />
 			<blockquote class="text-2xl leading-snug font-medium text-white">
-				Run your rentals from one fast, keyboard-friendly workspace.
+				Rentals, minus the busywork.
 			</blockquote>
 			<p class="mt-4 text-sm text-neutral-400">
-				Properties, leases, rent, maintenance and a tenant portal — open source, self-hostable on
-				your own infrastructure.
+				Properties, leases, rent, maintenance and a tenant portal.
 			</p>
 		</div>
 	</div>
