@@ -1,4 +1,7 @@
-node_modules
+node_modules/
+data/uploads/
+coverage/
+*.log
 
 # Output
 .output
@@ -16,7 +19,11 @@ Thumbs.db
 .env
 .env.*
 !.env.example
-!.env.test
+
+# Local Drizzle scratch files, never the committed migration history.
+drizzle/*.local.*
+drizzle/*.scratch.*
+drizzle/.scratch/
 
 # Vite
 vite.config.js.timestamp-*

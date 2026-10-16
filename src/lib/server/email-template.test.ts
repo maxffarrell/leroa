@@ -32,4 +32,33 @@ describe('renderEmail', () => {
 		});
 		expect(branded.html).toContain('background:#0ea5e9');
 	});
+
+	it('does not interpolate CSS or attribute markup from workspace accents', () => {
+		const result = renderEmail({
+			orgName: '<script>not markup</script>',
+			heading: '<img src=x onerror=alert(1)>',
+			lines: ['<svg onload=alert(1)>'],
+			accent: '#fff;\"><img src=x onerror=alert(1)>',
+			action: { label: 'Open', url: 'https://example.com/' }
+		});
+		expect(result.html).toContain('background:#18181b;');
+		expect(result.html).not.toMatch(/<(script|img|svg)\b/);
+		expect(result.text).toContain('<svg onload=alert(1)>');
+	});
+
+	it.each([
+		'javascript:alert(1)',
+		'data:text/html,<script>alert(1)</script>',
+		'//evil.example',
+		'bad URL'
+	])('omits unsafe or malformed HTML action URL %s', (url) => {
+		const result = renderEmail({
+			orgName: 'Org',
+			heading: 'Hello',
+			lines: [],
+			action: { label: 'Open', url }
+		});
+		expect(result.html).not.toContain('<a ');
+		expect(result.text).toContain(`Open: ${url}`);
+	});
 });

@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			'content-length': String(doc.size),
 			'x-content-type-options': 'nosniff',
 			'referrer-policy': 'no-referrer',
-			'cache-control': 'private, max-age=3600'
+			'cache-control': 'private, no-store'
 		}
 	});
 };

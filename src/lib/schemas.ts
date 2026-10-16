@@ -282,7 +282,7 @@ export const ownerUpdate = v.object({
 
 /** What a vendor may do from their work-order link. */
 export const workOrderUpdate = v.object({
-	token: v.pipe(v.string(), v.maxLength(500)),
+	token: v.string(),
 	status: v.optional(v.picklist(['in_progress', 'on_hold', 'done'] as const)),
 	costAmount: v.optional(v.nullable(cents)),
 	note: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(5000)))

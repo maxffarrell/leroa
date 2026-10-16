@@ -7,6 +7,7 @@ Leroa runs on any Hostinger **VPS** using the Docker Manager (Docker Compose) te
    `https://raw.githubusercontent.com/maxffarrell/leroa/main/docker-compose.yml`
 3. Set environment variables:
    - `BETTER_AUTH_SECRET` – output of `openssl rand -hex 32`
+   - `POSTGRES_PASSWORD` – a separate output of `openssl rand -hex 32`, kept across upgrades (existing volumes need their existing password)
    - `ORIGIN` – your public URL, e.g. `https://pm.example.com`
 4. Deploy. Leroa listens on port 3000; point your domain at the VPS and enable HTTPS from **Domains → SSL**.
 
