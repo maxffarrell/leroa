@@ -84,6 +84,7 @@ jobs:
     outputs:
       digest: ${{ steps.image.outputs.digest }}
     services:
+      # Isolated, disposable CI credentials only; never used by deployed services.
       postgres:
         image: postgres:18-alpine
         env:
@@ -104,6 +105,7 @@ jobs:
         with:
           node-version: '26'
       - name: Validate application and release safeguards
+        # Test-only values for the isolated runner database/auth instance.
         env:
           DATABASE_URL: postgres://demo_test:runner-test-only@localhost:5432/demo_test
           BETTER_AUTH_SECRET: runner-test-only

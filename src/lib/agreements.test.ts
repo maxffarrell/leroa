@@ -16,6 +16,13 @@ describe('renderTemplate', () => {
 			'{{today}}'
 		);
 	});
+
+	it('preserves literal lease text for Svelte text nodes and PDF text drawing', () => {
+		const text = '<img src=x onerror=alert(1)> & "Tenant"';
+		expect(renderTemplate('# {{tenant_names}}\nA & B', { tenant_names: text }).text).toBe(
+			`# ${text}\nA & B`
+		);
+	});
 });
 
 describe('ordinal', () => {

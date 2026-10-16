@@ -6,6 +6,8 @@
 
 Properties, units, tenants, leases, rent tracking, maintenance, documents and a resident portal, in a keyboard-friendly UI. Self-host for free, or use Leroa Cloud.
 
+Leroa is open core: the core is licensed under [AGPL-3.0](LICENSE-AGPL.txt), with separately licensed enterprise features. Copy [`.env.example`](.env.example) to `.env` for self-hosted setup. Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
+
 [![Deploy on Vercel](https://img.shields.io/badge/Deploy%20on-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmaxffarrell%2Fleroa&env=DATABASE_URL,BETTER_AUTH_SECRET&envDescription=Postgres%20URL%20and%20a%2032%2B%20char%20random%20secret&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
 [![Deploy on Railway](https://img.shields.io/badge/Deploy%20on-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.com/new/template?template=https%3A%2F%2Fgithub.com%2Fmaxffarrell%2Fleroa&plugins=postgresql&envs=BETTER_AUTH_SECRET&BETTER_AUTH_SECRETDesc=32%2B+random+characters)
 [![Deploy on Render](https://img.shields.io/badge/Deploy%20on-Render-46E3B7?logo=render&logoColor=black)](https://render.com/deploy?repo=https://github.com/maxffarrell/leroa)
@@ -34,7 +36,8 @@ Out of scope by design: general ledger and bookkeeping. Export payments to your 
 
 ```sh
 cp .env.example .env           # set a persistent random BETTER_AUTH_SECRET (32+ characters)
-# In .env set DATABASE_URL=postgres://leroa:leroa@localhost:5432/leroa
+# In .env set POSTGRES_PASSWORD to `openssl rand -hex 32` output,
+# and DATABASE_URL=postgres://leroa:<that-password>@localhost:5432/leroa
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
 pnpm install
 node --env-file=.env scripts/migrate.ts
@@ -47,7 +50,7 @@ Open http://localhost:5173, create an account, then click **Explore with demo da
 
 | Target       | How                                                                                                            |
 | ------------ | -------------------------------------------------------------------------------------------------------------- |
-| Docker       | `BETTER_AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d`                                              |
+| Docker       | Set persistent `BETTER_AUTH_SECRET` and `POSTGRES_PASSWORD` in `.env`, then `docker compose up -d`.            |
 | Railway      | Button above. Uses `railway.json` + `Dockerfile` with a Postgres plugin.                                       |
 | Vercel       | Button above. Uses `@sveltejs/adapter-vercel` automatically when `VERCEL=1`. Migrations run during the build.  |
 | Render       | Button above. `render.yaml` provisions a Docker web service and a Postgres database.                           |
@@ -229,5 +232,7 @@ See [LICENSE](LICENSE).
 This is pre-1.0 software. Start with a disposable evaluation and check your workflows before using real customer data. Review [SECURITY.md](SECURITY.md), test your identity provider and payment webhooks, verify scheduled jobs, and perform a backup/restore drill for your installation.
 
 For Docker self-hosting, create `.env` once and keep its authentication secret across upgrades. Optional SSO/AI/provider settings in `.env` are passed to the application container. Use `docker compose up -d --build` when building this checkout; published images use version tags rather than an unversioned `latest` tag.
+
+Compose now requires `POSTGRES_PASSWORD` instead of a shared default. Use a generated hex password for a new database. For an existing volume, set the **existing** database password first; changing this environment variable does not change the role's password. Rotate it separately in Postgres and update the application connection together. Never delete a volume to reset credentials.
 
 The source Compose setup builds this checkout and requires Docker Compose 2.24 or newer for its optional `.env` file. Rebuild after updating source to pick up security fixes.

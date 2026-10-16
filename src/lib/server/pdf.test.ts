@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { PDFDocument } from 'pdf-lib';
+import { describe, expect, it, vi } from 'vitest';
+import { PDFDocument, PDFName, PDFPage } from 'pdf-lib';
 import { agreementPdf, toWinAnsi } from './pdf.ts';
 
 describe('toWinAnsi', () => {
@@ -9,6 +9,32 @@ describe('toWinAnsi', () => {
 });
 
 describe('agreementPdf', () => {
+	it('draws hostile lease content as literal text, not HTML or PDF actions', async () => {
+		const draw = vi.spyOn(PDFPage.prototype, 'drawText');
+		try {
+			const body = '<script>alert(1)</script> & Tenant\n) Tj /JavaScript (alert(1))';
+			const bytes = await agreementPdf({
+				id: 'test',
+				title: 'Lease',
+				orgName: 'A & B',
+				body,
+				watermark: null,
+				certificate: false,
+				contentHash: null,
+				sentAt: null,
+				completedAt: null,
+				signers: []
+			});
+			expect(draw.mock.calls.map(([text]) => text)).toContain('<script>alert(1)</script> & Tenant');
+			expect(draw.mock.calls.map(([text]) => text)).toContain(') Tj /JavaScript (alert(1))');
+			const pdf = await PDFDocument.load(bytes);
+			expect(pdf.catalog.has(PDFName.of('OpenAction'))).toBe(false);
+			expect(pdf.getPages()[0].node.has(PDFName.of('AA'))).toBe(false);
+		} finally {
+			draw.mockRestore();
+		}
+	});
+
 	it('renders a long body with a signature certificate', async () => {
 		const bytes = await agreementPdf({
 			id: 'a1',

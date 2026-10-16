@@ -23,36 +23,45 @@ type Out<T extends v.GenericSchema> = v.InferOutput<T>;
 
 /** Photos a vendor may add to one work order through their link. */
 const MAX_LINK_PHOTOS = 30;
+const LINK_LIFETIME_SECONDS = 30 * 24 * 60 * 60;
+const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+const INVALID_LINK = 'This work order link is not valid';
 
 function sign(payload: string) {
 	return createHmac('sha256', BETTER_AUTH_SECRET)
-		.update(`work-order:${payload}`)
+		.update(`work-order:v2:${payload}`)
 		.digest('base64url');
 }
 
 /**
- * A signed link for the vendor assigned to a ticket. It stops working as soon as
- * the ticket is reassigned, so there is nothing to revoke or store.
+ * A 30-day signed link for the assigned vendor. Reassignment or cancellation
+ * revokes access. Legacy links without an expiry must be regenerated.
  */
 export function workOrderToken(ticketId: string, vendorId: string) {
-	const payload = `${ticketId}.${vendorId}`;
-	return `${Buffer.from(payload).toString('base64url')}.${sign(payload)}`;
+	if (!UUID.test(ticketId) || !UUID.test(vendorId)) throw new Error('Invalid work order IDs');
+	const expires = Math.floor(Date.now() / 1000) + LINK_LIFETIME_SECONDS;
+	const payload = `${ticketId}.${vendorId}.${expires}`;
+	return `v2.${Buffer.from(payload).toString('base64url')}.${sign(payload)}`;
 }
 
 function verify(token: string) {
-	const [encoded, sig] = token.split('.');
-	if (!encoded || !sig) return null;
-	const payload = Buffer.from(encoded, 'base64url').toString();
+	if (token.length > 500 || !/^v2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(token)) return null;
+	const [, encoded, sig] = token.split('.');
+	const payload = Buffer.from(encoded!, 'base64url').toString('utf8');
+	if (Buffer.from(payload).toString('base64url') !== encoded) return null;
 	const expected = Buffer.from(sign(payload));
-	const given = Buffer.from(sig);
+	const given = Buffer.from(sig!);
 	if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
-	const [ticketId, vendorId] = payload.split('.');
-	return ticketId && vendorId ? { ticketId, vendorId } : null;
+	const [ticketId, vendorId, expiry, extra] = payload.split('.');
+	if (!ticketId || !vendorId || !UUID.test(ticketId) || !UUID.test(vendorId)) return null;
+	if (!expiry || !/^\d{10}$/.test(expiry) || extra !== undefined) return null;
+	const remaining = Number(expiry) - Math.floor(Date.now() / 1000);
+	return remaining > 0 && remaining <= LINK_LIFETIME_SECONDS ? { ticketId, vendorId } : null;
 }
 
 async function load(token: string) {
 	const ids = verify(token);
-	if (!ids) error(404, 'This work order link is not valid');
+	if (!ids) error(404, INVALID_LINK);
 	const [row] = await db
 		.select({
 			ticket: maintenanceTicket,
@@ -97,8 +106,12 @@ async function load(token: string) {
 		.where(
 			and(eq(maintenanceTicket.id, ids.ticketId), eq(maintenanceTicket.vendorId, ids.vendorId))
 		);
-	if (!row) error(404, 'This work order is no longer assigned to you');
+	if (!row || row.ticket.status === 'cancelled') error(404, INVALID_LINK);
 	return { ...row, vendorId: ids.vendorId };
+}
+
+export async function validateWorkOrderLink(token: string) {
+	await load(token);
 }
 
 export async function getWorkOrder(token: string) {
@@ -116,7 +129,13 @@ export async function getWorkOrder(token: string) {
 				createdAt: ticketNote.createdAt
 			})
 			.from(ticketNote)
-			.where(and(eq(ticketNote.ticketId, t.id), eq(ticketNote.internal, false)))
+			.where(
+				and(
+					eq(ticketNote.ticketId, t.id),
+					eq(ticketNote.organizationId, t.organizationId),
+					eq(ticketNote.internal, false)
+				)
+			)
 			.orderBy(asc(ticketNote.createdAt))
 	]);
 	return {
@@ -134,9 +153,13 @@ export async function getWorkOrder(token: string) {
 		property: row.property,
 		unitName: row.unitName,
 		photos: photos.map((p) => ({ id: p.id, name: p.name })),
-		notes: notes.map(({ vendorId, ...n }) => ({
-			...n,
-			mine: n.authorType === 'vendor' && vendorId === row.vendorId
+		notes: notes.map((n) => ({
+			id: n.id,
+			authorType: n.authorType,
+			authorName: n.authorName,
+			body: n.body,
+			createdAt: n.createdAt,
+			mine: n.authorType === 'vendor' && n.vendorId === row.vendorId
 		}))
 	};
 }
@@ -167,8 +190,16 @@ export async function updateWorkOrder(input: Out<typeof workOrderUpdate>) {
 				...(cost ? { costAmount: input.costAmount } : {}),
 				updatedAt: new Date()
 			})
-			.where(eq(maintenanceTicket.id, t.id))
+			.where(
+				and(
+					eq(maintenanceTicket.id, t.id),
+					eq(maintenanceTicket.organizationId, t.organizationId),
+					eq(maintenanceTicket.vendorId, row.vendorId),
+					eq(maintenanceTicket.status, t.status)
+				)
+			)
 			.returning();
+		if (!updated) error(404, INVALID_LINK);
 		const [n] = note
 			? await tx
 					.insert(ticketNote)

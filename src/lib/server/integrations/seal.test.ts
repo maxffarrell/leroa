@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { seal, signState, unseal, verifyState } from './seal.ts';
 
-const secret = 'test-secret-that-is-long-enough-123456';
+const secret = 'test_not_real_sealing_secret_for_unit_tests';
 
 describe('token sealing', () => {
 	it('round-trips and uses a fresh IV each time', () => {

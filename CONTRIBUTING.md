@@ -2,6 +2,8 @@
 
 ## Development
 
+Use Node 26 and pnpm. Configure the database and a persistent random authentication secret in your local `.env` before running migrations.
+
 ```sh
 pnpm install
 cp .env.example .env
@@ -9,7 +11,13 @@ pnpm db:migrate
 pnpm dev
 ```
 
-Before opening a PR run `pnpm check`, `pnpm lint` and `pnpm test`.
+Before requesting review run `pnpm check`, `pnpm lint`, `pnpm test` and `pnpm build`.
+
+## Security and fixtures
+
+Never commit real credentials or local `.env` files. Keep `.env.example` placeholder-only; use obviously fake test fixtures and disposable local/CI credentials. Report vulnerabilities privately using [SECURITY.md](SECURITY.md), not public issues. Do not include secrets or customer data in logs, screenshots or PR descriptions.
+
+The root ignore rules cover all `.env.*` files except `.env.example`. There is no committed `.env.test` fixture. Do not ignore or delete the committed Drizzle migration history; keep local experiments in `.scratch` or `*.scratch.*` / `*.local.*` files instead.
 
 ## Conventions
 
