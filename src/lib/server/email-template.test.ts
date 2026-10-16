@@ -38,7 +38,7 @@ describe('renderEmail', () => {
 			orgName: '<script>not markup</script>',
 			heading: '<img src=x onerror=alert(1)>',
 			lines: ['<svg onload=alert(1)>'],
-			accent: '#fff;\"><img src=x onerror=alert(1)>',
+			accent: '#fff;"><img src=x onerror=alert(1)>',
 			action: { label: 'Open', url: 'https://example.com/' }
 		});
 		expect(result.html).toContain('background:#18181b;');

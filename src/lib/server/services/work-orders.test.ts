@@ -5,6 +5,7 @@ import { ticketNote } from '#lib/server/db/schema.ts';
 
 const state = vi.hoisted(() => ({
 	select: vi.fn(),
+	selectWhere: vi.fn(),
 	rows: [] as unknown[][],
 	transaction: vi.fn(),
 	returning: vi.fn(),
@@ -81,7 +82,10 @@ beforeEach(() => {
 			from: () => query,
 			innerJoin: () => query,
 			leftJoin: () => query,
-			where: () => query,
+			where: (condition: unknown) => {
+				state.selectWhere(condition);
+				return query;
+			},
 			orderBy: () => query,
 			then: (resolve: (value: unknown[]) => unknown) => Promise.resolve(rows).then(resolve)
 		};
@@ -103,6 +107,8 @@ describe('public work-order link authorization', () => {
 			validateWorkOrderLink(workOrderToken(ticketId, vendorId))
 		).resolves.toBeUndefined();
 		expect(state.select).toHaveBeenCalledOnce();
+		const query = new PgDialect().sqlToQuery(state.selectWhere.mock.calls[0][0]);
+		expect(query.params).toEqual([ticketId, vendorId]);
 	});
 
 	it.each(['', '1', 'a.b', 'v2.a.b', 'x'.repeat(501)])(
@@ -207,6 +213,8 @@ describe('public work-order link authorization', () => {
 			}
 		]);
 		expect(JSON.stringify(result)).not.toMatch(/private|never serialize/);
+		const noteQuery = new PgDialect().sqlToQuery(state.selectWhere.mock.calls[1][0]);
+		expect(noteQuery.params).toEqual([ticketId, row.ticket.organizationId, false]);
 		const noteProjection = state.select.mock.calls[1][0];
 		expect(noteProjection).toEqual({
 			id: ticketNote.id,
@@ -216,6 +224,28 @@ describe('public work-order link authorization', () => {
 			body: ticketNote.body,
 			createdAt: ticketNote.createdAt
 		});
+	});
+
+	it('rechecks missing assignments for updates and uploads, and scopes photo downloads', async () => {
+		const token = workOrderToken(ticketId, vendorId);
+		state.rows = [[]];
+		await expect(updateWorkOrder({ token, status: 'done' })).rejects.toMatchObject(invalid);
+		state.rows = [[]];
+		await expect(uploadWorkOrderPhotos(token, [])).rejects.toMatchObject(invalid);
+		expect(state.transaction).not.toHaveBeenCalled();
+		expect(state.save).not.toHaveBeenCalled();
+		state.rows = [[row], []];
+		await expect(workOrderPhoto(token, 'other-ticket-photo')).rejects.toMatchObject({
+			status: 404
+		});
+		const query = new PgDialect().sqlToQuery(state.selectWhere.mock.calls.at(-1)![0]);
+		expect(query.params).toEqual([
+			'other-ticket-photo',
+			row.ticket.organizationId,
+			'maintenance',
+			ticketId
+		]);
+		expect(state.store).not.toHaveBeenCalled();
 	});
 
 	it('revalidates the token on mutation and prevents concurrent reassignment/status changes', async () => {
