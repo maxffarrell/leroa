@@ -1,5 +1,11 @@
 # leroa
 
+## 0.1.4
+
+### Patch Changes
+
+- 11af88c: Fix demo deployment for releases merged by a GitHub App account.
+
 ## 0.1.3
 
 ### Patch Changes
