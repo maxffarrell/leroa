@@ -7,12 +7,8 @@ Portions of this software are licensed as follows:
   defined in `ee/LICENSE`.
 * The integration SDK (`packages/integration-sdk/`) and bundled integrations
   (`integrations/`) are licensed under the MIT license in their directories.
-* All other content is licensed under the GNU Affero General Public License v3
-  (AGPLv3), reproduced in `LICENSE-AGPL.txt`. This includes basic SSO,
-  passkeys and BYOK AI in `src/lib/server/auth-plugins.ts` and
-  `src/lib/server/ai/`.
+* All other first-party content is licensed under the MIT license reproduced
+  in `LICENSE-MIT.txt`. This includes basic SSO, passkeys and BYOK AI in
+  `src/lib/server/auth-plugins.ts` and `src/lib/server/ai/`.
 
-Application exception: programs that interact with Leroa only through its
-published interfaces (the REST API, webhooks and the integration SDK) without
-incorporating or modifying Leroa source code are not considered derivative
-works and may use any license.
+Third-party code retains its own license and copyright notices.

@@ -6,7 +6,7 @@
 
 Properties, units, tenants, leases, rent tracking, maintenance, documents and a resident portal, in a keyboard-friendly UI. Self-host for free, or use Leroa Cloud.
 
-Leroa is open core: the core is licensed under [AGPL-3.0](LICENSE-AGPL.txt), with separately licensed enterprise features. Copy [`.env.example`](.env.example) to `.env` for self-hosted setup. Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
+Leroa is open core: the core is licensed under [MIT](LICENSE-MIT.txt), with separately licensed enterprise features. Copy [`.env.example`](.env.example) to `.env` for self-hosted setup. Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
 [![Deploy on Vercel](https://img.shields.io/badge/Deploy%20on-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmaxffarrell%2Fleroa&env=DATABASE_URL,BETTER_AUTH_SECRET&envDescription=Postgres%20URL%20and%20a%2032%2B%20char%20random%20secret&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
 [![Deploy on Railway](https://img.shields.io/badge/Deploy%20on-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.com/new/template?template=https%3A%2F%2Fgithub.com%2Fmaxffarrell%2Fleroa&plugins=postgresql&envs=BETTER_AUTH_SECRET&BETTER_AUTH_SECRETDesc=32%2B+random+characters)
@@ -221,7 +221,7 @@ SvelteKit 3 · Svelte 5 (remote functions, async) · Tailwind 4 · shadcn-svelte
 
 Leroa is open core:
 
-- Core, including basic SSO, passkeys and BYOK AI: [AGPLv3](LICENSE-AGPL.txt)
+- Core, including basic SSO, passkeys and BYOK AI: [MIT](LICENSE-MIT.txt)
 - `src/lib/server/ee/` and files marked `/* @license Enterprise */`: [Leroa Enterprise License](ee/LICENSE)
 - Integration SDK and integrations: MIT
 
