@@ -79,7 +79,7 @@
 		"better-auth": "^1.7.7",
 		"country-flag-icons": "^1.6.20",
 		"drizzle-orm": "^0.45.3",
-		"nodemailer": "^10.0.15",
+		"nodemailer": "^10.1.4",
 		"pdf-lib": "1.17.1",
 		"postgres": "^3.4.9",
 		"runed": "^0.37.1",
