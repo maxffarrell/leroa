@@ -79,7 +79,7 @@ export async function purgeExpiredDemos() {
 }
 
 /** Signs the visitor into a fresh, private workspace filled with sample data. */
-export async function startDemo(ip: string) {
+export async function startDemo(ip: string, view: 'staff' | 'member' = 'staff') {
 	if (!LEROA_DEMO) error(404, 'Not found');
 	rateLimit(ip);
 	await purgeExpiredDemos();
@@ -87,7 +87,7 @@ export async function startDemo(ip: string) {
 	const id = randomBytes(6).toString('hex');
 	const { user: demoUser } = await auth.api.signUpEmail({
 		body: {
-			name: 'Demo Manager',
+			name: view === 'member' ? 'Demo Resident' : 'Demo Manager',
 			email: `demo-${id}${DEMO_EMAIL_DOMAIN}`,
 			password: randomBytes(24).toString('base64url')
 		}
