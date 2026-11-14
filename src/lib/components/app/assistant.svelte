@@ -111,99 +111,101 @@
 			</Sheet.Description>
 		</Sheet.Header>
 
-		<MessageScroller.Root class="min-h-0 flex-1">
-			<MessageScroller.Viewport aria-live="polite">
-				<MessageScroller.Content class="gap-3 p-4">
-					{#if msgs.length === 0}
-						<div class="space-y-3 pt-2">
-							<p class="text-sm text-muted-foreground">Ask anything about your portfolio:</p>
-							<div class="flex flex-wrap gap-2">
-								{#each suggestions as s (s)}
-									<button
-										class="rounded-full border px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent"
-										onclick={() => void ask(s)}>{s}</button
-									>
-								{/each}
-							</div>
-						</div>
-					{:else}
-						{#each msgs as m (m)}
-							<MessageScroller.Item>
-								<Message.Root align={m.role === 'user' ? 'end' : 'start'}>
-									<Message.Content class="min-w-0 flex-1">
-										<Bubble.Root
-											variant={m.role === 'user' ? 'default' : 'muted'}
-											align={m.role === 'user' ? 'end' : 'start'}
+		<MessageScroller.Provider autoScroll>
+			<MessageScroller.Root class="min-h-0 flex-1">
+				<MessageScroller.Viewport aria-live="polite">
+					<MessageScroller.Content class="gap-3 p-4">
+						{#if msgs.length === 0}
+							<div class="space-y-3 pt-2">
+								<p class="text-sm text-muted-foreground">Ask anything about your portfolio:</p>
+								<div class="flex flex-wrap gap-2">
+									{#each suggestions as s (s)}
+										<button
+											class="rounded-full border px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent"
+											onclick={() => void ask(s)}>{s}</button
 										>
-											<Bubble.Content class="whitespace-pre-wrap">{m.text}</Bubble.Content>
-										</Bubble.Root>
-										{#if m.sources?.length}
-											<div class="flex flex-wrap gap-1.5 pl-1">
-												{#each m.sources as s (s.href)}
-													<a
-														class="text-xs text-primary underline-offset-2 hover:underline"
-														href={s.href}>{s.label}</a
-													>
-												{/each}
-											</div>
-										{/if}
-										{#if m.action?.type === 'create_ticket'}
-											<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
-												<div class="flex items-center gap-2">
-													<span class="text-sm font-medium">{m.action.input.title}</span>
-													<Badge
-														variant={m.action.input.priority === 'urgent'
-															? 'destructive'
-															: 'secondary'}>{m.action.input.priority}</Badge
-													>
+									{/each}
+								</div>
+							</div>
+						{:else}
+							{#each msgs as m (m)}
+								<MessageScroller.Item>
+									<Message.Root align={m.role === 'user' ? 'end' : 'start'}>
+										<Message.Content class="min-w-0 flex-1">
+											<Bubble.Root
+												variant={m.role === 'user' ? 'default' : 'muted'}
+												align={m.role === 'user' ? 'end' : 'start'}
+											>
+												<Bubble.Content class="whitespace-pre-wrap">{m.text}</Bubble.Content>
+											</Bubble.Root>
+											{#if m.sources?.length}
+												<div class="flex flex-wrap gap-1.5 pl-1">
+													{#each m.sources as s (s.href)}
+														<a
+															class="text-xs text-primary underline-offset-2 hover:underline"
+															href={s.href}>{s.label}</a
+														>
+													{/each}
 												</div>
-												{#if m.done}
-													<p class="text-xs text-muted-foreground">Ticket created.</p>
-												{:else}
-													<Button size="sm" onclick={() => void confirmTicket(m)}
-														>Create ticket</Button
-													>
-												{/if}
-											</div>
-										{:else if m.action?.type === 'draft_reply'}
-											<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
-												<p class="text-xs font-medium text-muted-foreground">
-													To {m.action.tenantName}
-												</p>
-												{#if m.done}
-													<p class="text-sm whitespace-pre-wrap">{m.action.body}</p>
-													<a
-														class="text-xs text-primary underline-offset-2 hover:underline"
-														href="/messages/{m.action.tenantId}">Open thread</a
-													>
-												{:else}
-													<Textarea bind:value={m.action.body} rows={4} class="text-sm" />
-													<Button
-														size="sm"
-														onclick={() =>
-															m.action?.type === 'draft_reply' &&
-															void confirmReply(m, m.action.body)}>Send</Button
-													>
-												{/if}
-											</div>
-										{/if}
-									</Message.Content>
-								</Message.Root>
-							</MessageScroller.Item>
-						{/each}
-						{#if busy}
-							<Trace.Line status="running">
-								<Trace.Icon>
-									<LoaderCircle class="animate-spin" />
-								</Trace.Icon>
-								<Trace.Title>Thinking</Trace.Title>
-							</Trace.Line>
+											{/if}
+											{#if m.action?.type === 'create_ticket'}
+												<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
+													<div class="flex items-center gap-2">
+														<span class="text-sm font-medium">{m.action.input.title}</span>
+														<Badge
+															variant={m.action.input.priority === 'urgent'
+																? 'destructive'
+																: 'secondary'}>{m.action.input.priority}</Badge
+														>
+													</div>
+													{#if m.done}
+														<p class="text-xs text-muted-foreground">Ticket created.</p>
+													{:else}
+														<Button size="sm" onclick={() => void confirmTicket(m)}
+															>Create ticket</Button
+														>
+													{/if}
+												</div>
+											{:else if m.action?.type === 'draft_reply'}
+												<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
+													<p class="text-xs font-medium text-muted-foreground">
+														To {m.action.tenantName}
+													</p>
+													{#if m.done}
+														<p class="text-sm whitespace-pre-wrap">{m.action.body}</p>
+														<a
+															class="text-xs text-primary underline-offset-2 hover:underline"
+															href="/messages/{m.action.tenantId}">Open thread</a
+														>
+													{:else}
+														<Textarea bind:value={m.action.body} rows={4} class="text-sm" />
+														<Button
+															size="sm"
+															onclick={() =>
+																m.action?.type === 'draft_reply' &&
+																void confirmReply(m, m.action.body)}>Send</Button
+														>
+													{/if}
+												</div>
+											{/if}
+										</Message.Content>
+									</Message.Root>
+								</MessageScroller.Item>
+							{/each}
+							{#if busy}
+								<Trace.Line status="running">
+									<Trace.Icon>
+										<LoaderCircle class="animate-spin" />
+									</Trace.Icon>
+									<Trace.Title>Thinking</Trace.Title>
+								</Trace.Line>
+							{/if}
 						{/if}
-					{/if}
-				</MessageScroller.Content>
-			</MessageScroller.Viewport>
-			<MessageScroller.Button />
-		</MessageScroller.Root>
+					</MessageScroller.Content>
+				</MessageScroller.Viewport>
+				<MessageScroller.Button />
+			</MessageScroller.Root>
+		</MessageScroller.Provider>
 
 		<form
 			class="border-t bg-background p-3"

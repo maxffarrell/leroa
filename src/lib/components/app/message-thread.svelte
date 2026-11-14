@@ -133,57 +133,62 @@
 </script>
 
 <div class={cn('flex min-h-0 flex-col', className)}>
-	<MessageScroller.Root class="min-h-0 flex-1">
-		<MessageScroller.Viewport aria-live="polite">
-			<MessageScroller.Content class="gap-1 p-4">
-				{#if messages.length === 0}
-					{@render empty?.()}
-				{:else}
-					<Message.Group class="gap-1">
-						{#each messages as m, i (m.id)}
-							{@const mine = m.authorType === side}
-							{#if i === firstNew}
-								<div class="my-2 flex items-center gap-2 text-xs font-medium text-primary">
-									<span class="h-px flex-1 bg-primary/30"></span>New<span
-										class="h-px flex-1 bg-primary/30"
-									></span>
-								</div>
-							{/if}
-							<Message.Root align={mine ? 'end' : 'start'} class={startsRun(i) ? 'mt-2' : ''}>
-								<Message.Content class="gap-1">
-									{#if startsRun(i)}
-										<Message.Header class="gap-1.5 px-1">
-											<span>{mine && side === 'tenant' ? 'You' : m.authorName}</span>
-											<time class="font-normal" datetime={new Date(m.createdAt).toISOString()}
-												>{stamp(m.createdAt)}</time
-											>
-										</Message.Header>
-									{/if}
-									{@const cat = categoryOf(m.aiCategory)}
-									{#if showCategories && !mine && cat}
-										<span class="flex">
-											<Badge
-												variant={cat.urgent ? 'destructive' : 'outline'}
-												class="h-5 px-1.5 text-[10px] font-normal"
-												>{cat.urgent ? `Urgent · ${cat.label}` : cat.label}</Badge
-											>
-										</span>
-									{/if}
-									<Bubble.Root variant={mine ? 'default' : 'muted'} align={mine ? 'end' : 'start'}>
-										<Bubble.Content class="whitespace-pre-wrap">{m.body}</Bubble.Content>
-									</Bubble.Root>
-									{#if i === lastMine && seen}
-										<Message.Footer class="px-1 font-normal">Seen</Message.Footer>
-									{/if}
-								</Message.Content>
-							</Message.Root>
-						{/each}
-					</Message.Group>
-				{/if}
-			</MessageScroller.Content>
-		</MessageScroller.Viewport>
-		<MessageScroller.Button />
-	</MessageScroller.Root>
+	<MessageScroller.Provider autoScroll>
+		<MessageScroller.Root class="min-h-0 flex-1">
+			<MessageScroller.Viewport aria-live="polite">
+				<MessageScroller.Content class="gap-1 p-4">
+					{#if messages.length === 0}
+						{@render empty?.()}
+					{:else}
+						<Message.Group class="gap-1">
+							{#each messages as m, i (m.id)}
+								{@const mine = m.authorType === side}
+								{#if i === firstNew}
+									<div class="my-2 flex items-center gap-2 text-xs font-medium text-primary">
+										<span class="h-px flex-1 bg-primary/30"></span>New<span
+											class="h-px flex-1 bg-primary/30"
+										></span>
+									</div>
+								{/if}
+								<Message.Root align={mine ? 'end' : 'start'} class={startsRun(i) ? 'mt-2' : ''}>
+									<Message.Content class="gap-1">
+										{#if startsRun(i)}
+											<Message.Header class="gap-1.5 px-1">
+												<span>{mine && side === 'tenant' ? 'You' : m.authorName}</span>
+												<time class="font-normal" datetime={new Date(m.createdAt).toISOString()}
+													>{stamp(m.createdAt)}</time
+												>
+											</Message.Header>
+										{/if}
+										{@const cat = categoryOf(m.aiCategory)}
+										{#if showCategories && !mine && cat}
+											<span class="flex">
+												<Badge
+													variant={cat.urgent ? 'destructive' : 'outline'}
+													class="h-5 px-1.5 text-[10px] font-normal"
+													>{cat.urgent ? `Urgent · ${cat.label}` : cat.label}</Badge
+												>
+											</span>
+										{/if}
+										<Bubble.Root
+											variant={mine ? 'default' : 'muted'}
+											align={mine ? 'end' : 'start'}
+										>
+											<Bubble.Content class="whitespace-pre-wrap">{m.body}</Bubble.Content>
+										</Bubble.Root>
+										{#if i === lastMine && seen}
+											<Message.Footer class="px-1 font-normal">Seen</Message.Footer>
+										{/if}
+									</Message.Content>
+								</Message.Root>
+							{/each}
+						</Message.Group>
+					{/if}
+				</MessageScroller.Content>
+			</MessageScroller.Viewport>
+			<MessageScroller.Button />
+		</MessageScroller.Root>
+	</MessageScroller.Provider>
 	{#if onsend}
 		<form
 			class="border-t bg-background p-3"
