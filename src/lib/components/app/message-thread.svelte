@@ -2,11 +2,11 @@
 	import * as Message from '#lib/components/ui/message/index.js';
 	import * as Bubble from '#lib/components/ui/bubble/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
-	import { Button } from '#lib/components/ui/button/index.js';
-	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import * as InputGroup from '#lib/components/ui/input-group/index.js';
+	import * as MessageScroller from '#lib/components/ui/message-scroller/index.js';
 	import { cn } from '#lib/utils.js';
 	import { toast } from 'svelte-sonner';
-	import SendHorizontal from '@lucide/svelte/icons/send-horizontal';
+	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import type { Snippet } from 'svelte';
@@ -62,7 +62,6 @@
 	let body = $state('');
 	let sending = $state(false);
 	let drafting = $state(false);
-	let scroller = $state<HTMLDivElement | null>(null);
 
 	async function draft() {
 		if (!ondraft || drafting) return;
@@ -111,11 +110,6 @@
 		return today ? timeFmt.format(date) : `${dayFmt.format(date)}, ${timeFmt.format(date)}`;
 	}
 
-	$effect(() => {
-		void messages.length;
-		scroller?.scrollTo({ top: scroller.scrollHeight });
-	});
-
 	async function send() {
 		const text = body.trim();
 		if (!text || sending || !onsend) return;
@@ -139,84 +133,96 @@
 </script>
 
 <div class={cn('flex min-h-0 flex-col', className)}>
-	<div bind:this={scroller} class="min-h-0 flex-1 overflow-y-auto p-4" aria-live="polite">
-		{#if messages.length === 0}
-			{@render empty?.()}
-		{:else}
-			<Message.Group class="gap-1">
-				{#each messages as m, i (m.id)}
-					{@const mine = m.authorType === side}
-					{#if i === firstNew}
-						<div class="my-2 flex items-center gap-2 text-xs font-medium text-primary">
-							<span class="h-px flex-1 bg-primary/30"></span>New<span
-								class="h-px flex-1 bg-primary/30"
-							></span>
-						</div>
-					{/if}
-					<Message.Root align={mine ? 'end' : 'start'} class={startsRun(i) ? 'mt-2' : ''}>
-						<Message.Content class="gap-1">
-							{#if startsRun(i)}
-								<Message.Header class="gap-1.5 px-1">
-									<span>{mine && side === 'tenant' ? 'You' : m.authorName}</span>
-									<time class="font-normal" datetime={new Date(m.createdAt).toISOString()}
-										>{stamp(m.createdAt)}</time
-									>
-								</Message.Header>
+	<MessageScroller.Root class="min-h-0 flex-1">
+		<MessageScroller.Viewport aria-live="polite">
+			<MessageScroller.Content class="gap-1 p-4">
+				{#if messages.length === 0}
+					{@render empty?.()}
+				{:else}
+					<Message.Group class="gap-1">
+						{#each messages as m, i (m.id)}
+							{@const mine = m.authorType === side}
+							{#if i === firstNew}
+								<div class="my-2 flex items-center gap-2 text-xs font-medium text-primary">
+									<span class="h-px flex-1 bg-primary/30"></span>New<span
+										class="h-px flex-1 bg-primary/30"
+									></span>
+								</div>
 							{/if}
-							{@const cat = categoryOf(m.aiCategory)}
-							{#if showCategories && !mine && cat}
-								<span class="flex">
-									<Badge
-										variant={cat.urgent ? 'destructive' : 'outline'}
-										class="h-5 px-1.5 text-[10px] font-normal"
-										>{cat.urgent ? `Urgent · ${cat.label}` : cat.label}</Badge
-									>
-								</span>
-							{/if}
-							<Bubble.Root variant={mine ? 'default' : 'muted'} align={mine ? 'end' : 'start'}>
-								<Bubble.Content class="whitespace-pre-wrap">{m.body}</Bubble.Content>
-							</Bubble.Root>
-							{#if i === lastMine && seen}
-								<Message.Footer class="px-1 font-normal">Seen</Message.Footer>
-							{/if}
-						</Message.Content>
-					</Message.Root>
-				{/each}
-			</Message.Group>
-		{/if}
-	</div>
+							<Message.Root align={mine ? 'end' : 'start'} class={startsRun(i) ? 'mt-2' : ''}>
+								<Message.Content class="gap-1">
+									{#if startsRun(i)}
+										<Message.Header class="gap-1.5 px-1">
+											<span>{mine && side === 'tenant' ? 'You' : m.authorName}</span>
+											<time class="font-normal" datetime={new Date(m.createdAt).toISOString()}
+												>{stamp(m.createdAt)}</time
+											>
+										</Message.Header>
+									{/if}
+									{@const cat = categoryOf(m.aiCategory)}
+									{#if showCategories && !mine && cat}
+										<span class="flex">
+											<Badge
+												variant={cat.urgent ? 'destructive' : 'outline'}
+												class="h-5 px-1.5 text-[10px] font-normal"
+												>{cat.urgent ? `Urgent · ${cat.label}` : cat.label}</Badge
+											>
+										</span>
+									{/if}
+									<Bubble.Root variant={mine ? 'default' : 'muted'} align={mine ? 'end' : 'start'}>
+										<Bubble.Content class="whitespace-pre-wrap">{m.body}</Bubble.Content>
+									</Bubble.Root>
+									{#if i === lastMine && seen}
+										<Message.Footer class="px-1 font-normal">Seen</Message.Footer>
+									{/if}
+								</Message.Content>
+							</Message.Root>
+						{/each}
+					</Message.Group>
+				{/if}
+			</MessageScroller.Content>
+		</MessageScroller.Viewport>
+		<MessageScroller.Button />
+	</MessageScroller.Root>
 	{#if onsend}
 		<form
-			class="flex items-end gap-2 border-t bg-background p-3"
+			class="border-t bg-background p-3"
 			onsubmit={(e) => {
 				e.preventDefault();
 				void send();
 			}}
 		>
-			<Textarea
-				bind:value={body}
-				{placeholder}
-				rows={1}
-				maxlength={5000}
-				class="max-h-40 min-h-10 resize-none"
-				aria-label="Message"
-				{onkeydown}
-			/>
-			{#if ondraft}
-				<Button
-					type="button"
-					size="icon"
-					variant="ghost"
-					disabled={drafting}
-					aria-label="Draft a reply"
-					title="Draft a reply"
-					onclick={draft}
-					>{#if drafting}<Spinner />{:else}<Sparkles />{/if}</Button
-				>
-			{/if}
-			<Button type="submit" size="icon" disabled={sending || !body.trim()} aria-label="Send"
-				><SendHorizontal /></Button
-			>
+			<InputGroup.Root>
+				<InputGroup.Textarea
+					bind:value={body}
+					{placeholder}
+					rows={1}
+					maxlength={5000}
+					class="max-h-40 min-h-10 resize-none"
+					aria-label="Message"
+					{onkeydown}
+				/>
+				<InputGroup.Addon align="inline-end">
+					{#if ondraft}
+						<InputGroup.Button
+							type="button"
+							size="icon-sm"
+							variant="ghost"
+							disabled={drafting}
+							aria-label="Draft a reply"
+							title="Draft a reply"
+							onclick={draft}
+							>{#if drafting}<Spinner />{:else}<Sparkles />{/if}</InputGroup.Button
+						>
+					{/if}
+					<InputGroup.Button
+						type="submit"
+						size="icon-sm"
+						disabled={sending || !body.trim()}
+						aria-label="Send"><ArrowUp /></InputGroup.Button
+					>
+				</InputGroup.Addon>
+			</InputGroup.Root>
 		</form>
 	{/if}
 </div>

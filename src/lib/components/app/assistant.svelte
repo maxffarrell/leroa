@@ -5,11 +5,16 @@
 	import { toast } from 'svelte-sonner';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
 	import * as Bubble from '#lib/components/ui/bubble/index.js';
+	import * as Message from '#lib/components/ui/message/index.js';
+	import * as MessageScroller from '#lib/components/ui/message-scroller/index.js';
+	import * as InputGroup from '#lib/components/ui/input-group/index.js';
+	import * as Trace from '#lib/components/ui/trace/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
-	import SendHorizontal from '@lucide/svelte/icons/send-horizontal';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import type { AssistantAction } from '#lib/server/ai/assistant.ts';
 
 	type Msg = {
@@ -24,7 +29,6 @@
 	let input = $state('');
 	let busy = $state(false);
 	let msgs = $state<Msg[]>([]);
-	let scroller = $state<HTMLDivElement>();
 
 	const suggestions = [
 		"What's vacant right now?",
@@ -52,7 +56,6 @@
 			});
 		} finally {
 			busy = false;
-			queueMicrotask(() => scroller?.scrollTo({ top: scroller.scrollHeight }));
 		}
 	}
 
@@ -108,105 +111,131 @@
 			</Sheet.Description>
 		</Sheet.Header>
 
-		<div
-			bind:this={scroller}
-			class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
-			aria-live="polite"
-		>
-			{#if msgs.length === 0}
-				<div class="space-y-3 pt-2">
-					<p class="text-sm text-muted-foreground">Ask anything about your portfolio:</p>
-					<div class="flex flex-wrap gap-2">
-						{#each suggestions as s (s)}
-							<button
-								class="rounded-full border px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent"
-								onclick={() => void ask(s)}>{s}</button
-							>
-						{/each}
-					</div>
-				</div>
-			{:else}
-				{#each msgs as m (m)}
-					<Bubble.Root
-						variant={m.role === 'user' ? 'default' : 'muted'}
-						align={m.role === 'user' ? 'end' : 'start'}
-					>
-						<Bubble.Content class="whitespace-pre-wrap">{m.text}</Bubble.Content>
-					</Bubble.Root>
-					{#if m.sources?.length}
-						<div class="flex flex-wrap gap-1.5 pl-1">
-							{#each m.sources as s (s.href)}
-								<a class="text-xs text-primary underline-offset-2 hover:underline" href={s.href}
-									>{s.label}</a
-								>
-							{/each}
-						</div>
-					{/if}
-					{#if m.action?.type === 'create_ticket'}
-						<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
-							<div class="flex items-center gap-2">
-								<span class="text-sm font-medium">{m.action.input.title}</span>
-								<Badge variant={m.action.input.priority === 'urgent' ? 'destructive' : 'secondary'}
-									>{m.action.input.priority}</Badge
-								>
+		<MessageScroller.Root class="min-h-0 flex-1">
+			<MessageScroller.Viewport aria-live="polite">
+				<MessageScroller.Content class="gap-3 p-4">
+					{#if msgs.length === 0}
+						<div class="space-y-3 pt-2">
+							<p class="text-sm text-muted-foreground">Ask anything about your portfolio:</p>
+							<div class="flex flex-wrap gap-2">
+								{#each suggestions as s (s)}
+									<button
+										class="rounded-full border px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent"
+										onclick={() => void ask(s)}>{s}</button
+									>
+								{/each}
 							</div>
-							{#if m.done}
-								<p class="text-xs text-muted-foreground">Ticket created.</p>
-							{:else}
-								<Button size="sm" onclick={() => void confirmTicket(m)}>Create ticket</Button>
-							{/if}
 						</div>
-					{:else if m.action?.type === 'draft_reply'}
-						<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
-							<p class="text-xs font-medium text-muted-foreground">To {m.action.tenantName}</p>
-							{#if m.done}
-								<p class="text-sm whitespace-pre-wrap">{m.action.body}</p>
-								<a
-									class="text-xs text-primary underline-offset-2 hover:underline"
-									href="/messages/{m.action.tenantId}">Open thread</a
-								>
-							{:else}
-								<Textarea bind:value={m.action.body} rows={4} class="text-sm" />
-								<Button
-									size="sm"
-									onclick={() =>
-										m.action?.type === 'draft_reply' && void confirmReply(m, m.action.body)}
-									>Send</Button
-								>
-							{/if}
-						</div>
+					{:else}
+						{#each msgs as m (m)}
+							<MessageScroller.Item>
+								<Message.Root align={m.role === 'user' ? 'end' : 'start'}>
+									<Message.Content class="min-w-0 flex-1">
+										<Bubble.Root
+											variant={m.role === 'user' ? 'default' : 'muted'}
+											align={m.role === 'user' ? 'end' : 'start'}
+										>
+											<Bubble.Content class="whitespace-pre-wrap">{m.text}</Bubble.Content>
+										</Bubble.Root>
+										{#if m.sources?.length}
+											<div class="flex flex-wrap gap-1.5 pl-1">
+												{#each m.sources as s (s.href)}
+													<a
+														class="text-xs text-primary underline-offset-2 hover:underline"
+														href={s.href}>{s.label}</a
+													>
+												{/each}
+											</div>
+										{/if}
+										{#if m.action?.type === 'create_ticket'}
+											<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
+												<div class="flex items-center gap-2">
+													<span class="text-sm font-medium">{m.action.input.title}</span>
+													<Badge
+														variant={m.action.input.priority === 'urgent'
+															? 'destructive'
+															: 'secondary'}>{m.action.input.priority}</Badge
+													>
+												</div>
+												{#if m.done}
+													<p class="text-xs text-muted-foreground">Ticket created.</p>
+												{:else}
+													<Button size="sm" onclick={() => void confirmTicket(m)}
+														>Create ticket</Button
+													>
+												{/if}
+											</div>
+										{:else if m.action?.type === 'draft_reply'}
+											<div class="space-y-2 rounded-lg border bg-muted/40 p-3">
+												<p class="text-xs font-medium text-muted-foreground">
+													To {m.action.tenantName}
+												</p>
+												{#if m.done}
+													<p class="text-sm whitespace-pre-wrap">{m.action.body}</p>
+													<a
+														class="text-xs text-primary underline-offset-2 hover:underline"
+														href="/messages/{m.action.tenantId}">Open thread</a
+													>
+												{:else}
+													<Textarea bind:value={m.action.body} rows={4} class="text-sm" />
+													<Button
+														size="sm"
+														onclick={() =>
+															m.action?.type === 'draft_reply' &&
+															void confirmReply(m, m.action.body)}>Send</Button
+													>
+												{/if}
+											</div>
+										{/if}
+									</Message.Content>
+								</Message.Root>
+							</MessageScroller.Item>
+						{/each}
+						{#if busy}
+							<Trace.Line status="running">
+								<Trace.Icon>
+									<LoaderCircle class="animate-spin" />
+								</Trace.Icon>
+								<Trace.Title>Thinking</Trace.Title>
+							</Trace.Line>
+						{/if}
 					{/if}
-				{/each}
-				{#if busy}
-					<Bubble.Root variant="muted" align="start">
-						<Bubble.Content class="text-muted-foreground">Thinking…</Bubble.Content>
-					</Bubble.Root>
-				{/if}
-			{/if}
-		</div>
+				</MessageScroller.Content>
+			</MessageScroller.Viewport>
+			<MessageScroller.Button />
+		</MessageScroller.Root>
 
 		<form
-			class="flex items-end gap-2 border-t bg-background p-3"
+			class="border-t bg-background p-3"
 			onsubmit={(e) => {
 				e.preventDefault();
 				void ask(input);
 			}}
 		>
-			<Textarea
-				bind:value={input}
-				rows={1}
-				placeholder="Ask about units, leases, tickets…"
-				class="max-h-32 min-h-9 flex-1 resize-none"
-				onkeydown={(e) => {
-					if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-						e.preventDefault();
-						void ask(input);
-					}
-				}}
-			/>
-			<Button type="submit" size="icon" disabled={busy || !input.trim()} aria-label="Ask">
-				<SendHorizontal class="size-4" />
-			</Button>
+			<InputGroup.Root>
+				<InputGroup.Textarea
+					bind:value={input}
+					rows={1}
+					placeholder="Ask about units, leases, tickets…"
+					class="max-h-32 min-h-9 flex-1 resize-none"
+					onkeydown={(e) => {
+						if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+							e.preventDefault();
+							void ask(input);
+						}
+					}}
+				/>
+				<InputGroup.Addon align="inline-end">
+					<InputGroup.Button
+						type="submit"
+						size="icon-sm"
+						disabled={busy || !input.trim()}
+						aria-label="Ask"
+					>
+						<ArrowUp class="size-4" />
+					</InputGroup.Button>
+				</InputGroup.Addon>
+			</InputGroup.Root>
 		</form>
 	</Sheet.Content>
 </Sheet.Root>

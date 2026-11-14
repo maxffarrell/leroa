@@ -12,7 +12,10 @@ Components sourced from shadcn-svelte-extras: `confirm-delete-dialog`,
 `copy-button`, `file-drop-zone`, `modal`, `nlp-date-input` (if present),
 `phone-input`, `split-button`, plus their shared helpers (`components/button.svelte`,
 `hooks/use-clipboard.svelte.ts`). Everything else here is shadcn-svelte core,
-including the chat components (`message`, `bubble`, `attachment`, `marker`).
+including the chat/AI components (`message`, `bubble`, `attachment`, `marker`,
+`message-scroller`, `trace`, `code-block`, plus `src/lib/highlighter.ts` and
+`src/lib/hooks/use-highlighted-code.svelte.ts`, which depend on
+`@shadcn-svelte/primitives` and `shiki`).
 
 The MIT License requires the copyright and permission notices to be included
 with substantial portions of the software. Both licenses permit use,
