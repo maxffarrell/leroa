@@ -1,5 +1,16 @@
 # leroa
 
+## 0.2.0
+
+### Minor Changes
+
+- 62dcf1d: Migrate the assistant and message threads to the new shadcn-svelte chat/AI components (message-scroller, input-group composer, trace indicator) and vendor the trace, code-block, and message-scroller primitives.
+- ae6dda6: Float the demo banner as an absolute-positioned pill and show it on the resident and owner portals too.
+
+### Patch Changes
+
+- 1de05ba: Require patched Node.js runtimes for CVE-2026-111497 and rebuild containers with Node.js 26.12.1.
+
 ## 0.1.4
 
 ### Patch Changes
