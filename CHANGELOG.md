@@ -1,5 +1,11 @@
 # leroa
 
+## 0.3.0
+
+### Minor Changes
+
+- 3d66852: Add printable rent statements (per-lease ledger) and monthly owner statements in the flat single-typeface strict-grid print style, linked from the lease and owner detail pages.
+
 ## 0.2.0
 
 ### Minor Changes
