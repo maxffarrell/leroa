@@ -4,6 +4,7 @@
 	import CheckCheck from '@lucide/svelte/icons/check-check';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Popover from '#lib/components/ui/popover/index.js';
+	import * as Sidebar from '#lib/components/ui/sidebar/index.js';
 	import { getInbox, markInboxRead } from '#lib/remote/notifications.remote.ts';
 	import { formatRelative } from '#lib/format.ts';
 
@@ -29,18 +30,23 @@
 >
 	<Popover.Trigger>
 		{#snippet child({ props })}
-			<Button {...props} variant="ghost" size="icon" class="relative" aria-label="Notifications">
-				<Bell class="size-4" />
+			<Sidebar.MenuButton
+				{...props}
+				variant="outline"
+				tooltipContent="Notifications"
+				class="relative aspect-square !w-auto shrink-0 px-2 text-muted-foreground"
+			>
+				<Bell />
 				{#if inbox.unread}
 					<span
-						class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground"
-						>{inbox.unread > 99 ? '99+' : inbox.unread}</span
+						class="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+						>{inbox.unread > 9 ? '9+' : inbox.unread}</span
 					>
 				{/if}
-			</Button>
+			</Sidebar.MenuButton>
 		{/snippet}
 	</Popover.Trigger>
-	<Popover.Content align="end" class="w-80 p-0 sm:w-96">
+	<Popover.Content side="right" align="start" sideOffset={8} class="w-80 p-0 sm:w-96">
 		<div class="flex items-center justify-between border-b px-4 py-2.5">
 			<span class="text-sm font-medium">Notifications</span>
 			{#if inbox.unread}
