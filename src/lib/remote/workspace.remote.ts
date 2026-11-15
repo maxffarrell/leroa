@@ -21,6 +21,12 @@ import { appOrigin } from '#lib/server/email.ts';
 import { idSchema, webhookInput } from '#lib/schemas.ts';
 import { hasFeature } from '#lib/server/features.ts';
 
+/** Org name/logo for printable statements and reports. */
+export const getOrgProfile = query(async () => {
+	const ctx = await requireOrg();
+	return { name: ctx.org.name, logoUrl: ctx.org.logo ?? null };
+});
+
 export const getDashboard = query(async () =>
 	(async () => {
 		const ctx = await requireOrg();

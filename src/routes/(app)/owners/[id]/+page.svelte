@@ -16,6 +16,7 @@
 	import { formatDate } from '#lib/format.ts';
 	import { toast } from 'svelte-sonner';
 	import Pencil from '@lucide/svelte/icons/pencil';
+	import Printer from '@lucide/svelte/icons/printer';
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import Link from '@lucide/svelte/icons/link';
 	import Mail from '@lucide/svelte/icons/mail';
@@ -52,6 +53,9 @@
 	{#snippet actions()}
 		<Button size="sm" variant="outline" onclick={() => (editing = true)}
 			><Pencil /> <span class="hidden sm:inline">Edit</span></Button
+		>
+		<Button size="sm" variant="outline" href="/owners/{o.id}/statement" target="_blank"
+			><Printer /> <span class="hidden sm:inline">Statement</span></Button
 		>
 		{#if !o.archivedAt}
 			<Button size="sm" variant="outline" onclick={copyInvite}
