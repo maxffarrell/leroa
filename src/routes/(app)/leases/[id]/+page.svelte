@@ -118,6 +118,10 @@
 					>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end">
+				<DropdownMenu.Item onclick={() => window.open(`/leases/${id}/statement`, '_blank')}
+					>Rent statement</DropdownMenu.Item
+				>
+				<DropdownMenu.Separator />
 				{#if l.status === 'draft'}<DropdownMenu.Item onclick={() => setStatus('active')}
 						>Activate lease</DropdownMenu.Item
 					>{/if}
