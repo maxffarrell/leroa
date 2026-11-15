@@ -11,6 +11,7 @@
 	import { initials } from '#lib/format.ts';
 	import Logo from './logo.svelte';
 	import { mainNav, secondaryNav } from './nav.ts';
+	import InboxBell from './inbox-bell.svelte';
 	import { getUnreadCount } from '#lib/remote/messaging.remote.ts';
 	import { getLeasingBadge } from '#lib/remote/crm.remote.ts';
 	import Search from '@lucide/svelte/icons/search';
@@ -78,17 +79,20 @@
 				</Sidebar.MenuButton>
 			</Sidebar.MenuItem>
 			<Sidebar.MenuItem>
-				<Sidebar.MenuButton
-					variant="outline"
-					onclick={onsearch}
-					tooltipContent="Search (⌘K)"
-					class="text-muted-foreground"
-					data-tour="search"
-				>
-					<Search />
-					<span>Search or jump to…</span>
-					<Kbd class="ml-auto group-data-[collapsible=icon]:hidden">⌘K</Kbd>
-				</Sidebar.MenuButton>
+				<div class="flex gap-1">
+					<Sidebar.MenuButton
+						variant="outline"
+						onclick={onsearch}
+						tooltipContent="Search (⌘K)"
+						class="flex-1 text-muted-foreground"
+						data-tour="search"
+					>
+						<Search />
+						<span>Search or jump to…</span>
+						<Kbd class="ml-auto group-data-[collapsible=icon]:hidden">⌘K</Kbd>
+					</Sidebar.MenuButton>
+					<InboxBell />
+				</div>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>
 	</Sidebar.Header>

@@ -3,7 +3,6 @@
 	import * as Sidebar from '#lib/components/ui/sidebar/index.js';
 	import { Separator } from '#lib/components/ui/separator/index.js';
 	import * as Breadcrumb from '#lib/components/ui/breadcrumb/index.js';
-	import InboxBell from '#lib/components/app/inbox-bell.svelte';
 
 	type Crumb = { label: string; href?: string };
 	let {
@@ -34,7 +33,6 @@
 		</Breadcrumb.List>
 	</Breadcrumb.Root>
 	<div class="ml-auto flex items-center gap-2">
-		<InboxBell />
 		{#if actions}{@render actions()}{/if}
 	</div>
 </header>
