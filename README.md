@@ -11,6 +11,9 @@ Leroa is open core: the core is licensed under [MIT](LICENSE-MIT.txt), with sepa
 [![Deploy on Vercel](https://img.shields.io/badge/Deploy%20on-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmaxffarrell%2Fleroa&env=DATABASE_URL,BETTER_AUTH_SECRET&envDescription=Postgres%20URL%20and%20a%2032%2B%20char%20random%20secret&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
 [![Deploy on Render](https://img.shields.io/badge/Deploy%20on-Render-46E3B7?logo=render&logoColor=black)](https://render.com/deploy?repo=https://github.com/maxffarrell/leroa)
 [![Deploy on DigitalOcean](https://img.shields.io/badge/Deploy%20on-DigitalOcean-0080FF?logo=digitalocean&logoColor=white)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/maxffarrell/leroa/tree/main)
+[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostinger.com/docker-hosting?compose_url=https%3A%2F%2Fraw.githubusercontent.com%2Fmaxffarrell%2Fleroa%2Fmain%2Fdocker-compose.hostinger.yml)
+
+Hostinger: **untested on the provider**. App + PostgreSQL + HTTPS are configured together; requires a Docker VPS, DNS hostname and persistent secrets. [Setup and limitations](docs/deploy-hostinger.md).
 
 </div>
 
@@ -53,7 +56,7 @@ Open http://localhost:5173, create an account, then click **Explore with demo da
 | Render       | Button above. `render.yaml` provisions a Docker web service and a Postgres database.                                              |
 | Koyeb        | Manual setup: deploy the `Dockerfile`, add PostgreSQL, and configure `DATABASE_URL` and `BETTER_AUTH_SECRET`.                     |
 | DigitalOcean | Button above. `.do/deploy.template.yaml` creates the app and a dev Postgres on App Platform.                                      |
-| Hostinger    | Manual VPS Docker Manager setup: [deployment guide](docs/deploy-hostinger.md).                                                    |
+| Hostinger    | Button above: app + Postgres + HTTPS on a VPS. **Provider-untested**; [required setup](docs/deploy-hostinger.md).                 |
 | Any VPS      | [docs/deploy-vps.md](docs/deploy-vps.md) — same compose file on a ~$4 Hetzner VM or Oracle's always-free tier.                    |
 | Fly.io       | [docs/deploy-fly.md](docs/deploy-fly.md) — `fly launch` using `fly.toml`, scales to zero when idle.                               |
 | PikaPods     | Not yet in their app catalog — once submitted, a `Run on PikaPods` badge goes here (~$1.50/mo managed).                           |
@@ -175,19 +178,19 @@ Integrations live in [`integrations/`](integrations) and are built with [`@leroa
 import { defineIntegration } from '@leroa/integration-sdk';
 
 export default defineIntegration({
-	id: 'my-integration',
-	name: 'My integration',
-	description: 'Does something useful',
-	category: 'automation',
-	author: { name: 'You' },
-	config: [{ key: 'url', label: 'Endpoint', type: 'url', required: true }],
-	events: ['payment.recorded'],
-	async handle(event, ctx) {
-		await ctx.fetch(ctx.config.url as string, {
-			method: 'POST',
-			body: JSON.stringify(event)
-		});
-	}
+  id: 'my-integration',
+  name: 'My integration',
+  description: 'Does something useful',
+  category: 'automation',
+  author: { name: 'You' },
+  config: [{ key: 'url', label: 'Endpoint', type: 'url', required: true }],
+  events: ['payment.recorded'],
+  async handle(event, ctx) {
+    await ctx.fetch(ctx.config.url as string, {
+      method: 'POST',
+      body: JSON.stringify(event)
+    });
+  }
 });
 ```
 
