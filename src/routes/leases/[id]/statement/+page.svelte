@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { statementTotals } from '#lib/statement-totals.ts';
 	import { page } from '$app/state';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import Printer from '@lucide/svelte/icons/printer';
@@ -12,8 +13,7 @@
 
 	const charges = [...l.charges].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 	const payments = [...l.payments].sort((a, b) => a.receivedOn.localeCompare(b.receivedOn));
-	const charged = charges.reduce((s, c) => s + c.amount, 0);
-	const paid = payments.reduce((s, p) => s + p.amount, 0);
+	const { charged, paid, ledgerBalance } = statementTotals(charges, payments);
 
 	const billTo = l.tenants.map((t) => tenantName(t));
 	const term = `${formatDate(l.startDate)} – ${l.endDate ? formatDate(l.endDate) : 'Month-to-month'}`;
@@ -61,6 +61,17 @@
 						</dd>
 						<dt class="text-sm text-neutral-400">Status</dt>
 						<dd class="text-sm capitalize">{l.status}</dd>
+					</div>
+					<div class="grid grid-cols-2 gap-x-4 pt-2">
+						<dt class="text-neutral-500">Current balance</dt>
+						<dd class="text-right tabular-nums">{formatMoney(l.balance, l.currency)}</dd>
+					</div>
+					<div>
+						<dt class="sr-only">Balance calculation</dt>
+						<dd class="text-xs text-neutral-500">
+							Ledger balance includes future charges. Current balance includes charges due through
+							today, less all recorded payments. Negative balances are credits.
+						</dd>
 					</div>
 				</dl>
 			</header>
@@ -128,9 +139,20 @@
 						<dd class="text-right tabular-nums">-{formatMoney(paid, l.currency)}</dd>
 					</div>
 					<div class="grid grid-cols-2 gap-x-4 border-t border-neutral-200 pt-2 text-lg">
-						<dt>Balance {l.currency.toUpperCase()}</dt>
+						<dt>Ledger balance {l.currency.toUpperCase()}</dt>
 						<dd class="text-right font-semibold tabular-nums">
-							{formatMoney(l.balance, l.currency)}
+							{formatMoney(ledgerBalance, l.currency)}
+						</dd>
+					</div>
+					<div class="grid grid-cols-2 gap-x-4 pt-2">
+						<dt class="text-neutral-500">Current balance</dt>
+						<dd class="text-right tabular-nums">{formatMoney(l.balance, l.currency)}</dd>
+					</div>
+					<div>
+						<dt class="sr-only">Balance calculation</dt>
+						<dd class="text-xs text-neutral-500">
+							Ledger balance includes future charges. Current balance includes charges due through
+							today, less all recorded payments. Negative balances are credits.
 						</dd>
 					</div>
 				</dl>
@@ -139,7 +161,7 @@
 			<footer class="mt-14 text-sm">
 				{#if l.depositAmount > 0}
 					<p class="text-xs text-neutral-500">
-						Deposit held: {formatMoney(l.depositAmount, l.currency)}
+						Contractual deposit: {formatMoney(l.depositAmount, l.currency)}
 					</p>
 				{/if}
 				{#if org.logoUrl}
