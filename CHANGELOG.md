@@ -1,5 +1,11 @@
 # leroa
 
+## 0.4.1
+
+### Patch Changes
+
+- 44cc6d1: Show a reconciling full-ledger balance separately from the current due-date balance on rent statements, and label contractual deposits without implying they have been received.
+
 ## 0.4.0
 
 ### Minor Changes
