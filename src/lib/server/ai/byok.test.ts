@@ -6,9 +6,11 @@ vi.mock('$app/env/private', () => env);
 beforeEach(() => {
 	vi.resetModules();
 	Object.assign(env, {
+		AI_PROVIDER: undefined,
 		AI_API_KEY: undefined,
 		AI_MODEL: 'test-model',
 		AI_BASE_URL: 'https://api.openai.com/v1',
+		AI_DECISION_PROVIDER: undefined,
 		AI_DECISION_API_KEY: undefined,
 		AI_DECISION_MODEL: undefined,
 		AI_DECISION_BASE_URL: undefined
@@ -55,5 +57,23 @@ describe('BYOK AI without a Cloud flag or enterprise key', () => {
 		const ai = await import('./client.ts');
 		expect(ai.aiConfigured()).toBe(false);
 		expect(ai.decisionConfigured()).toBe(true);
+	});
+
+	it('calls the Anthropic messages API when the provider is anthropic', async () => {
+		env.AI_PROVIDER = 'anthropic';
+		env.AI_API_KEY = 'sk-ant-test';
+		env.AI_BASE_URL = undefined;
+		env.AI_MODEL = undefined;
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(Response.json({ content: [{ type: 'text', text: 'claude draft' }] }));
+		vi.stubGlobal('fetch', fetchMock);
+		const ai = await import('./client.ts');
+		expect(ai.aiConfigured()).toBe(true);
+		expect(ai.decisionConfigured()).toBe(true);
+		expect(await ai.chatText('system', 'hello')).toBe('claude draft');
+		expect(fetchMock.mock.calls[0][0]).toBe('https://api.anthropic.com/v1/messages');
+		expect(fetchMock.mock.calls[0][1].headers['x-api-key']).toBe('sk-ant-test');
+		expect(JSON.parse(fetchMock.mock.calls[0][1].body as string).model).toBe('claude-sonnet-4-5');
 	});
 });
