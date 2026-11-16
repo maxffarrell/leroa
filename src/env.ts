@@ -198,18 +198,30 @@ export const variables = defineEnvVars({
 			'Set to `true` on Leroa Cloud. Enables enterprise features and cloud-only behaviour.',
 		schema: (value) => value === 'true'
 	},
+	AI_PROVIDER: {
+		description:
+			'AI provider API to call: `openai` (default — any OpenAI-compatible `/chat/completions` endpoint: OpenAI, Ollama, OpenRouter, vLLM, LiteLLM) or `anthropic` (Claude Messages API).',
+		schema: (value) => value || undefined
+	},
 	AI_API_KEY: {
 		description:
-			'API key for an OpenAI-compatible chat-completions endpoint powering generative BYOK AI features, and the fallback key for structured AI decision calls when AI_DECISION_API_KEY is unset. Without a key or a custom endpoint, the features use deterministic local fallbacks.',
+			'API key for the configured AI provider powering generative BYOK AI features, and the fallback key for structured AI decision calls when AI_DECISION_API_KEY is unset. Without a key or a custom endpoint, the features use deterministic local fallbacks.',
 		schema: (value) => value || undefined
 	},
 	AI_BASE_URL: {
-		description: 'OpenAI-compatible API base URL. Defaults to `https://api.openai.com/v1`.',
-		schema: (value) => value?.replace(/\/+$/, '') || 'https://api.openai.com/v1'
+		description:
+			'API base URL override — for `openai` the `/chat/completions` root (default `https://api.openai.com/v1`), for `anthropic` the API origin (default `https://api.anthropic.com`).',
+		schema: (value) => value?.replace(/\/+$/, '') || undefined
 	},
 	AI_MODEL: {
-		description: 'Model name used for AI features. Defaults to `gpt-4o-mini`.',
-		schema: (value) => value || 'gpt-4o-mini'
+		description:
+			'Model name used for AI features. Defaults to `gpt-4o-mini` (openai) or `claude-sonnet-4-5` (anthropic).',
+		schema: (value) => value || undefined
+	},
+	AI_DECISION_PROVIDER: {
+		description:
+			'Optional separate provider API for AI decision calls (`openai` or `anthropic`). Falls back to `AI_PROVIDER`.',
+		schema: (value) => value || undefined
 	},
 	AI_DECISION_API_KEY: {
 		description:
