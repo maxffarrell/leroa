@@ -1,5 +1,12 @@
 # leroa
 
+## 0.4.0
+
+### Minor Changes
+
+- b52c643: Add `AI_PROVIDER` / `AI_DECISION_PROVIDER` (`openai` or `anthropic`) so AI features work against any OpenAI-compatible `/chat/completions` endpoint or the Anthropic Messages API.
+- b52c643: Add printable rent statements (per-lease ledger) and monthly owner statements in the flat single-typeface strict-grid print style, linked from the lease and owner detail pages.
+
 ## 0.3.0
 
 ### Minor Changes
