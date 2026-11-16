@@ -178,19 +178,19 @@ Integrations live in [`integrations/`](integrations) and are built with [`@leroa
 import { defineIntegration } from '@leroa/integration-sdk';
 
 export default defineIntegration({
-  id: 'my-integration',
-  name: 'My integration',
-  description: 'Does something useful',
-  category: 'automation',
-  author: { name: 'You' },
-  config: [{ key: 'url', label: 'Endpoint', type: 'url', required: true }],
-  events: ['payment.recorded'],
-  async handle(event, ctx) {
-    await ctx.fetch(ctx.config.url as string, {
-      method: 'POST',
-      body: JSON.stringify(event)
-    });
-  }
+	id: 'my-integration',
+	name: 'My integration',
+	description: 'Does something useful',
+	category: 'automation',
+	author: { name: 'You' },
+	config: [{ key: 'url', label: 'Endpoint', type: 'url', required: true }],
+	events: ['payment.recorded'],
+	async handle(event, ctx) {
+		await ctx.fetch(ctx.config.url as string, {
+			method: 'POST',
+			body: JSON.stringify(event)
+		});
+	}
 });
 ```
 
