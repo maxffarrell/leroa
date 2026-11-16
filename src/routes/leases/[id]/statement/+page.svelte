@@ -62,17 +62,6 @@
 						<dt class="text-sm text-neutral-400">Status</dt>
 						<dd class="text-sm capitalize">{l.status}</dd>
 					</div>
-					<div class="grid grid-cols-2 gap-x-4 pt-2">
-						<dt class="text-neutral-500">Current balance</dt>
-						<dd class="text-right tabular-nums">{formatMoney(l.balance, l.currency)}</dd>
-					</div>
-					<div>
-						<dt class="sr-only">Balance calculation</dt>
-						<dd class="text-xs text-neutral-500">
-							Ledger balance includes future charges. Current balance includes charges due through
-							today, less all recorded payments. Negative balances are credits.
-						</dd>
-					</div>
 				</dl>
 			</header>
 

@@ -51,6 +51,7 @@ describe('rent statement ledger totals', () => {
 		expect(source).toContain('formatMoney(l.balance, l.currency)');
 		expect(source).toContain('Ledger balance includes future charges.');
 		expect(source).toContain('Contractual deposit:');
+		expect(source.match(/<dt class="text-neutral-500">Current balance<\/dt>/g)).toHaveLength(1);
 		expect(source).not.toContain('Deposit held:');
 	});
 });
