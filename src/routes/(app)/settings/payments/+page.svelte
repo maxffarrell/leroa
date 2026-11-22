@@ -14,6 +14,7 @@
 	import { toast } from 'svelte-sonner';
 	import Copy from '@lucide/svelte/icons/copy';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const s = $derived(await getPaymentSettings());
 	const canEdit = $derived(page.data.role !== 'member' && !page.data.demo);
@@ -43,20 +44,20 @@
 		);
 
 	const disconnect = (id: string, name: string) =>
-		run(
-			id,
-			async () => {
-				if (
-					!confirm(
-						`Disconnect this ${name} account? Tenants will no longer be able to pay with it.`
-					)
+		confirmDelete({
+			title: `Disconnect this ${name} account?`,
+			description: 'Tenants will no longer be able to pay with it.',
+			confirm: { text: 'Disconnect' },
+			onConfirm: () =>
+				run(
+					id,
+					async () => {
+						await disconnectProvider(id);
+						toast.success(`${name} disconnected`);
+					},
+					'Could not disconnect'
 				)
-					return;
-				await disconnectProvider(id);
-				toast.success(`${name} disconnected`);
-			},
-			'Could not disconnect'
-		);
+		});
 
 	const toggle = (id: string, name: string, enabled: boolean) =>
 		run(

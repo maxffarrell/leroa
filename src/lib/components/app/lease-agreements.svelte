@@ -22,6 +22,7 @@
 	import FileSignature from '@lucide/svelte/icons/file-signature';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Send from '@lucide/svelte/icons/send';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	let { leaseId }: { leaseId: string } = $props();
 
@@ -62,8 +63,16 @@
 		}
 	}
 
-	async function send(id: string) {
-		if (!confirm('Send for signature? The document can’t be edited after it’s sent.')) return;
+	function send(id: string) {
+		confirmDelete({
+			title: 'Send for signature?',
+			description: 'The document can’t be edited after it’s sent.',
+			confirm: { text: 'Send' },
+			onConfirm: () => sendNow(id)
+		});
+	}
+
+	async function sendNow(id: string) {
 		busy = true;
 		try {
 			const { unreachable } = await sendAgreement(id);
@@ -80,17 +89,25 @@
 		}
 	}
 
-	async function remove(id: string) {
-		if (!confirm('Delete this draft?')) return;
-		await deleteAgreement(id).catch((err) => fail(err, 'Could not delete'));
+	function remove(id: string) {
+		confirmDelete({
+			title: 'Delete this draft?',
+			description: 'The draft agreement will be removed.',
+			onConfirm: () => deleteAgreement(id).catch((err) => fail(err, 'Could not delete'))
+		});
 	}
 
-	async function voidIt(id: string) {
-		if (!confirm('Void this agreement? Tenants will no longer be able to sign it.')) return;
-		await voidAgreement(id).then(
-			() => toast.success('Agreement voided'),
-			(err) => fail(err, 'Could not void')
-		);
+	function voidIt(id: string) {
+		confirmDelete({
+			title: 'Void this agreement?',
+			description: 'Tenants will no longer be able to sign it.',
+			confirm: { text: 'Void' },
+			onConfirm: () =>
+				voidAgreement(id).then(
+					() => toast.success('Agreement voided'),
+					(err) => fail(err, 'Could not void')
+				)
+		});
 	}
 
 	const pdf = (id: string) => `/api/agreements/${id}/pdf`;

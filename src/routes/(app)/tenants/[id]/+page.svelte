@@ -22,6 +22,7 @@
 	import FileSignature from '@lucide/svelte/icons/file-signature';
 	import MessagesSquare from '@lucide/svelte/icons/messages-square';
 	import MonitorSmartphone from '@lucide/svelte/icons/monitor-smartphone';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const id = $derived(page.params.id!);
 	const t = $derived(await getTenant(id));
@@ -44,14 +45,21 @@
 		toast.success('Portal invite link copied. It works for 14 days.');
 	}
 
-	async function remove() {
-		if (!confirm(`Delete ${name}?`)) return;
-		try {
-			await deleteTenant(id);
-			await goto('/tenants');
-		} catch (err) {
-			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Could not delete');
-		}
+	function remove() {
+		confirmDelete({
+			title: `Delete ${name}?`,
+			description: 'This cannot be undone.',
+			onConfirm: async () => {
+				try {
+					await deleteTenant(id);
+					await goto('/tenants');
+				} catch (err) {
+					toast.error(
+						(err as { body?: { message?: string } })?.body?.message ?? 'Could not delete'
+					);
+				}
+			}
+		});
 	}
 </script>
 

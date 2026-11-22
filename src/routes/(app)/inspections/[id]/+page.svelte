@@ -40,6 +40,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import Plus from '@lucide/svelte/icons/plus';
 	import MessageSquare from '@lucide/svelte/icons/message-square';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const id = $derived(page.params.id!);
 	const i = $derived(await getInspection(id));
@@ -179,14 +180,19 @@
 		}
 	}
 
-	async function remove() {
-		if (!confirm('Delete this inspection and its photos?')) return;
-		try {
-			await deleteInspection(id);
-			await goto('/inspections');
-		} catch (err) {
-			fail(err, 'Could not delete');
-		}
+	function remove() {
+		confirmDelete({
+			title: 'Delete this inspection and its photos?',
+			description: 'This cannot be undone.',
+			onConfirm: async () => {
+				try {
+					await deleteInspection(id);
+					await goto('/inspections');
+				} catch (err) {
+					fail(err, 'Could not delete');
+				}
+			}
+		});
 	}
 </script>
 

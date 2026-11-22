@@ -31,6 +31,7 @@
 	import ImagePlus from '@lucide/svelte/icons/image-plus';
 	import X from '@lucide/svelte/icons/x';
 	import Plus from '@lucide/svelte/icons/plus';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	type Listing = Awaited<ReturnType<typeof getListing>>;
 	let { listing }: { listing: Listing } = $props();
@@ -160,14 +161,19 @@
 		toast.success('Link copied');
 	}
 
-	async function remove() {
-		if (!confirm('Delete this listing and its photos? Applications are kept.')) return;
-		try {
-			await deleteListing(listing.id);
-			await goto('/leasing?tab=listings');
-		} catch (err) {
-			fail(err, 'Could not delete');
-		}
+	function remove() {
+		confirmDelete({
+			title: 'Delete this listing and its photos?',
+			description: 'Applications are kept.',
+			onConfirm: async () => {
+				try {
+					await deleteListing(listing.id);
+					await goto('/leasing?tab=listings');
+				} catch (err) {
+					fail(err, 'Could not delete');
+				}
+			}
+		});
 	}
 </script>
 

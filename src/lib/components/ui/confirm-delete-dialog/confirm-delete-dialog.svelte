@@ -95,7 +95,7 @@
 				<AlertDialog.Title>
 					{dialogState.options?.title}
 				</AlertDialog.Title>
-				<AlertDialog.Description>
+				<AlertDialog.Description class="wrap-anywhere">
 					{dialogState.options?.description}
 				</AlertDialog.Description>
 			</AlertDialog.Header>

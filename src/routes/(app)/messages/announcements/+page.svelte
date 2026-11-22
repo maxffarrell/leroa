@@ -10,6 +10,7 @@
 	import Megaphone from '@lucide/svelte/icons/megaphone';
 	import Trash from '@lucide/svelte/icons/trash-2';
 	import Mail from '@lucide/svelte/icons/mail';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const items = $derived(await getAnnouncements());
 	let composing = $state(page.url.searchParams.has('new'));
@@ -18,13 +19,16 @@
 		if (page.url.searchParams.has('new')) composing = true;
 	});
 
-	async function remove(id: string, subject: string) {
-		if (
-			!confirm(
-				`Remove "${subject}" from the resident portal? Emails already sent can't be recalled.`
-			)
-		)
-			return;
+	function remove(id: string, subject: string) {
+		confirmDelete({
+			title: `Remove "${subject}" from the resident portal?`,
+			description: "Emails already sent can't be recalled.",
+			confirm: { text: 'Remove' },
+			onConfirm: () => removeNow(id)
+		});
+	}
+
+	async function removeNow(id: string) {
 		try {
 			await deleteAnnouncement(id);
 			toast.success('Announcement removed');

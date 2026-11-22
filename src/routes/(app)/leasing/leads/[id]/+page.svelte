@@ -51,6 +51,7 @@
 	import Inbox from '@lucide/svelte/icons/inbox';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import CalendarClock from '@lucide/svelte/icons/calendar-clock';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const id = $derived(page.params.id!);
 	const l = $derived(await getLead(id));
@@ -143,14 +144,19 @@
 		}
 	}
 
-	async function remove() {
-		if (!confirm(`Delete ${name} and their history? This can't be undone.`)) return;
-		try {
-			await deleteLead(id);
-			await goto('/leasing');
-		} catch (err) {
-			fail(err, 'Could not delete');
-		}
+	function remove() {
+		confirmDelete({
+			title: `Delete ${name} and their history?`,
+			description: "This can't be undone.",
+			onConfirm: async () => {
+				try {
+					await deleteLead(id);
+					await goto('/leasing');
+				} catch (err) {
+					fail(err, 'Could not delete');
+				}
+			}
+		});
 	}
 
 	async function tourStatus(tourId: string, status: 'completed' | 'no_show' | 'cancelled') {

@@ -22,6 +22,7 @@
 	import { toast } from 'svelte-sonner';
 	import Copy from '@lucide/svelte/icons/copy';
 	import Building2 from '@lucide/svelte/icons/building-2';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const members = $derived(await getMembers());
 	const canManage = $derived(page.data.role !== 'member');
@@ -95,8 +96,16 @@
 		}
 	}
 
-	async function remove(memberId: string) {
-		if (!confirm('Remove this member?')) return;
+	function remove(memberId: string) {
+		confirmDelete({
+			title: 'Remove this member?',
+			description: 'They will lose access to this organization.',
+			confirm: { text: 'Remove' },
+			onConfirm: () => removeNow(memberId)
+		});
+	}
+
+	async function removeNow(memberId: string) {
 		const { error } = await authClient.organization.removeMember({ memberIdOrEmail: memberId });
 		if (error) return toast.error(error.message ?? 'Could not remove');
 		await getMembers().refresh();
