@@ -131,11 +131,11 @@
 				class="flex items-start gap-2 hover:underline"
 			>
 				<MapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-				<span
-					><span class="font-medium"
-						>{w.property.name}{w.unitName ? ` · Unit ${w.unitName}` : ' · Common area'}</span
-					>{#if address}<br /><span class="text-muted-foreground">{address}</span>{/if}</span
-				>
+				<span>
+					<span class="font-medium">
+						{w.property.name}{w.unitName ? ` · Unit ${w.unitName}` : ' · Common area'}
+					</span>{#if address}<br /><span class="text-muted-foreground">{address}</span>{/if}
+				</span>
 			</a>
 			{#if w.dueDate}
 				<p class="flex items-center gap-2">
@@ -154,14 +154,14 @@
 			<ul class="grid grid-cols-3 gap-2 sm:grid-cols-4">
 				{#each w.photos as p (p.id)}
 					<li class="aspect-square overflow-hidden rounded-md bg-muted">
-						<a href="/w/{token}/photos/{p.id}" target="_blank" rel="noreferrer"
-							><img
+						<a href="/w/{token}/photos/{p.id}" target="_blank" rel="noreferrer">
+							<img
 								src="/w/{token}/photos/{p.id}"
 								alt={p.name}
 								loading="lazy"
 								class="size-full object-cover"
-							/></a
-						>
+							/>
+						</a>
 					</li>
 				{/each}
 				{#if !cancelled}
@@ -219,32 +219,35 @@
 						<div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
 							{#if w.status !== 'done'}
 								{#if w.status !== 'in_progress'}
-									<Button type="button" disabled={!!pending} onclick={() => send('in_progress')}
-										>{pending === 'in_progress' ? 'Sending…' : 'Start work'}</Button
-									>
+									<Button type="button" disabled={!!pending} onclick={() => send('in_progress')}>
+										{pending === 'in_progress' ? 'Sending…' : 'Start work'}
+									</Button>
 								{:else}
 									<Button
 										type="button"
 										variant="outline"
 										disabled={!!pending}
 										onclick={() => send('on_hold')}
-										>{pending === 'on_hold' ? 'Sending…' : 'Put on hold'}</Button
 									>
+										{pending === 'on_hold' ? 'Sending…' : 'Put on hold'}
+									</Button>
 								{/if}
 								<Button
 									type="button"
 									variant={w.status === 'in_progress' ? 'default' : 'outline'}
 									disabled={!!pending}
 									onclick={() => send('done')}
-									>{pending === 'done' ? 'Sending…' : 'Mark done'}</Button
 								>
+									{pending === 'done' ? 'Sending…' : 'Mark done'}
+								</Button>
 							{/if}
 							<Button
 								type="submit"
 								variant="ghost"
 								disabled={!!pending || (!note.trim() && !costTouched)}
-								>{pending === 'note' ? 'Sending…' : 'Send note only'}</Button
 							>
+								{pending === 'note' ? 'Sending…' : 'Send note only'}
+							</Button>
 						</div>
 					{/key}
 				</form>

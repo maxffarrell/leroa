@@ -85,9 +85,9 @@
 				{#if actual > budget}<Badge variant="destructive" class="ml-1">over budget</Badge>{/if}
 			</span>
 		{/if}
-		<Button size="sm" variant="outline" class="ml-auto" onclick={() => (adding = true)}
-			><Plus /> TI item</Button
-		>
+		<Button size="sm" variant="outline" class="ml-auto" onclick={() => (adding = true)}>
+			<Plus /> TI item
+		</Button>
 	</div>
 	{#if !items.length}
 		<div class="rounded-lg border py-6 text-center text-sm text-muted-foreground">
@@ -109,8 +109,10 @@
 									<span
 										class="ml-1 text-xs tabular-nums {i.dueDate < todayISO()
 											? 'text-red-600 dark:text-red-400'
-											: 'text-muted-foreground'}">due {formatDate(i.dueDate, true)}</span
+											: 'text-muted-foreground'}"
 									>
+										due {formatDate(i.dueDate, true)}
+									</span>
 								{/if}
 							</td>
 							<td class="px-3 py-2 text-right whitespace-nowrap tabular-nums">
@@ -124,23 +126,27 @@
 												size="icon-xs"
 												variant="ghost"
 												aria-label="TI item actions"
-												{...props}><Ellipsis /></Button
-											>{/snippet}
+												{...props}
+											>
+												<Ellipsis />
+											</Button>{/snippet}
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content align="end">
 										{#each TI_STATUSES as s (s)}
 											{#if s !== i.status}
-												<DropdownMenu.Item onclick={() => setStatus(i.id, s)}
-													>Mark {TI_STATUS_LABELS[s].toLowerCase()}</DropdownMenu.Item
-												>
+												<DropdownMenu.Item onclick={() => setStatus(i.id, s)}>
+													Mark {TI_STATUS_LABELS[s].toLowerCase()}
+												</DropdownMenu.Item>
 											{/if}
 										{/each}
 										<DropdownMenu.Item
 											onclick={() => {
 												editingActual = i.id;
 												aAmount = i.actualAmount;
-											}}>Set actual spend…</DropdownMenu.Item
+											}}
 										>
+											Set actual spend…
+										</DropdownMenu.Item>
 										<DropdownMenu.Separator />
 										<DropdownMenu.Item
 											variant="destructive"
@@ -152,8 +158,10 @@
 														await removeTiItem(i.id).catch(() => toast.error('Could not delete'));
 														getTiItems(leaseId).refresh();
 													}
-												})}>Delete</DropdownMenu.Item
+												})}
 										>
+											Delete
+										</DropdownMenu.Item>
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
 							</td>
@@ -170,9 +178,9 @@
 		<form class="space-y-4" onsubmit={save}>
 			<Modal.Header>
 				<Modal.Title>New TI item</Modal.Title>
-				<Modal.Description
-					>A scope of tenant-improvement work with an allowance budget.</Modal.Description
-				>
+				<Modal.Description>
+					A scope of tenant-improvement work with an allowance budget.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Item</Field.Label>

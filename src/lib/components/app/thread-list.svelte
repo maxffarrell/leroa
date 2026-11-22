@@ -64,17 +64,17 @@
 						selected === t.tenantId && 'bg-muted'
 					)}
 				>
-					<Avatar.Root class="size-9 shrink-0"
-						><Avatar.Fallback class="text-xs">{initials(t.name)}</Avatar.Fallback></Avatar.Root
-					>
+					<Avatar.Root class="size-9 shrink-0">
+						<Avatar.Fallback class="text-xs">{initials(t.name)}</Avatar.Fallback>
+					</Avatar.Root>
 					<div class="min-w-0 flex-1">
 						<div class="flex items-baseline gap-2">
-							<span class={cn('truncate text-sm', t.unread ? 'font-semibold' : 'font-medium')}
-								>{t.name}</span
-							>
-							<span class="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums"
-								>{when(t.lastMessageAt)}</span
-							>
+							<span class={cn('truncate text-sm', t.unread ? 'font-semibold' : 'font-medium')}>
+								{t.name}
+							</span>
+							<span class="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">
+								{when(t.lastMessageAt)}
+							</span>
 						</div>
 						{#if t.unitName}
 							<div class="truncate text-xs text-muted-foreground">

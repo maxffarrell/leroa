@@ -194,29 +194,31 @@
 							<button
 								type="button"
 								class="font-medium hover:underline"
-								onclick={() => (selectedId = a.id)}>{a.name}</button
+								onclick={() => (selectedId = a.id)}
 							>
+								{a.name}
+							</button>
 							<p class="text-xs text-muted-foreground sm:hidden">
 								{a.propertyName}{a.unitName ? ` · ${a.unitName}` : ''}
 							</p>
 							<span class="mt-1 inline-block"><StatusBadge status={a.kind} /></span>
 						</Table.Cell>
-						<Table.Cell class="hidden sm:table-cell"
-							>{a.propertyName}{a.unitName ? ` · ${a.unitName}` : ''}</Table.Cell
-						>
-						<Table.Cell class="hidden md:table-cell"
-							>{[a.make, a.model].filter(Boolean).join(' ') || '—'}</Table.Cell
-						>
-						<Table.Cell class="hidden whitespace-nowrap sm:table-cell"
-							><span class={warranty(a).tone}>{warranty(a).label}</span></Table.Cell
-						>
-						<Table.Cell class="hidden lg:table-cell"
-							>{a.jobCount}{a.openTickets ? ` (${a.openTickets} open)` : ''}</Table.Cell
-						>
+						<Table.Cell class="hidden sm:table-cell">
+							{a.propertyName}{a.unitName ? ` · ${a.unitName}` : ''}
+						</Table.Cell>
+						<Table.Cell class="hidden md:table-cell">
+							{[a.make, a.model].filter(Boolean).join(' ') || '—'}
+						</Table.Cell>
+						<Table.Cell class="hidden whitespace-nowrap sm:table-cell">
+							<span class={warranty(a).tone}>{warranty(a).label}</span>
+						</Table.Cell>
+						<Table.Cell class="hidden lg:table-cell">
+							{a.jobCount}{a.openTickets ? ` (${a.openTickets} open)` : ''}
+						</Table.Cell>
 						<Table.Cell>
-							<Button variant="ghost" size="icon" title="Edit" onclick={() => (editing = a)}
-								><Pencil /></Button
-							>
+							<Button variant="ghost" size="icon" title="Edit" onclick={() => (editing = a)}>
+								<Pencil />
+							</Button>
 						</Table.Cell>
 					</Table.Row>
 				{/each}
@@ -229,9 +231,9 @@
 	<Sheet.Content class="w-full gap-0 sm:max-w-md">
 		{#if detail}
 			<Sheet.Header>
-				<Sheet.Description
-					>{detail.property?.name}{detail.unit ? ` · ${detail.unit.name}` : ''}</Sheet.Description
-				>
+				<Sheet.Description>
+					{detail.property?.name}{detail.unit ? ` · ${detail.unit.name}` : ''}
+				</Sheet.Description>
 				<Sheet.Title class="text-lg">{detail.name}</Sheet.Title>
 			</Sheet.Header>
 			<div class="space-y-4 overflow-y-auto px-4 pb-4">
@@ -263,18 +265,19 @@
 				</dl>
 				{#if detail.notes}<p class="text-sm whitespace-pre-wrap">{detail.notes}</p>{/if}
 				<div class="flex flex-wrap gap-2">
-					<Button size="sm" variant="outline" onclick={() => (addingWork = true)}
-						><Wrench /> New work order</Button
-					>
+					<Button size="sm" variant="outline" onclick={() => (addingWork = true)}>
+						<Wrench /> New work order
+					</Button>
 					<Button
 						size="sm"
 						variant="outline"
 						onclick={() => (editing = assets.find((x) => x.id === detail!.id) ?? null)}
-						><Pencil /> Edit</Button
 					>
-					<Button size="sm" variant="ghost" onclick={() => archive(detail)}
-						>{detail.archivedAt ? 'Restore' : 'Archive'}</Button
-					>
+						<Pencil /> Edit
+					</Button>
+					<Button size="sm" variant="ghost" onclick={() => archive(detail)}>
+						{detail.archivedAt ? 'Restore' : 'Archive'}
+					</Button>
 				</div>
 				<section aria-label="Service history">
 					<h3 class="mb-2 text-sm font-medium">Service history</h3>
@@ -290,9 +293,9 @@
 									>
 										<StatusBadge status={h.status} />
 										<span class="min-w-0 flex-1 truncate">#{h.number} {h.title}</span>
-										{#if h.costAmount != null}<span class="text-xs tabular-nums"
-												>{formatMoney(h.costAmount)}</span
-											>{/if}
+										{#if h.costAmount != null}<span class="text-xs tabular-nums">
+												{formatMoney(h.costAmount)}
+											</span>{/if}
 										<span class="text-xs text-muted-foreground">{formatRelative(h.createdAt)}</span>
 									</a>
 								</li>
@@ -326,10 +329,11 @@
 						<Field.Label>Kind</Field.Label>
 						<Select.Root type="single" bind:value={fKind}>
 							<Select.Trigger class="w-full">{KIND_LABEL[fKind]}</Select.Trigger>
-							<Select.Content class="max-h-72"
-								>{#each assetKinds as k (k)}<Select.Item value={k}>{KIND_LABEL[k]}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Content class="max-h-72">
+								{#each assetKinds as k (k)}<Select.Item value={k}>
+										{KIND_LABEL[k]}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 				</div>
@@ -342,21 +346,22 @@
 							onValueChange={() => (fUnit = '')}
 							disabled={!!editing}
 						>
-							<Select.Trigger class="w-full"
-								>{selName(properties, fProperty) ?? 'Select'}</Select.Trigger
-							>
-							<Select.Content class="max-h-72"
-								>{#each properties as p (p.id)}<Select.Item value={p.id}>{p.name}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Trigger class="w-full">
+								{selName(properties, fProperty) ?? 'Select'}
+							</Select.Trigger>
+							<Select.Content class="max-h-72">
+								{#each properties as p (p.id)}<Select.Item value={p.id}>
+										{p.name}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 					<Field.Field>
 						<Field.Label>Unit</Field.Label>
 						<Select.Root type="single" bind:value={fUnit} disabled={!fProperty}>
-							<Select.Trigger class="w-full"
-								>{selName(propUnits, fUnit) ?? 'Common area'}</Select.Trigger
-							>
+							<Select.Trigger class="w-full">
+								{selName(propUnits, fUnit) ?? 'Common area'}
+							</Select.Trigger>
 							<Select.Content class="max-h-72">
 								<Select.Item value="">Common area</Select.Item>
 								{#each propUnits as u (u.id)}<Select.Item value={u.id}>{u.name}</Select.Item>{/each}
@@ -405,9 +410,9 @@
 			</Field.Group>
 			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => setDialog(false)}>Cancel</Button>
-				<Button type="submit" disabled={pending || !fName.trim() || !fProperty}
-					>{pending ? 'Saving…' : editing ? 'Save' : 'Add asset'}</Button
-				>
+				<Button type="submit" disabled={pending || !fName.trim() || !fProperty}>
+					{pending ? 'Saving…' : editing ? 'Save' : 'Add asset'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

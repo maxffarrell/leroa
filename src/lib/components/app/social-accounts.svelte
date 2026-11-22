@@ -43,9 +43,9 @@
 					disabled={isLinked || pending != null}
 					onclick={() => link(p)}
 				>
-					<svg viewBox="0 0 24 24" class="size-4" aria-hidden="true"
-						><path fill="currentColor" d={SOCIAL_ICONS[p]} /></svg
-					>
+					<svg viewBox="0 0 24 24" class="size-4" aria-hidden="true">
+						<path fill="currentColor" d={SOCIAL_ICONS[p]} />
+					</svg>
 					{isLinked ? `${SOCIAL_LABELS[p]} linked` : `Link ${SOCIAL_LABELS[p]}`}
 					{#if isLinked}<Check class="size-3.5 text-primary" />{/if}
 				</Button>

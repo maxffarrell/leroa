@@ -44,17 +44,16 @@
 <header class="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
 	<div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4">
 		<a href="/l/{data.org.slug}" class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
-			<ArrowLeft class="size-4 shrink-0" /><span class="truncate" style:color={data.org.accentColor}
-				>{brandName}</span
+			<ArrowLeft class="size-4 shrink-0" /><span
+				class="truncate"
+				style:color={data.org.accentColor}
 			>
+				{brandName}
+			</span>
 		</a>
-		<Button size="sm" href="#contact"
-			>{data.selfBooking
-				? 'Book a tour'
-				: data.listings.length
-					? 'Contact us'
-					: 'Join waitlist'}</Button
-		>
+		<Button size="sm" href="#contact">
+			{data.selfBooking ? 'Book a tour' : data.listings.length ? 'Contact us' : 'Join waitlist'}
+		</Button>
 	</div>
 </header>
 
@@ -156,8 +155,10 @@
 									</div>
 									<p class="shrink-0 font-semibold tabular-nums">
 										{formatMoney(l.rentAmount, l.currency)}<span
-											class="text-xs font-normal text-muted-foreground">/mo</span
+											class="text-xs font-normal text-muted-foreground"
 										>
+											/mo
+										</span>
 									</p>
 								</a>
 							</li>

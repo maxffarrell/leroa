@@ -62,10 +62,10 @@
 
 <PageHeader title="Inspections">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> <span class="hidden sm:inline">New inspection</span>
-			<Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" onclick={() => (creating = true)}>
+			<Plus /> <span class="hidden sm:inline">New inspection</span>
+			<Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -75,29 +75,28 @@
 			<Empty.Header>
 				<Empty.Media variant="icon"><ClipboardCheck /></Empty.Media>
 				<Empty.Title>No inspections yet</Empty.Title>
-				<Empty.Description
-					>Walk a unit at move-in, move-out or any time in between. Rate each item, add photos, and
-					Leroa saves a PDF report to the lease.</Empty.Description
-				>
+				<Empty.Description>
+					Walk a unit at move-in, move-out or any time in between. Rate each item, add photos, and
+					Leroa saves a PDF report to the lease.
+				</Empty.Description>
 			</Empty.Header>
-			<Empty.Content
-				><Button onclick={() => (creating = true)}><Plus /> New inspection</Button></Empty.Content
-			>
+			<Empty.Content>
+				<Button onclick={() => (creating = true)}><Plus /> New inspection</Button>
+			</Empty.Content>
 		</Empty.Root>
 	{:else}
 		<div class="mb-3 flex items-center justify-between gap-3">
 			{#if view === 'table'}
 				<Tabs.Root bind:value={tab} onValueChange={() => (nav.index = -1)}>
 					<Tabs.List>
-						<Tabs.Trigger value="open"
-							>In progress <span class="ml-1 text-xs text-muted-foreground">{openCount}</span
-							></Tabs.Trigger
-						>
-						<Tabs.Trigger value="completed"
-							>Completed <span class="ml-1 text-xs text-muted-foreground"
-								>{all.length - openCount}</span
-							></Tabs.Trigger
-						>
+						<Tabs.Trigger value="open">
+							In progress <span class="ml-1 text-xs text-muted-foreground">{openCount}</span>
+						</Tabs.Trigger>
+						<Tabs.Trigger value="completed">
+							Completed <span class="ml-1 text-xs text-muted-foreground">
+								{all.length - openCount}
+							</span>
+						</Tabs.Trigger>
 					</Tabs.List>
 				</Tabs.Root>
 			{:else}
@@ -129,15 +128,12 @@
 								onmouseenter={() => (nav.index = n)}
 							>
 								<Table.Cell class="max-w-56">
-									<a href="/inspections/{i.id}" class="block truncate font-medium outline-none"
-										>{i.propertyName} · {i.unitName}</a
-									>
-									<span class="block text-xs text-muted-foreground sm:hidden"
-										>{KIND_LABEL[i.kind]} · {formatDate(
-											i.completedAt ?? i.scheduledFor,
-											true
-										)}</span
-									>
+									<a href="/inspections/{i.id}" class="block truncate font-medium outline-none">
+										{i.propertyName} · {i.unitName}
+									</a>
+									<span class="block text-xs text-muted-foreground sm:hidden">
+										{KIND_LABEL[i.kind]} · {formatDate(i.completedAt ?? i.scheduledFor, true)}
+									</span>
 								</Table.Cell>
 								<Table.Cell class="hidden sm:table-cell">{KIND_LABEL[i.kind]}</Table.Cell>
 								<Table.Cell class="text-right tabular-nums">
@@ -145,37 +141,36 @@
 										{#if i.flagged}<span
 												class="inline-flex items-center gap-0.5 text-xs text-red-600 dark:text-red-400"
 												title="{i.flagged} poor or damaged"
-												><TriangleAlert class="size-3" />{i.flagged}</span
-											>{/if}
+											>
+												<TriangleAlert class="size-3" />{i.flagged}
+											</span>{/if}
 										{#if i.hasTenantComment}<MessageSquare
 												class="size-3.5 text-amber-600"
 												aria-label="Resident left comments"
 											/>{/if}
-										{#if i.status === 'in_progress'}{i.rated}<span class="text-muted-foreground"
-												>/{i.total}</span
-											>{:else}{i.total}{/if}
+										{#if i.status === 'in_progress'}{i.rated}<span class="text-muted-foreground">
+												/{i.total}
+											</span>{:else}{i.total}{/if}
 									</span>
 								</Table.Cell>
-								<Table.Cell class="hidden text-muted-foreground tabular-nums md:table-cell"
-									>{formatDate(i.completedAt ?? i.scheduledFor)}</Table.Cell
-								>
+								<Table.Cell class="hidden text-muted-foreground tabular-nums md:table-cell">
+									{formatDate(i.completedAt ?? i.scheduledFor)}
+								</Table.Cell>
 								<Table.Cell class="hidden sm:table-cell">
 									<StatusBadge status={i.status} />
 									{#if i.status === 'completed' && i.leaseId && i.kind !== 'routine'}
-										<span class="ml-1 text-xs text-muted-foreground"
-											>{i.acknowledgedAt ? 'Reviewed by resident' : 'Awaiting resident'}</span
-										>
+										<span class="ml-1 text-xs text-muted-foreground">
+											{i.acknowledgedAt ? 'Reviewed by resident' : 'Awaiting resident'}
+										</span>
 									{/if}
 								</Table.Cell>
 							</Table.Row>
 						{:else}
-							<Table.Row
-								><Table.Cell colspan={5} class="py-8 text-center text-muted-foreground"
-									>{tab === 'open'
-										? 'Nothing in progress.'
-										: 'No completed inspections yet.'}</Table.Cell
-								></Table.Row
-							>
+							<Table.Row>
+								<Table.Cell colspan={5} class="py-8 text-center text-muted-foreground">
+									{tab === 'open' ? 'Nothing in progress.' : 'No completed inspections yet.'}
+								</Table.Cell>
+							</Table.Row>
 						{/each}
 					</Table.Body>
 				</Table.Root>

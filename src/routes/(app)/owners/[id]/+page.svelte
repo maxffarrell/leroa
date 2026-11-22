@@ -51,18 +51,17 @@
 
 <PageHeader title={o.name} crumbs={[{ label: 'Owners', href: '/owners' }]}>
 	{#snippet actions()}
-		<Button size="sm" variant="outline" onclick={() => (editing = true)}
-			><Pencil /> <span class="hidden sm:inline">Edit</span></Button
-		>
-		<Button size="sm" variant="outline" href="/owners/{o.id}/statement" target="_blank"
-			><Printer /> <span class="hidden sm:inline">Statement</span></Button
-		>
+		<Button size="sm" variant="outline" onclick={() => (editing = true)}>
+			<Pencil /> <span class="hidden sm:inline">Edit</span>
+		</Button>
+		<Button size="sm" variant="outline" href="/owners/{o.id}/statement" target="_blank">
+			<Printer /> <span class="hidden sm:inline">Statement</span>
+		</Button>
 		{#if !o.archivedAt}
-			<Button size="sm" variant="outline" onclick={copyInvite}
-				><Link />
-				<span class="hidden sm:inline">{o.portalLinked ? 'Portal linked' : 'Portal invite'}</span
-				></Button
-			>
+			<Button size="sm" variant="outline" onclick={copyInvite}>
+				<Link />
+				<span class="hidden sm:inline">{o.portalLinked ? 'Portal linked' : 'Portal invite'}</span>
+			</Button>
 		{/if}
 		{#if page.data.role !== 'member'}
 			<DropdownMenu.Root>
@@ -71,16 +70,18 @@
 							size="icon-sm"
 							variant="ghost"
 							aria-label="More"
-							{...props}><Ellipsis /></Button
-						>{/snippet}
+							{...props}
+						>
+							<Ellipsis />
+						</Button>{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
 					{#if o.archivedAt}
 						<DropdownMenu.Item onclick={() => setArchived(false)}>Restore owner</DropdownMenu.Item>
 					{:else}
-						<DropdownMenu.Item variant="destructive" onclick={() => setArchived(true)}
-							>Archive owner</DropdownMenu.Item
-						>
+						<DropdownMenu.Item variant="destructive" onclick={() => setArchived(true)}>
+							Archive owner
+						</DropdownMenu.Item>
 					{/if}
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
@@ -102,24 +103,24 @@
 	<Card.Root class="h-fit lg:order-first lg:col-start-2 lg:row-start-1">
 		<Card.Header>
 			<Card.Title>Contact</Card.Title>
-			<Card.Description
-				>{o.archivedAt
+			<Card.Description>
+				{o.archivedAt
 					? 'Archived. Portal access is off.'
 					: o.portalLinked
 						? 'Signed in to the owner portal'
-						: 'Not invited to the portal yet'}</Card.Description
-			>
+						: 'Not invited to the portal yet'}
+			</Card.Description>
 		</Card.Header>
 		<Card.Content class="space-y-3 text-sm">
 			{#if o.email}
-				<a href="mailto:{o.email}" class="flex items-center gap-2 hover:underline"
-					><Mail class="size-4 text-muted-foreground" />{o.email}</a
-				>
+				<a href="mailto:{o.email}" class="flex items-center gap-2 hover:underline">
+					<Mail class="size-4 text-muted-foreground" />{o.email}
+				</a>
 			{/if}
 			{#if o.phone}
-				<a href="tel:{o.phone}" class="flex items-center gap-2 tabular-nums hover:underline"
-					><Phone class="size-4 text-muted-foreground" />{o.phone}</a
-				>
+				<a href="tel:{o.phone}" class="flex items-center gap-2 tabular-nums hover:underline">
+					<Phone class="size-4 text-muted-foreground" />{o.phone}
+				</a>
 			{/if}
 			{#if !o.email && !o.phone}<p class="text-muted-foreground">No contact details.</p>{/if}
 			<div>

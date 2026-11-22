@@ -136,18 +136,19 @@
 							<Table.Row>
 								<Table.Cell
 									class="text-xs whitespace-nowrap text-muted-foreground"
-									title={row.createdAt.toISOString()}>{formatRelative(row.createdAt)}</Table.Cell
+									title={row.createdAt.toISOString()}
 								>
-								<Table.Cell class="hidden text-sm sm:table-cell"
-									>{row.actorName ?? 'System'}</Table.Cell
-								>
-								<Table.Cell class="hidden text-xs sm:table-cell"
-									>{actLabel(row.entityType)}</Table.Cell
-								>
-								<Table.Cell
-									><Badge variant="outline" class="font-normal">{actLabel(row.action)}</Badge
-									></Table.Cell
-								>
+									{formatRelative(row.createdAt)}
+								</Table.Cell>
+								<Table.Cell class="hidden text-sm sm:table-cell">
+									{row.actorName ?? 'System'}
+								</Table.Cell>
+								<Table.Cell class="hidden text-xs sm:table-cell">
+									{actLabel(row.entityType)}
+								</Table.Cell>
+								<Table.Cell>
+									<Badge variant="outline" class="font-normal">{actLabel(row.action)}</Badge>
+								</Table.Cell>
 								<Table.Cell class="text-sm">{row.summary}</Table.Cell>
 							</Table.Row>
 						{/each}

@@ -129,8 +129,10 @@
 						variant="ghost"
 						size="icon"
 						aria-label="Remove {m.name || 'person'}"
-						onclick={() => form.household.members.splice(i, 1)}><X /></Button
+						onclick={() => form.household.members.splice(i, 1)}
 					>
+						<X />
+					</Button>
 				</div>
 			{/each}
 			{#if form.household.members.length < 19}
@@ -138,8 +140,9 @@
 					variant="outline"
 					size="sm"
 					onclick={() => form.household.members.push({ name: '', relationship: '' })}
-					><Plus /> Add person</Button
 				>
+					<Plus /> Add person
+				</Button>
 			{/if}
 		</Card.Content>
 	</Card.Root>
@@ -171,8 +174,10 @@
 						variant="ghost"
 						size="icon"
 						aria-label="Remove {pet.name || 'pet'}"
-						onclick={() => form.pets.splice(i, 1)}><X /></Button
+						onclick={() => form.pets.splice(i, 1)}
 					>
+						<X />
+					</Button>
 				</div>
 			{/each}
 			{#if form.pets.length < 10}
@@ -180,8 +185,9 @@
 					variant="outline"
 					size="sm"
 					onclick={() => form.pets.push({ kind: '', name: '', breed: '', weight: '' })}
-					><Plus /> Add pet</Button
 				>
+					<Plus /> Add pet
+				</Button>
 			{/if}
 		</Card.Content>
 	</Card.Root>
@@ -214,12 +220,12 @@
 	</Card.Root>
 
 	<div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
-		<Button variant="ghost" class="w-full sm:w-auto" onclick={exportFile}
-			><Download /> Export</Button
-		>
-		<Button variant="ghost" class="w-full sm:w-auto" onclick={() => fileInput?.click()}
-			><Upload /> Import</Button
-		>
+		<Button variant="ghost" class="w-full sm:w-auto" onclick={exportFile}>
+			<Download /> Export
+		</Button>
+		<Button variant="ghost" class="w-full sm:w-auto" onclick={() => fileInput?.click()}>
+			<Upload /> Import
+		</Button>
 		<input
 			bind:this={fileInput}
 			type="file"
@@ -227,18 +233,18 @@
 			class="hidden"
 			onchange={importFile}
 		/>
-		<Button type="submit" class="w-full sm:ml-auto sm:w-auto" disabled={saving}
-			>{saving ? 'Saving…' : 'Save profile'}</Button
-		>
+		<Button type="submit" class="w-full sm:ml-auto sm:w-auto" disabled={saving}>
+			{saving ? 'Saving…' : 'Save profile'}
+		</Button>
 	</div>
 </form>
 
 <Card.Root>
 	<Card.Header>
 		<Card.Title>Shared with</Card.Title>
-		<Card.Description
-			>Sites that can read your profile. Revoking stops future updates.</Card.Description
-		>
+		<Card.Description>
+			Sites that can read your profile. Revoking stops future updates.
+		</Card.Description>
 	</Card.Header>
 	<Card.Content class="px-0">
 		{#if grants.length}
@@ -259,8 +265,10 @@
 							onclick={async () => {
 								await revokeProfileGrant(g.id);
 								toast.success(`${new URL(g.clientId).host} can no longer read your profile`);
-							}}>Revoke</Button
+							}}
 						>
+							Revoke
+						</Button>
 					</li>
 				{/each}
 			</ul>

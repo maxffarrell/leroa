@@ -82,10 +82,10 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>Tour booking</Card.Title>
-			<Card.Description
-				>Let prospects book their own tours from your public property and listing pages. Tours book
-				into open times only, and you get an email for each one.</Card.Description
-			>
+			<Card.Description>
+				Let prospects book their own tours from your public property and listing pages. Tours book
+				into open times only, and you get an email for each one.
+			</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<Field.Group class="gap-5">
@@ -110,9 +110,9 @@
 					<datalist id="ls-zones">
 						{#each zones as z (z)}<option value={z}></option>{/each}
 					</datalist>
-					<Field.Description
-						>Tour times on public pages and in emails use this zone.</Field.Description
-					>
+					<Field.Description>
+						Tour times on public pages and in emails use this zone.
+					</Field.Description>
 				</Field.Field>
 				<Field.Field>
 					<Field.Label>Tour days</Field.Label>
@@ -124,8 +124,10 @@
 								variant={form.tourDays.includes(d) ? 'secondary' : 'outline'}
 								aria-pressed={form.tourDays.includes(d)}
 								disabled={!isAdmin}
-								onclick={() => toggleDay(d)}>{label}</Button
+								onclick={() => toggleDay(d)}
 							>
+								{label}
+							</Button>
 						{/each}
 					</div>
 				</Field.Field>
@@ -186,9 +188,9 @@
 		</Card.Content>
 		{#if isAdmin}
 			<Card.Footer class="justify-end gap-2">
-				{#if draft}<Button type="button" variant="ghost" onclick={() => (draft = null)}
-						>Cancel</Button
-					>{/if}
+				{#if draft}<Button type="button" variant="ghost" onclick={() => (draft = null)}>
+						Cancel
+					</Button>{/if}
 				<Button type="submit" disabled={pending || (!draft && saved.configured)}>Save</Button>
 			</Card.Footer>
 		{/if}

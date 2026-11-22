@@ -64,15 +64,16 @@
 <Card.Root>
 	<Card.Header>
 		<Card.Title>Roles</Card.Title>
-		<Card.Description
-			>Custom permission matrices for members — same resources and levels as API keys. Assign them
-			on the <a class="underline" href="/settings/team">Team</a> page. Owner and admin members are never
-			restricted.</Card.Description
-		>
-		<Card.Action
-			>{#if page.data.enterprise}<Button size="sm" onclick={openCreate}><Plus /> New role</Button
-				>{/if}</Card.Action
-		>
+		<Card.Description>
+			Custom permission matrices for members — same resources and levels as API keys. Assign them on
+			the <a class="underline" href="/settings/team">Team</a> page. Owner and admin members are never
+			restricted.
+		</Card.Description>
+		<Card.Action>
+			{#if page.data.enterprise}<Button size="sm" onclick={openCreate}>
+					<Plus /> New role
+				</Button>{/if}
+		</Card.Action>
 	</Card.Header>
 	<Card.Content>
 		{#if !page.data.enterprise}
@@ -88,27 +89,27 @@
 						<div class="min-w-0 flex-1 space-y-1.5">
 							<p class="text-sm font-medium">
 								{r.name}
-								<span class="text-xs font-normal text-muted-foreground"
-									>· {r.members} member{r.members === 1 ? '' : 's'}</span
-								>
+								<span class="text-xs font-normal text-muted-foreground">
+									· {r.members} member{r.members === 1 ? '' : 's'}
+								</span>
 							</p>
 							<div class="flex flex-wrap gap-1">
 								{#if summary === 'custom'}
 									{#each API_RESOURCES.filter((x) => levelOf(r.permissions, x) !== 'none') as x (x)}
-										<Badge variant="outline"
-											>{API_RESOURCE_LABELS[x]} · {levelOf(r.permissions, x) === 'write'
+										<Badge variant="outline">
+											{API_RESOURCE_LABELS[x]} · {levelOf(r.permissions, x) === 'write'
 												? 'write'
-												: 'read'}</Badge
-										>
+												: 'read'}
+										</Badge>
 									{/each}
 								{:else}
 									<Badge variant="secondary">{summary}</Badge>
 								{/if}
 							</div>
 						</div>
-						<Button size="icon-sm" variant="ghost" aria-label="Edit" onclick={() => openEdit(r)}
-							><Pencil /></Button
-						>
+						<Button size="icon-sm" variant="ghost" aria-label="Edit" onclick={() => openEdit(r)}>
+							<Pencil />
+						</Button>
 						<Button
 							size="icon-sm"
 							variant="ghost"
@@ -118,8 +119,10 @@
 									title: `Delete ${r.name}?`,
 									description: 'Members with this role go back to unrestricted member access.',
 									onConfirm: () => deleteRole(r.id)
-								})}><Trash /></Button
+								})}
 						>
+							<Trash />
+						</Button>
 					</li>
 				{/each}
 			</ul>

@@ -140,10 +140,10 @@
 
 <PageHeader title="Vendors">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> <span class="hidden sm:inline">New vendor</span>
-			<Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" onclick={() => (creating = true)}>
+			<Plus /> <span class="hidden sm:inline">New vendor</span>
+			<Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -153,14 +153,14 @@
 			<Empty.Header>
 				<Empty.Media variant="icon"><HardHat /></Empty.Media>
 				<Empty.Title>No vendors yet</Empty.Title>
-				<Empty.Description
-					>Add the plumbers, electricians and cleaners you work with, then assign them to
-					maintenance requests.</Empty.Description
-				>
+				<Empty.Description>
+					Add the plumbers, electricians and cleaners you work with, then assign them to maintenance
+					requests.
+				</Empty.Description>
 			</Empty.Header>
-			<Empty.Content
-				><Button onclick={() => (creating = true)}><Plus /> New vendor</Button></Empty.Content
-			>
+			<Empty.Content>
+				<Button onclick={() => (creating = true)}><Plus /> New vendor</Button>
+			</Empty.Content>
 		</Empty.Root>
 	{:else}
 		<div class="mb-3 flex flex-wrap items-center gap-3">
@@ -220,11 +220,11 @@
 							{/each}
 						</Table.Row>
 					{:else}
-						<Table.Row
-							><Table.Cell colspan={columns.length} class="py-8 text-center text-muted-foreground"
-								>No vendors match.</Table.Cell
-							></Table.Row
-						>
+						<Table.Row>
+							<Table.Cell colspan={columns.length} class="py-8 text-center text-muted-foreground">
+								No vendors match.
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>
@@ -263,12 +263,12 @@
 
 {#snippet vendorCell(v: Row)}
 	<div class="max-w-56">
-		<a href="/vendors/{v.id}" class="block truncate font-medium outline-none"
-			>{v.name}{v.archivedAt ? ' (archived)' : ''}</a
-		>
-		<span class="block truncate text-xs text-muted-foreground"
-			>{v.trades.join(', ') || 'No trades set'}</span
-		>
+		<a href="/vendors/{v.id}" class="block truncate font-medium outline-none">
+			{v.name}{v.archivedAt ? ' (archived)' : ''}
+		</a>
+		<span class="block truncate text-xs text-muted-foreground">
+			{v.trades.join(', ') || 'No trades set'}
+		</span>
 		<InsuranceBadge expiresOn={v.insuranceExpiresOn} class="mt-1 sm:hidden" />
 	</div>
 {/snippet}

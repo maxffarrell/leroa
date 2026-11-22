@@ -106,20 +106,22 @@
 							tooltipContent={`${item.label}  G ${item.key.toUpperCase()}`}
 						>
 							{#snippet child({ props })}
-								<a href={item.href} data-tour={item.href} {...props}
-									><item.icon /><span>{item.label}</span></a
-								>
+								<a href={item.href} data-tour={item.href} {...props}>
+									<item.icon /><span>{item.label}</span>
+								</a>
 							{/snippet}
 						</Sidebar.MenuButton>
 						{#if item.href === '/messages' && unread.current}
 							<Sidebar.MenuBadge
 								class="bg-primary text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground"
-								aria-label="{unread.current} unread">{unread.current}</Sidebar.MenuBadge
+								aria-label="{unread.current} unread"
 							>
+								{unread.current}
+							</Sidebar.MenuBadge>
 						{:else if item.href === '/leasing' && leasing.current}
-							<Sidebar.MenuBadge aria-label="{leasing.current} leads need attention"
-								>{leasing.current}</Sidebar.MenuBadge
-							>
+							<Sidebar.MenuBadge aria-label="{leasing.current} leads need attention">
+								{leasing.current}
+							</Sidebar.MenuBadge>
 						{/if}
 					</Sidebar.MenuItem>
 				{/each}
@@ -130,9 +132,9 @@
 				<Sidebar.MenuItem>
 					<Sidebar.MenuButton tooltipContent="Tenant portal">
 						{#snippet child({ props })}
-							<a href="/portal" target="_blank" {...props}
-								><ExternalLink /><span>Tenant portal</span></a
-							>
+							<a href="/portal" target="_blank" {...props}>
+								<ExternalLink /><span>Tenant portal</span>
+							</a>
 						{/snippet}
 					</Sidebar.MenuButton>
 				</Sidebar.MenuItem>
@@ -140,9 +142,9 @@
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton isActive={isActive(item.href)} tooltipContent={item.label}>
 							{#snippet child({ props })}
-								<a href={item.href} data-tour={item.href} {...props}
-									><item.icon /><span>{item.label}</span></a
-								>
+								<a href={item.href} data-tour={item.href} {...props}>
+									<item.icon /><span>{item.label}</span>
+								</a>
 							{/snippet}
 						</Sidebar.MenuButton>
 					</Sidebar.MenuItem>

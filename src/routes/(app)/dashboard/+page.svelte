@@ -51,15 +51,15 @@
 			<Empty.Header>
 				<Empty.Media variant="icon"><Building2 /></Empty.Media>
 				<Empty.Title>Add your first property</Empty.Title>
-				<Empty.Description
-					>Start with a building and its units. Tenants, leases and rent come next.</Empty.Description
-				>
+				<Empty.Description>
+					Start with a building and its units. Tenants, leases and rent come next.
+				</Empty.Description>
 			</Empty.Header>
 			<Empty.Content class="flex-row justify-center gap-2">
 				<Button href="/properties?new=1">Add property</Button>
-				<Button variant="outline" disabled={seeding} onclick={demo}
-					>{seeding ? 'Loading…' : 'Explore with demo data'}</Button
-				>
+				<Button variant="outline" disabled={seeding} onclick={demo}>
+					{seeding ? 'Loading…' : 'Explore with demo data'}
+				</Button>
 			</Empty.Content>
 		</Empty.Root>
 	{:else}
@@ -81,38 +81,39 @@
 					<Card.Description>Overdue</Card.Description>
 					<Card.Title
 						class="text-2xl tabular-nums {overdueTotal ? 'text-red-600 dark:text-red-400' : ''}"
-						>{formatMoney(overdueTotal)}</Card.Title
 					>
+						{formatMoney(overdueTotal)}
+					</Card.Title>
 				</Card.Header>
-				<Card.Content
-					><p class="text-xs text-muted-foreground">
+				<Card.Content>
+					<p class="text-xs text-muted-foreground">
 						{d.rent.overdue.length}
 						{d.rent.overdue.length === 1 ? 'charge' : 'charges'} past due
-					</p></Card.Content
-				>
+					</p>
+				</Card.Content>
 			</Card.Root>
 			<Card.Root>
 				<Card.Header>
 					<Card.Description>Occupancy</Card.Description>
 					<Card.Title class="text-2xl tabular-nums">{occupancyPct}%</Card.Title>
 				</Card.Header>
-				<Card.Content
-					><p class="text-xs text-muted-foreground">
+				<Card.Content>
+					<p class="text-xs text-muted-foreground">
 						{d.occupancy.occupied} of {d.occupancy.total} units · {d.occupancy.vacant} vacant
-					</p></Card.Content
-				>
+					</p>
+				</Card.Content>
 			</Card.Root>
 			<Card.Root>
 				<Card.Header>
 					<Card.Description>Open maintenance</Card.Description>
 					<Card.Title class="text-2xl tabular-nums">{d.openTickets.length}</Card.Title>
 				</Card.Header>
-				<Card.Content
-					><p class="text-xs text-muted-foreground">
+				<Card.Content>
+					<p class="text-xs text-muted-foreground">
 						{d.urgentTickets} urgent · {d.openTurns}
 						{d.openTurns === 1 ? 'turn' : 'turns'} running
-					</p></Card.Content
-				>
+					</p>
+				</Card.Content>
 			</Card.Root>
 		</div>
 
@@ -139,9 +140,9 @@
 			<Card.Root class="lg:col-span-2">
 				<Card.Header class="flex-row items-center justify-between">
 					<Card.Title>Needs attention</Card.Title>
-					<Button variant="ghost" size="sm" href="/rent?filter=overdue"
-						>Rent roll <ArrowRight /></Button
-					>
+					<Button variant="ghost" size="sm" href="/rent?filter=overdue">
+						Rent roll <ArrowRight />
+					</Button>
 				</Card.Header>
 				<Card.Content class="px-0">
 					{#if d.rent.overdue.length === 0 && d.openTickets.length === 0 && d.followUps.length === 0 && d.toursToday.length === 0 && d.insuranceAlerts.length === 0}
@@ -155,18 +156,18 @@
 										class="flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50"
 									>
 										<StatusBadge status="tour" />
-										<span class="min-w-0 flex-1 truncate text-sm"
-											><span class="font-medium"
-												>Tour with {leadName({
+										<span class="min-w-0 flex-1 truncate text-sm">
+											<span class="font-medium">
+												Tour with {leadName({
 													firstName: t.leadFirstName,
 													lastName: t.leadLastName
-												})}</span
-											>
-											· {t.propertyName}</span
-										>
-										<span class="text-sm tabular-nums"
-											>{formatTourTime(t.startsAt, d.timezone, false)}</span
-										>
+												})}
+											</span>
+											· {t.propertyName}
+										</span>
+										<span class="text-sm tabular-nums">
+											{formatTourTime(t.startsAt, d.timezone, false)}
+										</span>
 									</a>
 								</li>
 							{/each}
@@ -177,14 +178,14 @@
 										class="flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50"
 									>
 										<StatusBadge status="follow_up" />
-										<span class="min-w-0 flex-1 truncate text-sm"
-											><span class="font-medium">Follow up with {leadName(f)}</span>{f.propertyName
+										<span class="min-w-0 flex-1 truncate text-sm">
+											<span class="font-medium">Follow up with {leadName(f)}</span>{f.propertyName
 												? ` · ${f.propertyName}`
-												: ''}</span
-										>
-										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block"
-											>{formatDate(f.nextFollowUpOn, true)}</span
-										>
+												: ''}
+										</span>
+										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block">
+											{formatDate(f.nextFollowUpOn, true)}
+										</span>
 									</a>
 								</li>
 							{/each}
@@ -197,13 +198,13 @@
 										<StatusBadge
 											status={v.insuranceExpiresOn! < todayISO() ? 'overdue' : 'notice'}
 										/>
-										<span class="min-w-0 flex-1 truncate text-sm"
-											><span class="font-medium">{v.name}</span> · insurance {v.insuranceExpiresOn! <
+										<span class="min-w-0 flex-1 truncate text-sm">
+											<span class="font-medium">{v.name}</span> · insurance {v.insuranceExpiresOn! <
 											todayISO()
 												? 'lapsed'
 												: 'expires'}
-											{formatDate(v.insuranceExpiresOn, true)}</span
-										>
+											{formatDate(v.insuranceExpiresOn, true)}
+										</span>
 									</a>
 								</li>
 							{/each}
@@ -214,16 +215,16 @@
 										class="flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50"
 									>
 										<StatusBadge status="overdue" />
-										<span class="min-w-0 flex-1 truncate text-sm"
-											><span class="font-medium">{r.tenants || 'No tenant'}</span> · {r.propertyName}
-											{r.unitName}</span
-										>
-										<span class="text-sm font-medium tabular-nums"
-											>{formatMoney(r.balance, r.currency)}</span
-										>
-										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block"
-											>due {formatDate(r.dueDate, true)}</span
-										>
+										<span class="min-w-0 flex-1 truncate text-sm">
+											<span class="font-medium">{r.tenants || 'No tenant'}</span> · {r.propertyName}
+											{r.unitName}
+										</span>
+										<span class="text-sm font-medium tabular-nums">
+											{formatMoney(r.balance, r.currency)}
+										</span>
+										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block">
+											due {formatDate(r.dueDate, true)}
+										</span>
 									</a>
 								</li>
 							{/each}
@@ -238,14 +239,14 @@
 												? t.priority
 												: t.status}
 										/>
-										<span class="min-w-0 flex-1 truncate text-sm"
-											><span class="font-medium">#{t.number} {t.title}</span> · {t.propertyName}{t.unitName
+										<span class="min-w-0 flex-1 truncate text-sm">
+											<span class="font-medium">#{t.number} {t.title}</span> · {t.propertyName}{t.unitName
 												? ` ${t.unitName}`
-												: ''}</span
-										>
-										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block"
-											>{formatRelative(t.createdAt)}</span
-										>
+												: ''}
+										</span>
+										<span class="hidden w-20 text-right text-xs text-muted-foreground sm:block">
+											{formatRelative(t.createdAt)}
+										</span>
 									</a>
 								</li>
 							{/each}

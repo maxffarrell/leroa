@@ -102,25 +102,24 @@
 						<Table.Row class={r.enabled ? '' : 'opacity-60'}>
 							<Table.Cell class="max-w-40">
 								<span class="block truncate font-medium">{r.name}</span>
-								<span class="block truncate text-xs text-muted-foreground md:hidden"
-									>{describe(r)}</span
-								>
+								<span class="block truncate text-xs text-muted-foreground md:hidden">
+									{describe(r)}
+								</span>
 								{#if r.lastRunAt}
-									<span class="block text-xs text-muted-foreground"
-										>Last run {formatRelative(r.lastRunAt)}</span
-									>
+									<span class="block text-xs text-muted-foreground">
+										Last run {formatRelative(r.lastRunAt)}
+									</span>
 								{/if}
 							</Table.Cell>
-							<Table.Cell
-								><Badge variant="secondary" class="font-mono text-xs">{r.eventType}</Badge
-								></Table.Cell
-							>
+							<Table.Cell>
+								<Badge variant="secondary" class="font-mono text-xs">{r.eventType}</Badge>
+							</Table.Cell>
 							<Table.Cell class="hidden max-w-56 md:table-cell">
 								<span class="block truncate text-sm text-muted-foreground">{describe(r)}</span>
 							</Table.Cell>
-							<Table.Cell class="hidden text-right text-sm tabular-nums sm:table-cell"
-								>{r.runCount}</Table.Cell
-							>
+							<Table.Cell class="hidden text-right text-sm tabular-nums sm:table-cell">
+								{r.runCount}
+							</Table.Cell>
 							<Table.Cell>
 								{#if isAdmin}
 									<Switch
@@ -137,17 +136,18 @@
 										size="icon-sm"
 										aria-label="Delete {r.name}"
 										onclick={() => deleteWorkflow(r.id)}
-										><Trash2 class="size-4 text-muted-foreground" /></Button
 									>
+										<Trash2 class="size-4 text-muted-foreground" />
+									</Button>
 								{/if}
 							</Table.Cell>
 						</Table.Row>
 					{:else}
-						<Table.Row
-							><Table.Cell colspan={6} class="py-8 text-center text-muted-foreground"
-								>No rules yet — add one below.</Table.Cell
-							></Table.Row
-						>
+						<Table.Row>
+							<Table.Cell colspan={6} class="py-8 text-center text-muted-foreground">
+								No rules yet — add one below.
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 					{#if isAdmin}
 						<Table.Row class="border-dashed bg-muted/30 hover:bg-muted/30">
@@ -224,9 +224,9 @@
 									</div>
 								{/if}
 								<div class="mt-2">
-									<Button size="sm" disabled={saving || !name.trim() || !eventValid} onclick={add}
-										><Plus /> Add rule</Button
-									>
+									<Button size="sm" disabled={saving || !name.trim() || !eventValid} onclick={add}>
+										<Plus /> Add rule
+									</Button>
 								</div>
 							</Table.Cell>
 						</Table.Row>

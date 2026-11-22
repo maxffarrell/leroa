@@ -153,16 +153,18 @@
 						/>{:else}<Puzzle />{/if}
 				</span>
 				<div class="min-w-0 flex-1 space-y-1">
-					<Card.Title class="flex flex-wrap items-center gap-2"
-						>{i.name}
-						{#if i.connection?.status === 'reconnect'}<Badge variant="destructive"
-								>Reconnect needed</Badge
-							>{:else if i.connection && !i.enabled}<Badge variant="outline">Paused</Badge
-							>{:else if i.connection}<Badge variant="secondary">Connected</Badge
-							>{:else if !i.connects && i.installed && i.enabled}<Badge variant="secondary"
-								>On</Badge
-							>{/if}</Card.Title
-					>
+					<Card.Title class="flex flex-wrap items-center gap-2">
+						{i.name}
+						{#if i.connection?.status === 'reconnect'}<Badge variant="destructive">
+								Reconnect needed
+							</Badge>{:else if i.connection && !i.enabled}<Badge variant="outline">
+								Paused
+							</Badge>{:else if i.connection}<Badge variant="secondary">
+								Connected
+							</Badge>{:else if !i.connects && i.installed && i.enabled}<Badge variant="secondary">
+								On
+							</Badge>{/if}
+					</Card.Title>
 					<Card.Description>{i.description}</Card.Description>
 				</div>
 			</Card.Header>
@@ -173,8 +175,9 @@
 					variant={i.installed || i.connection ? 'outline' : 'default'}
 					disabled={!canManage}
 					onclick={() => open(i)}
-					>{i.connection ? 'Manage' : i.installed && !i.connects ? 'Configure' : 'Connect'}</Button
 				>
+					{i.connection ? 'Manage' : i.installed && !i.connects ? 'Configure' : 'Connect'}
+				</Button>
 			</Card.Footer>
 		</Card.Root>
 	{/each}
@@ -214,8 +217,9 @@
 										variant="outline"
 										disabled={syncing || c.syncing || !editing.enabled}
 										onclick={() => syncNow(editing!)}
-										><RefreshCw class={syncing ? 'animate-spin' : ''} />Sync now</Button
 									>
+										<RefreshCw class={syncing ? 'animate-spin' : ''} />Sync now
+									</Button>
 								{/if}
 							</div>
 							{#if c.lastError}<p class="text-xs text-destructive" role="alert">
@@ -226,15 +230,17 @@
 								</p>{/if}
 							<p class="text-xs text-muted-foreground">
 								{plural(c.counts.synced, 'record')} in {editing.name}{#if c.counts.failed}, <span
-										class="text-destructive">{c.counts.failed} failed</span
-									>{/if}{#if c.counts.skipped}, {c.counts.skipped} skipped{/if}{#if c.lastSyncResult?.remaining}.
+										class="text-destructive"
+									>
+										{c.counts.failed} failed
+									</span>{/if}{#if c.counts.skipped}, {c.counts.skipped} skipped{/if}{#if c.lastSyncResult?.remaining}.
 									{c.lastSyncResult.remaining} more will go next sync{/if}.
 							</p>
 							{#if c.counts.failed || c.counts.skipped}
 								<Collapsible.Root class="text-xs" bind:open={showIssues}>
-									<Collapsible.Trigger class="cursor-pointer text-muted-foreground"
-										>Show records not synced</Collapsible.Trigger
-									>
+									<Collapsible.Trigger class="cursor-pointer text-muted-foreground">
+										Show records not synced
+									</Collapsible.Trigger>
 									<Collapsible.Content>
 										{#if showIssues}<svelte:boundary>
 												<ul class="mt-2 max-h-64 divide-y overflow-y-auto rounded border">
@@ -243,11 +249,13 @@
 															<div class="flex items-baseline justify-between gap-2">
 																{#if issue.href}<a
 																		class="font-medium underline-offset-2 hover:underline"
-																		href={issue.href}>{issue.label}</a
-																	>{:else}<span class="font-medium">{issue.label}</span>{/if}
-																{#if issue.amount != null}<span class="tabular-nums"
-																		>{formatMoney(issue.amount, issue.currency ?? 'USD')}</span
-																	>{/if}
+																		href={issue.href}
+																	>
+																		{issue.label}
+																	</a>{:else}<span class="font-medium">{issue.label}</span>{/if}
+																{#if issue.amount != null}<span class="tabular-nums">
+																		{formatMoney(issue.amount, issue.currency ?? 'USD')}
+																	</span>{/if}
 															</div>
 															{#if issue.detail}<p class="text-muted-foreground">
 																	{issue.detail}
@@ -274,34 +282,38 @@
 									<Button
 										size="sm"
 										href="/api/integrations/{editing.id}/connect"
-										data-sveltekit-reload>Reconnect</Button
+										data-sveltekit-reload
 									>
+										Reconnect
+									</Button>
 								{/if}
 								<Button
 									size="sm"
 									variant={confirmDisconnect ? 'destructive' : 'ghost'}
 									onclick={() => disconnect(editing!)}
-									>{confirmDisconnect ? 'Confirm disconnect' : 'Disconnect'}</Button
 								>
+									{confirmDisconnect ? 'Confirm disconnect' : 'Disconnect'}
+								</Button>
 							</div>
 						{:else if editing.app?.configured}
 							<p class="text-muted-foreground">
 								Sign in to {editing.name} and choose the company to send records to. Leroa only adds records;
 								it never changes or deletes ones you entered there yourself.
 							</p>
-							<Button href="/api/integrations/{editing.id}/connect" data-sveltekit-reload
-								>Connect to {editing.name}</Button
-							>
+							<Button href="/api/integrations/{editing.id}/connect" data-sveltekit-reload>
+								Connect to {editing.name}
+							</Button>
 						{:else}
 							<p class="text-muted-foreground">
 								{editing.name} isn't set up on this server yet. Set
-								{#each editing.app?.env ?? [] as name, n (name)}{n ? ' and ' : ''}<code>{name}</code
-									>{/each} from your developer app, and register this redirect URI:
+								{#each editing.app?.env ?? [] as name, n (name)}{n ? ' and ' : ''}<code>
+										{name}
+									</code>{/each} from your developer app, and register this redirect URI:
 							</p>
 							<div class="flex items-center gap-2">
-								<code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 text-xs"
-									>{editing.app?.redirectUri}</code
-								>
+								<code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
+									{editing.app?.redirectUri}
+								</code>
 								<Button
 									size="icon"
 									variant="ghost"
@@ -309,18 +321,20 @@
 									onclick={() => {
 										void navigator.clipboard.writeText(editing!.app?.redirectUri ?? '');
 										toast.success('Copied');
-									}}><Copy /></Button
+									}}
 								>
+									<Copy />
+								</Button>
 							</div>
 						{/if}
 					</section>
 				{/if}
 				<Field.Group class="gap-4 px-4">
-					<Field.Field orientation="horizontal"
-						><Switch id="int-enabled" bind:checked={enabled} /><Field.Label for="int-enabled"
-							>Enabled</Field.Label
-						></Field.Field
-					>
+					<Field.Field orientation="horizontal">
+						<Switch id="int-enabled" bind:checked={enabled} /><Field.Label for="int-enabled">
+							Enabled
+						</Field.Label>
+					</Field.Field>
 					{#each editing.config as f (f.key)}
 						{#if f.type === 'boolean'}
 							<Field.Field orientation="horizontal">

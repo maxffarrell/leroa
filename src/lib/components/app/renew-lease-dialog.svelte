@@ -68,10 +68,10 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>Renew lease</Modal.Title>
-				<Modal.Description
-					>Creates the next lease for the same unit and tenants. The deposit carries over and the
-					current lease ends the day before.</Modal.Description
-				>
+				<Modal.Description>
+					Creates the next lease for the same unit and tenants. The deposit carries over and the
+					current lease ends the day before.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Group class="gap-4">
 				<div class="grid grid-cols-2 gap-3">
@@ -90,9 +90,9 @@
 					<MoneyInput id="rn-rent" required bind:value={rent} />
 					<div class="flex flex-wrap items-center gap-1.5">
 						{#each [0, 3, 5] as pct (pct)}
-							<Button type="button" size="sm" variant="outline" onclick={() => bump(pct)}
-								>{pct ? `+${pct}%` : 'Same'}</Button
-							>
+							<Button type="button" size="sm" variant="outline" onclick={() => bump(pct)}>
+								{pct ? `+${pct}%` : 'Same'}
+							</Button>
 						{/each}
 						<span class="ml-auto text-xs text-muted-foreground tabular-nums">
 							Now {formatMoney(lease.rentAmount, lease.currency)}{change

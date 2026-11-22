@@ -95,20 +95,18 @@
 				{#each permits as p (p.id)}
 					<Table.Row>
 						<Table.Cell class="font-medium">{p.permitNumber}</Table.Cell>
-						<Table.Cell
-							>{p.tenantId
-								? `${p.tenantFirst} ${p.tenantLast}`.trim() || p.tenantCompany
-								: '—'}</Table.Cell
-						>
-						<Table.Cell class="hidden text-muted-foreground md:table-cell"
-							>{p.propertyName}{p.unitName ? ` · ${p.unitName}` : ''}</Table.Cell
-						>
-						<Table.Cell class="hidden max-w-48 truncate text-muted-foreground lg:table-cell"
-							>{p.vehicle ?? '—'}</Table.Cell
-						>
-						<Table.Cell class="hidden text-muted-foreground sm:table-cell"
-							>{p.expiresOn ? formatDate(p.expiresOn) : '—'}</Table.Cell
-						>
+						<Table.Cell>
+							{p.tenantId ? `${p.tenantFirst} ${p.tenantLast}`.trim() || p.tenantCompany : '—'}
+						</Table.Cell>
+						<Table.Cell class="hidden text-muted-foreground md:table-cell">
+							{p.propertyName}{p.unitName ? ` · ${p.unitName}` : ''}
+						</Table.Cell>
+						<Table.Cell class="hidden max-w-48 truncate text-muted-foreground lg:table-cell">
+							{p.vehicle ?? '—'}
+						</Table.Cell>
+						<Table.Cell class="hidden text-muted-foreground sm:table-cell">
+							{p.expiresOn ? formatDate(p.expiresOn) : '—'}
+						</Table.Cell>
 						<Table.Cell>
 							{#if p.status === 'revoked'}
 								<Badge variant="secondary">Revoked</Badge>
@@ -118,18 +116,18 @@
 						</Table.Cell>
 						<Table.Cell class="text-right">
 							{#if p.status === 'active'}
-								<Button size="sm" variant="outline" onclick={() => revoke(p.id, p.permitNumber)}
-									><CircleOff /> Revoke</Button
-								>
+								<Button size="sm" variant="outline" onclick={() => revoke(p.id, p.permitNumber)}>
+									<CircleOff /> Revoke
+								</Button>
 							{/if}
 						</Table.Cell>
 					</Table.Row>
 				{:else}
-					<Table.Row
-						><Table.Cell colspan={7} class="py-8 text-center text-muted-foreground"
-							>No active permits.</Table.Cell
-						></Table.Row
-					>
+					<Table.Row>
+						<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">
+							No active permits.
+						</Table.Cell>
+					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>

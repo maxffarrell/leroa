@@ -46,10 +46,10 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>Late fee</Modal.Title>
-				<Modal.Description
-					>Added automatically when rent is still unpaid after the grace period. Late fee limits
-					vary by location.</Modal.Description
-				>
+				<Modal.Description>
+					Added automatically when rent is still unpaid after the grace period. Late fee limits vary
+					by location.
+				</Modal.Description>
 			</Modal.Header>
 			<div class="grid grid-cols-2 gap-3">
 				<Field.Field>

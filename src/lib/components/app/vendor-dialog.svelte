@@ -100,9 +100,9 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>{vendor ? 'Edit vendor' : 'New vendor'}</Modal.Title>
-				<Modal.Description
-					>Vendors get a private link for each job. They don't need an account.</Modal.Description
-				>
+				<Modal.Description>
+					Vendors get a private link for each job. They don't need an account.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field>
@@ -147,8 +147,9 @@
 								class="inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {on
 									? 'border-primary bg-primary text-primary-foreground'
 									: 'hover:bg-muted'}"
-								>{#if on}<Check class="size-3" />{/if}{t}</button
 							>
+								{#if on}<Check class="size-3" />{/if}{t}
+							</button>
 						{/each}
 					</div>
 				</Field.Field>
@@ -174,9 +175,9 @@
 			</Field.Group>
 			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
-				<Button type="submit" disabled={pending || !form.name.trim()}
-					>{pending ? 'Saving…' : vendor ? 'Save' : 'Add vendor'}</Button
-				>
+				<Button type="submit" disabled={pending || !form.name.trim()}>
+					{pending ? 'Saving…' : vendor ? 'Save' : 'Add vendor'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

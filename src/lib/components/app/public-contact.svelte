@@ -143,15 +143,15 @@
 								aria-pressed={activeDay?.date === d.date}
 								onclick={() => ((day = d.date), (slot = null))}
 							>
-								<span class="text-xs text-muted-foreground"
-									>{date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}</span
-								>
-								<span class="tabular-nums"
-									>{date.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' })}</span
-								>
-								<span class="text-[10px] text-muted-foreground"
-									>{date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}</span
-								>
+								<span class="text-xs text-muted-foreground">
+									{date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}
+								</span>
+								<span class="tabular-nums">
+									{date.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' })}
+								</span>
+								<span class="text-[10px] text-muted-foreground">
+									{date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}
+								</span>
 							</button>
 						{/each}
 					</div>
@@ -164,8 +164,10 @@
 									variant={slot === s ? 'default' : 'outline'}
 									aria-pressed={slot === s}
 									class="tabular-nums"
-									onclick={() => (slot = s)}>{formatTourTime(s, slots.timezone, false)}</Button
+									onclick={() => (slot = s)}
 								>
+									{formatTourTime(s, slots.timezone, false)}
+								</Button>
 							{/each}
 						</div>
 						<p class="text-xs text-muted-foreground">Times in {slots.timezone.replace('_', ' ')}</p>
@@ -199,17 +201,17 @@
 			</Field.Field>
 		{/if}
 		<Field.Field>
-			<Field.Label for="pc-msg"
-				>{tab === 'tour' ? 'Anything we should know?' : 'Message'}</Field.Label
-			>
+			<Field.Label for="pc-msg">
+				{tab === 'tour' ? 'Anything we should know?' : 'Message'}
+			</Field.Label>
 			<Textarea id="pc-msg" rows={3} bind:value={form.message} />
 		</Field.Field>
 		{#if tab === 'message' && !waitlistDefault}
 			<Field.Field orientation="horizontal">
 				<Checkbox id="pc-wait" bind:checked={form.waitlist} />
-				<Field.Label for="pc-wait" class="text-sm font-normal"
-					>Email me when a similar home is available</Field.Label
-				>
+				<Field.Label for="pc-wait" class="text-sm font-normal">
+					Email me when a similar home is available
+				</Field.Label>
 			</Field.Field>
 		{/if}
 		<div class="sr-only" aria-hidden="true">
@@ -218,9 +220,9 @@
 		</div>
 		<Field.Field orientation="horizontal">
 			<Checkbox id="pc-consent" bind:checked={form.consent} />
-			<Field.Label for="pc-consent" class="text-sm leading-snug font-normal"
-				>{org.name} may contact me by email or phone about renting.</Field.Label
-			>
+			<Field.Label for="pc-consent" class="text-sm leading-snug font-normal">
+				{org.name} may contact me by email or phone about renting.
+			</Field.Label>
 		</Field.Field>
 		<Button type="submit" class="w-full" disabled={pending || (tab === 'tour' && !slot)}>
 			{pending

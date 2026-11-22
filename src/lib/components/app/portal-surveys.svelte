@@ -89,8 +89,10 @@
 					<Button
 						size="sm"
 						disabled={sending === s.id || !(rating[s.id] ?? 0)}
-						onclick={() => answer(s.id)}>{sending === s.id ? 'Sending…' : 'Send answer'}</Button
+						onclick={() => answer(s.id)}
 					>
+						{sending === s.id ? 'Sending…' : 'Send answer'}
+					</Button>
 				</div>
 			{/if}
 		</Card.Content>

@@ -79,48 +79,48 @@
 			</Modal.Header>
 			<Field.Group class="gap-4">
 				{#key key}
-					<Field.Field
-						><Field.Label for="pay-amt">Amount</Field.Label><MoneyInput
+					<Field.Field>
+						<Field.Label for="pay-amt">Amount</Field.Label><MoneyInput
 							id="pay-amt"
 							required
 							bind:value={amount}
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 				{/key}
 				<div class="grid grid-cols-2 gap-3">
-					<Field.Field
-						><Field.Label for="pay-date">Received</Field.Label><Input
+					<Field.Field>
+						<Field.Label for="pay-date">Received</Field.Label><Input
 							id="pay-date"
 							type="date"
 							required
 							bind:value={receivedOn}
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 					<Field.Field>
 						<Field.Label>Method</Field.Label>
 						<Select.Root type="single" bind:value={method}>
 							<Select.Trigger class="w-full">{methodLabels[method]}</Select.Trigger>
-							<Select.Content
-								>{#each paymentMethods as m (m)}<Select.Item value={m}
-										>{methodLabels[m]}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Content>
+								{#each paymentMethods as m (m)}<Select.Item value={m}>
+										{methodLabels[m]}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 				</div>
-				<Field.Field
-					><Field.Label for="pay-ref">Reference</Field.Label><Input
+				<Field.Field>
+					<Field.Label for="pay-ref">Reference</Field.Label><Input
 						id="pay-ref"
 						placeholder="Check # or transaction ID"
 						bind:value={reference}
-					/></Field.Field
-				>
+					/>
+				</Field.Field>
 			</Field.Group>
-			<Modal.Footer
-				><Button type="submit" class="w-full" disabled={pending || !amount}
-					>{pending ? 'Saving…' : 'Record payment'}</Button
-				></Modal.Footer
-			>
+			<Modal.Footer>
+				<Button type="submit" class="w-full" disabled={pending || !amount}>
+					{pending ? 'Saving…' : 'Record payment'}
+				</Button>
+			</Modal.Footer>
 		</form>
 	</Modal.Content>
 </Modal.Root>

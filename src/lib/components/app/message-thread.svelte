@@ -155,9 +155,9 @@
 										{#if startsRun(i)}
 											<Message.Header class="gap-1.5 px-1">
 												<span>{mine && side === 'tenant' ? 'You' : m.authorName}</span>
-												<time class="font-normal" datetime={new Date(m.createdAt).toISOString()}
-													>{stamp(m.createdAt)}</time
-												>
+												<time class="font-normal" datetime={new Date(m.createdAt).toISOString()}>
+													{stamp(m.createdAt)}
+												</time>
 											</Message.Header>
 										{/if}
 										{@const cat = categoryOf(m.aiCategory)}
@@ -166,8 +166,9 @@
 												<Badge
 													variant={cat.urgent ? 'destructive' : 'outline'}
 													class="h-5 px-1.5 text-[10px] font-normal"
-													>{cat.urgent ? `Urgent · ${cat.label}` : cat.label}</Badge
 												>
+													{cat.urgent ? `Urgent · ${cat.label}` : cat.label}
+												</Badge>
 											</span>
 										{/if}
 										<Bubble.Root
@@ -217,15 +218,18 @@
 							aria-label="Draft a reply"
 							title="Draft a reply"
 							onclick={draft}
-							>{#if drafting}<Spinner />{:else}<Sparkles />{/if}</InputGroup.Button
 						>
+							{#if drafting}<Spinner />{:else}<Sparkles />{/if}
+						</InputGroup.Button>
 					{/if}
 					<InputGroup.Button
 						type="submit"
 						size="icon-sm"
 						disabled={sending || !body.trim()}
-						aria-label="Send"><ArrowUp /></InputGroup.Button
+						aria-label="Send"
 					>
+						<ArrowUp />
+					</InputGroup.Button>
 				</InputGroup.Addon>
 			</InputGroup.Root>
 		</form>

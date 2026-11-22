@@ -70,9 +70,9 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>Book a tour</Modal.Title>
-				<Modal.Description
-					>With {leadName}. Times are in {settings?.timezone ?? 'UTC'}.</Modal.Description
-				>
+				<Modal.Description>
+					With {leadName}. Times are in {settings?.timezone ?? 'UTC'}.
+				</Modal.Description>
 			</Modal.Header>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<Field.Field class="sm:col-span-2">

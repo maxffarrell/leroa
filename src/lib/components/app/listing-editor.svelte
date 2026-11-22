@@ -185,11 +185,10 @@
 
 <PageHeader title={listing.title} crumbs={[{ label: 'Leasing', href: '/leasing?tab=listings' }]}>
 	{#snippet actions()}
-		<Button size="sm" variant="outline" href={publicUrl} target="_blank"
-			><ExternalLink />
-			<span class="hidden sm:inline">{listing.status === 'published' ? 'View' : 'Preview'}</span
-			></Button
-		>
+		<Button size="sm" variant="outline" href={publicUrl} target="_blank">
+			<ExternalLink />
+			<span class="hidden sm:inline">{listing.status === 'published' ? 'View' : 'Preview'}</span>
+		</Button>
 		{#if listing.status === 'published'}
 			<Button size="sm" variant="outline" onclick={() => setStatus('closed')}>Close</Button>
 		{:else}
@@ -201,21 +200,23 @@
 						size="icon-sm"
 						variant="ghost"
 						aria-label="More"
-						{...props}><Ellipsis /></Button
-					>{/snippet}
+						{...props}
+					>
+						<Ellipsis />
+					</Button>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end">
 				<DropdownMenu.Item onclick={copyLink}><Link /> Copy public link</DropdownMenu.Item>
 				{#if listing.status !== 'draft'}
-					<DropdownMenu.Item onclick={() => setStatus('draft')}
-						>Move back to draft</DropdownMenu.Item
-					>
+					<DropdownMenu.Item onclick={() => setStatus('draft')}>
+						Move back to draft
+					</DropdownMenu.Item>
 				{/if}
 				{#if page.data.role !== 'member'}
 					<DropdownMenu.Separator />
-					<DropdownMenu.Item variant="destructive" onclick={remove}
-						>Delete listing</DropdownMenu.Item
-					>
+					<DropdownMenu.Item variant="destructive" onclick={remove}>
+						Delete listing
+					</DropdownMenu.Item>
 				{/if}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
@@ -226,17 +227,17 @@
 	<form class="min-w-0 space-y-6" onsubmit={save} oninput={() => (dirty = true)}>
 		<div class="flex flex-wrap items-center gap-2">
 			<StatusBadge status={listing.status} />
-			<span class="text-sm text-muted-foreground"
-				>{listing.propertyName} · {listing.unitName}{facts ? ` · ${facts}` : ''}</span
-			>
+			<span class="text-sm text-muted-foreground">
+				{listing.propertyName} · {listing.unitName}{facts ? ` · ${facts}` : ''}
+			</span>
 		</div>
 
 		<Card.Root>
 			<Card.Header>
 				<Card.Title>Photos</Card.Title>
-				<Card.Description
-					>The first photo is the cover. JPEG, PNG or WebP up to 10 MB each.</Card.Description
-				>
+				<Card.Description>
+					The first photo is the cover. JPEG, PNG or WebP up to 10 MB each.
+				</Card.Description>
 			</Card.Header>
 			<Card.Content>
 				<ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -250,14 +251,17 @@
 							/>
 							{#if i === 0}<span
 									class="absolute bottom-1.5 left-1.5 rounded bg-background/90 px-1.5 text-xs font-medium"
-									>Cover</span
-								>{/if}
+								>
+									Cover
+								</span>{/if}
 							<button
 								type="button"
 								class="absolute top-1.5 right-1.5 rounded-full bg-background/90 p-1 opacity-100 shadow-sm transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
 								aria-label="Remove photo"
-								onclick={() => removePhoto(p.id)}><X class="size-3.5" /></button
+								onclick={() => removePhoto(p.id)}
 							>
+								<X class="size-3.5" />
+							</button>
 						</li>
 					{/each}
 					<li>
@@ -297,9 +301,10 @@
 									variant="ghost"
 									disabled={generating}
 									onclick={generateCopy}
-									>{#if generating}<Spinner />{:else}<Sparkles />{/if}
-									{generating ? 'Writing…' : 'Write copy'}</Button
 								>
+									{#if generating}<Spinner />{:else}<Sparkles />{/if}
+									{generating ? 'Writing…' : 'Write copy'}
+								</Button>
 							{/if}
 						</div>
 						<Input id="l-title" required maxlength={200} bind:value={title} />
@@ -345,10 +350,10 @@
 							placeholder="What makes this home great? Light, layout, neighborhood, recent updates…"
 							bind:value={description}
 						/>
-						<Field.Description
-							>Describe the home, not who should live there. Avoid phrases like “perfect for
-							singles” or “no kids”.</Field.Description
-						>
+						<Field.Description>
+							Describe the home, not who should live there. Avoid phrases like “perfect for singles”
+							or “no kids”.
+						</Field.Description>
 					</Field.Field>
 					<Field.Field>
 						<Field.Label for="l-pets">Pet policy</Field.Label>
@@ -373,8 +378,10 @@
 							variant={amenities.includes(a) ? 'secondary' : 'outline'}
 							aria-pressed={amenities.includes(a)}
 							class="h-7 rounded-full"
-							onclick={() => toggleAmenity(a)}>{a}</Button
+							onclick={() => toggleAmenity(a)}
 						>
+							{a}
+						</Button>
 					{/each}
 				</div>
 				<div class="flex max-w-sm gap-2">
@@ -395,8 +402,10 @@
 							if (a && !amenities.includes(a)) amenities = [...amenities, a];
 							customAmenity = '';
 							dirty = true;
-						}}><Plus /> Add</Button
+						}}
 					>
+						<Plus /> Add
+					</Button>
 				</div>
 			</Card.Content>
 		</Card.Root>
@@ -413,18 +422,19 @@
 		<Card.Root size="sm">
 			<Card.Header>
 				<Card.Description>Applications</Card.Description>
-				<Card.Title class="text-xl tabular-nums"
-					>{listing.applications.total}
+				<Card.Title class="text-xl tabular-nums">
+					{listing.applications.total}
 					{#if listing.applications.new}<span
 							class="text-sm font-normal text-sky-700 dark:text-sky-400"
-							>· {listing.applications.new} new</span
-						>{/if}</Card.Title
-				>
+						>
+							· {listing.applications.new} new
+						</span>{/if}
+				</Card.Title>
 			</Card.Header>
 			<Card.Footer>
-				<Button size="sm" variant="outline" href="/leasing" class="w-full"
-					>Review applications</Button
-				>
+				<Button size="sm" variant="outline" href="/leasing" class="w-full">
+					Review applications
+				</Button>
 			</Card.Footer>
 		</Card.Root>
 		<ListingWaitlist listingId={listing.id} published={listing.status === 'published'} {demo} />

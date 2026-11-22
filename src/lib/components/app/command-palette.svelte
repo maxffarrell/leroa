@@ -104,9 +104,9 @@
 					<Command.Item value={`${hit.type}-${hit.id}`} onSelect={() => go(hit.href)}>
 						<Icon />
 						<span class="truncate">{hit.title}</span>
-						<span class="ml-auto truncate text-xs text-muted-foreground capitalize"
-							>{hit.subtitle}</span
-						>
+						<span class="ml-auto truncate text-xs text-muted-foreground capitalize">
+							{hit.subtitle}
+						</span>
 					</Command.Item>
 				{/each}
 			</Command.Group>
@@ -122,9 +122,10 @@
 		</Command.Group>
 		<Command.Group heading="Create">
 			{#each actions as action (action.href)}
-				<Command.Item value={action.label} onSelect={() => go(action.href)}
-					><Plus /> {action.label}</Command.Item
-				>
+				<Command.Item value={action.label} onSelect={() => go(action.href)}>
+					<Plus />
+					{action.label}
+				</Command.Item>
 			{/each}
 		</Command.Group>
 	</Command.List>

@@ -77,12 +77,12 @@
 				<div
 					class="flex size-10 shrink-0 flex-col items-center justify-center rounded-md bg-muted text-center"
 				>
-					<span class="text-sm leading-none font-semibold tabular-nums"
-						>{new Date(ev.startsAt).getDate()}</span
-					>
-					<span class="text-[10px] text-muted-foreground uppercase"
-						>{new Date(ev.startsAt).toLocaleString('en-US', { month: 'short' })}</span
-					>
+					<span class="text-sm leading-none font-semibold tabular-nums">
+						{new Date(ev.startsAt).getDate()}
+					</span>
+					<span class="text-[10px] text-muted-foreground uppercase">
+						{new Date(ev.startsAt).toLocaleString('en-US', { month: 'short' })}
+					</span>
 				</div>
 				<div class="min-w-0 flex-1">
 					<div class="flex flex-wrap items-center gap-2">
@@ -117,8 +117,10 @@
 								onConfirm: async () => {
 									await cancelEvent(ev.id).catch(() => toast.error('Could not cancel'));
 								}
-							})}>Cancel</Button
+							})}
 					>
+						Cancel
+					</Button>
 				{/if}
 			</div>
 		{:else}

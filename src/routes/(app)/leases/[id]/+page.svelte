@@ -91,14 +91,15 @@
 				value="payment"
 				size="sm"
 				onclick={() => (payment = { leaseId: id, balance: Math.max(0, l.balance), label: title })}
-				><Banknote /> <span class="hidden sm:inline">Record payment</span></SplitButton.Action
 			>
-			<SplitButton.Action value="charge" size="sm" onclick={() => (feeOpen = true)}
-				><Plus /> <span class="hidden sm:inline">Add charge</span></SplitButton.Action
-			>
-			<SplitButton.Action value="late_fee" size="sm" onclick={() => (lateFeeOpen = true)}
-				><Banknote /> <span class="hidden sm:inline">Late fee…</span></SplitButton.Action
-			>
+				<Banknote /> <span class="hidden sm:inline">Record payment</span>
+			</SplitButton.Action>
+			<SplitButton.Action value="charge" size="sm" onclick={() => (feeOpen = true)}>
+				<Plus /> <span class="hidden sm:inline">Add charge</span>
+			</SplitButton.Action>
+			<SplitButton.Action value="late_fee" size="sm" onclick={() => (lateFeeOpen = true)}>
+				<Banknote /> <span class="hidden sm:inline">Late fee…</span>
+			</SplitButton.Action>
 			<SplitButton.Select>
 				<SplitButton.SelectTrigger size="icon-sm" aria-label="More record actions" />
 				<SplitButton.SelectContent>
@@ -114,27 +115,29 @@
 						size="icon-sm"
 						variant="ghost"
 						aria-label="More"
-						{...props}><Ellipsis /></Button
-					>{/snippet}
+						{...props}
+					>
+						<Ellipsis />
+					</Button>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end">
-				<DropdownMenu.Item onclick={() => window.open(`/leases/${id}/statement`, '_blank')}
-					>Rent statement</DropdownMenu.Item
-				>
+				<DropdownMenu.Item onclick={() => window.open(`/leases/${id}/statement`, '_blank')}>
+					Rent statement
+				</DropdownMenu.Item>
 				<DropdownMenu.Separator />
-				{#if l.status === 'draft'}<DropdownMenu.Item onclick={() => setStatus('active')}
-						>Activate lease</DropdownMenu.Item
-					>{/if}
+				{#if l.status === 'draft'}<DropdownMenu.Item onclick={() => setStatus('active')}>
+						Activate lease
+					</DropdownMenu.Item>{/if}
 				{#if l.status === 'active'}
-					{#if !l.renewedById}<DropdownMenu.Item onclick={() => (renewOpen = true)}
-							>Renew lease…</DropdownMenu.Item
-						>{/if}
+					{#if !l.renewedById}<DropdownMenu.Item onclick={() => (renewOpen = true)}>
+							Renew lease…
+						</DropdownMenu.Item>{/if}
 					<DropdownMenu.Item onclick={() => (lateFeeOpen = true)}>Late fee…</DropdownMenu.Item>
 					<DropdownMenu.Separator />
 					<DropdownMenu.Item onclick={() => setStatus('ended')}>End lease</DropdownMenu.Item>
-					<DropdownMenu.Item variant="destructive" onclick={() => setStatus('terminated')}
-						>Terminate early</DropdownMenu.Item
-					>
+					<DropdownMenu.Item variant="destructive" onclick={() => setStatus('terminated')}>
+						Terminate early
+					</DropdownMenu.Item>
 				{/if}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
@@ -149,27 +152,32 @@
 		<StatusBadge status={l.status} />
 		{#if l.renewedFromId}<a
 				href="/leases/{l.renewedFromId}"
-				class="text-xs text-muted-foreground hover:underline">Renewal of previous lease</a
-			>{/if}
+				class="text-xs text-muted-foreground hover:underline"
+			>
+				Renewal of previous lease
+			</a>{/if}
 		{#if l.renewedById}<a
 				href="/leases/{l.renewedById}"
-				class="text-xs font-medium text-primary hover:underline">Renewed · view next lease →</a
-			>{/if}
+				class="text-xs font-medium text-primary hover:underline"
+			>
+				Renewed · view next lease →
+			</a>{/if}
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-		<Card.Root size="sm"
-			><Card.Header
-				><Card.Description>Balance</Card.Description><Card.Title
+		<Card.Root size="sm">
+			<Card.Header>
+				<Card.Description>Balance</Card.Description><Card.Title
 					class="text-xl tabular-nums {l.balance > 0 ? 'text-red-600 dark:text-red-400' : ''}"
-					>{formatMoney(l.balance, l.currency)}</Card.Title
-				></Card.Header
-			></Card.Root
-		>
-		<Card.Root size="sm"
-			><Card.Header
-				><Card.Description>Rent</Card.Description><Card.Title class="text-xl tabular-nums"
-					>{formatMoney(l.rentAmount, l.currency)}<span
+				>
+					{formatMoney(l.balance, l.currency)}
+				</Card.Title>
+			</Card.Header>
+		</Card.Root>
+		<Card.Root size="sm">
+			<Card.Header>
+				<Card.Description>Rent</Card.Description><Card.Title class="text-xl tabular-nums">
+					{formatMoney(l.rentAmount, l.currency)}<span
 						class="text-sm font-normal text-muted-foreground"
 					>
 						/ mo, due on the {l.rentDueDay}{l.rentDueDay === 1
@@ -178,34 +186,33 @@
 								? 'nd'
 								: l.rentDueDay === 3
 									? 'rd'
-									: 'th'}</span
-					></Card.Title
-				><button
+									: 'th'}
+					</span>
+				</Card.Title><button
 					type="button"
 					class="text-left text-xs text-muted-foreground hover:underline"
 					onclick={() => (lateFeeOpen = true)}
-					>{l.lateFeeAmount
+				>
+					{l.lateFeeAmount
 						? `Late fee ${formatMoney(l.lateFeeAmount, l.currency)} after ${l.lateFeeGraceDays} day${l.lateFeeGraceDays === 1 ? '' : 's'}`
-						: 'No late fee'}</button
-				></Card.Header
-			></Card.Root
-		>
-		<Card.Root size="sm"
-			><Card.Header
-				><Card.Description>Term</Card.Description><Card.Title class="text-base"
-					>{formatDate(l.startDate)} – {l.endDate
-						? formatDate(l.endDate)
-						: 'Month-to-month'}</Card.Title
-				></Card.Header
-			></Card.Root
-		>
-		<Card.Root size="sm"
-			><Card.Header
-				><Card.Description>Deposit</Card.Description><Card.Title class="text-xl tabular-nums"
-					>{formatMoney(l.depositAmount, l.currency)}</Card.Title
-				></Card.Header
-			></Card.Root
-		>
+						: 'No late fee'}
+				</button>
+			</Card.Header>
+		</Card.Root>
+		<Card.Root size="sm">
+			<Card.Header>
+				<Card.Description>Term</Card.Description><Card.Title class="text-base">
+					{formatDate(l.startDate)} – {l.endDate ? formatDate(l.endDate) : 'Month-to-month'}
+				</Card.Title>
+			</Card.Header>
+		</Card.Root>
+		<Card.Root size="sm">
+			<Card.Header>
+				<Card.Description>Deposit</Card.Description><Card.Title class="text-xl tabular-nums">
+					{formatMoney(l.depositAmount, l.currency)}
+				</Card.Title>
+			</Card.Header>
+		</Card.Root>
 	</div>
 
 	<section class="space-y-2">
@@ -214,8 +221,10 @@
 			{#each l.tenants as t (t.id)}
 				<a href="/tenants/{t.id}" class="rounded-lg border px-3 py-2 text-sm hover:bg-muted/50">
 					<span class="font-medium">{tenantName(t)}</span>{#if t.isPrimary}<span
-							class="ml-1.5 text-xs text-muted-foreground">primary</span
-						>{/if}
+							class="ml-1.5 text-xs text-muted-foreground"
+						>
+							primary
+						</span>{/if}
 					{#if t.email}<span class="block text-xs text-muted-foreground">{t.email}</span>{/if}
 				</a>
 			{/each}
@@ -244,44 +253,42 @@
 	<Tabs.Root bind:value={tab}>
 		<div class="flex items-center gap-2">
 			<Tabs.List>
-				<Tabs.Trigger value="charges"
-					>Charges <span class="ml-1 text-xs text-muted-foreground">{l.charges.length}</span
-					></Tabs.Trigger
-				>
-				<Tabs.Trigger value="payments"
-					>Payments <span class="ml-1 text-xs text-muted-foreground">{l.payments.length}</span
-					></Tabs.Trigger
-				>
+				<Tabs.Trigger value="charges">
+					Charges <span class="ml-1 text-xs text-muted-foreground">{l.charges.length}</span>
+				</Tabs.Trigger>
+				<Tabs.Trigger value="payments">
+					Payments <span class="ml-1 text-xs text-muted-foreground">{l.payments.length}</span>
+				</Tabs.Trigger>
 			</Tabs.List>
 			<Popover.Root bind:open={feeOpen}>
 				<Popover.Trigger class="ml-auto">
-					{#snippet child({ props })}<Button size="sm" variant="outline" {...props}
-							><Plus /> Charge</Button
-						>{/snippet}
+					{#snippet child({ props })}<Button size="sm" variant="outline" {...props}>
+							<Plus /> Charge
+						</Button>{/snippet}
 				</Popover.Trigger>
 				<Popover.Content align="end" class="w-72">
 					<form class="space-y-3" onsubmit={submitFee}>
-						<Field.Field
-							><Field.Label for="fee-desc">Description</Field.Label><Input
+						<Field.Field>
+							<Field.Label for="fee-desc">Description</Field.Label><Input
 								id="fee-desc"
 								bind:value={feeDesc}
-							/></Field.Field
-						>
+							/>
+						</Field.Field>
 						<div class="grid grid-cols-2 gap-2">
-							<Field.Field
-								><Field.Label for="fee-amt">Amount</Field.Label><MoneyInput
+							<Field.Field>
+								<Field.Label for="fee-amt">Amount</Field.Label><MoneyInput
 									id="fee-amt"
 									required
 									bind:value={feeAmount}
-								/></Field.Field
-							>
-							<Field.Field
-								><Field.Label for="fee-date">Due</Field.Label><Input
+								/>
+							</Field.Field>
+							<Field.Field>
+								<Field.Label for="fee-date">Due</Field.Label><Input
 									id="fee-date"
 									type="date"
 									bind:value={feeDate}
-								/></Field.Field
-							>
+								/>
+							</Field.Field>
 						</div>
 						<Button type="submit" size="sm" class="w-full" disabled={!feeAmount}>Add charge</Button>
 					</form>
@@ -290,29 +297,33 @@
 		</div>
 		<Tabs.Content value="charges" class="mt-2 overflow-x-auto rounded-lg border">
 			<Table.Root>
-				<Table.Header
-					><Table.Row
-						><Table.Head class="hidden sm:table-cell">Due</Table.Head><Table.Head
-							>Description</Table.Head
-						><Table.Head class="text-right">Amount</Table.Head><Table.Head
-							class="hidden text-right sm:table-cell">Paid</Table.Head
-						><Table.Head class="w-28"></Table.Head></Table.Row
-					></Table.Header
-				>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head class="hidden sm:table-cell">Due</Table.Head><Table.Head>
+							Description
+						</Table.Head><Table.Head class="text-right">Amount</Table.Head><Table.Head
+							class="hidden text-right sm:table-cell"
+						>
+							Paid
+						</Table.Head><Table.Head class="w-28"></Table.Head>
+					</Table.Row>
+				</Table.Header>
 				<Table.Body>
 					{#each l.charges as c (c.id)}
 						{@const open = c.amount - c.paid}
 						<Table.Row>
-							<Table.Cell class="hidden tabular-nums sm:table-cell"
-								>{formatDate(c.dueDate, true)}</Table.Cell
-							>
+							<Table.Cell class="hidden tabular-nums sm:table-cell">
+								{formatDate(c.dueDate, true)}
+							</Table.Cell>
 							<Table.Cell>{c.description ?? c.kind}</Table.Cell>
-							<Table.Cell class="text-right tabular-nums"
-								>{formatMoney(c.amount, l.currency)}</Table.Cell
+							<Table.Cell class="text-right tabular-nums">
+								{formatMoney(c.amount, l.currency)}
+							</Table.Cell>
+							<Table.Cell
+								class="hidden text-right text-muted-foreground tabular-nums sm:table-cell"
 							>
-							<Table.Cell class="hidden text-right text-muted-foreground tabular-nums sm:table-cell"
-								>{c.paid ? formatMoney(c.paid, l.currency) : '—'}</Table.Cell
-							>
+								{c.paid ? formatMoney(c.paid, l.currency) : '—'}
+							</Table.Cell>
 							<Table.Cell class="text-right">
 								{#if open > 0}
 									<Button
@@ -324,55 +335,59 @@
 												chargeId: c.id,
 												balance: open,
 												label: `${c.description ?? c.kind} · ${title}`
-											})}>Record</Button
+											})}
 									>
+										Record
+									</Button>
 								{:else}<StatusBadge status="paid" />{/if}
 							</Table.Cell>
 						</Table.Row>
 					{:else}
-						<Table.Row
-							><Table.Cell colspan={5} class="py-8 text-center text-muted-foreground"
-								>No charges yet.</Table.Cell
-							></Table.Row
-						>
+						<Table.Row>
+							<Table.Cell colspan={5} class="py-8 text-center text-muted-foreground">
+								No charges yet.
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>
 		</Tabs.Content>
 		<Tabs.Content value="payments" class="mt-2 overflow-x-auto rounded-lg border">
 			<Table.Root>
-				<Table.Header
-					><Table.Row
-						><Table.Head>Received</Table.Head><Table.Head>Method</Table.Head><Table.Head
-							>Reference</Table.Head
-						><Table.Head class="text-right">Amount</Table.Head><Table.Head class="w-10"
-						></Table.Head></Table.Row
-					></Table.Header
-				>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Received</Table.Head><Table.Head>Method</Table.Head><Table.Head>
+							Reference
+						</Table.Head><Table.Head class="text-right">Amount</Table.Head><Table.Head class="w-10"
+						></Table.Head>
+					</Table.Row>
+				</Table.Header>
 				<Table.Body>
 					{#each l.payments as p (p.id)}
 						<Table.Row>
 							<Table.Cell class="tabular-nums">{formatDate(p.receivedOn, true)}</Table.Cell>
 							<Table.Cell class="text-muted-foreground uppercase">{p.method}</Table.Cell>
 							<Table.Cell class="text-muted-foreground">{p.reference ?? ''}</Table.Cell>
-							<Table.Cell class="text-right font-medium tabular-nums"
-								>{formatMoney(p.amount, l.currency)}</Table.Cell
-							>
-							<Table.Cell
-								><Button
+							<Table.Cell class="text-right font-medium tabular-nums">
+								{formatMoney(p.amount, l.currency)}
+							</Table.Cell>
+							<Table.Cell>
+								<Button
 									size="icon-sm"
 									variant="ghost"
 									aria-label="Delete payment"
-									onclick={() => removePayment(p.id)}><Ellipsis /></Button
-								></Table.Cell
-							>
+									onclick={() => removePayment(p.id)}
+								>
+									<Ellipsis />
+								</Button>
+							</Table.Cell>
 						</Table.Row>
 					{:else}
-						<Table.Row
-							><Table.Cell colspan={5} class="py-8 text-center text-muted-foreground"
-								>No payments yet.</Table.Cell
-							></Table.Row
-						>
+						<Table.Row>
+							<Table.Cell colspan={5} class="py-8 text-center text-muted-foreground">
+								No payments yet.
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>

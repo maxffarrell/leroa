@@ -175,9 +175,9 @@
 				{/each}
 			</div>
 			{#if index > 0}
-				<Button size="icon-sm" variant="ghost" aria-label="Back" onclick={() => go(index - 1)}
-					><ArrowLeft /></Button
-				>
+				<Button size="icon-sm" variant="ghost" aria-label="Back" onclick={() => go(index - 1)}>
+					<ArrowLeft />
+				</Button>
 			{/if}
 			<Button size="sm" onclick={() => (last ? close() : go(index + 1))}>
 				{last ? 'Done' : 'Next'}<ArrowRight />

@@ -133,12 +133,13 @@
 				: s === 'today'
 					? 'text-amber-700 dark:text-amber-400'
 					: ''}"
-			><Clock class="size-3" />{s === 'today'
+		>
+			<Clock class="size-3" />{s === 'today'
 				? 'Today'
 				: s === 'overdue'
 					? `Overdue · ${formatDate(date, true)}`
-					: formatDate(date, true)}</span
-		>
+					: formatDate(date, true)}
+		</span>
 	{/if}
 {/snippet}
 
@@ -147,10 +148,10 @@
 		<Empty.Header>
 			<Empty.Media variant="icon"><Users /></Empty.Media>
 			<Empty.Title>No leads yet</Empty.Title>
-			<Empty.Description
-				>Inquiries, tour bookings and applications from your public pages show up here. You can also
-				add people who call or walk in.</Empty.Description
-			>
+			<Empty.Description>
+				Inquiries, tour bookings and applications from your public pages show up here. You can also
+				add people who call or walk in.
+			</Empty.Description>
 		</Empty.Header>
 		<Empty.Content><Button onclick={oncreate}><Plus /> New lead</Button></Empty.Content>
 	</Empty.Root>
@@ -177,18 +178,22 @@
 			size="sm"
 			variant={onlyWaitlist ? 'secondary' : 'ghost'}
 			aria-pressed={onlyWaitlist}
-			onclick={() => (onlyWaitlist = !onlyWaitlist)}>Waitlist</Button
+			onclick={() => (onlyWaitlist = !onlyWaitlist)}
 		>
+			Waitlist
+		</Button>
 		<Button
 			size="sm"
 			variant={showClosed ? 'secondary' : 'ghost'}
 			aria-pressed={showClosed}
-			onclick={() => (showClosed = !showClosed)}>Leased & lost</Button
+			onclick={() => (showClosed = !showClosed)}
 		>
+			Leased & lost
+		</Button>
 		{#if due}
-			<span class="text-sm text-red-700 sm:ml-auto dark:text-red-400"
-				>{due} overdue {due === 1 ? 'follow-up' : 'follow-ups'}</span
-			>
+			<span class="text-sm text-red-700 sm:ml-auto dark:text-red-400">
+				{due} overdue {due === 1 ? 'follow-up' : 'follow-ups'}
+			</span>
 		{/if}
 	</div>
 
@@ -248,12 +253,9 @@
 										class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
 									>
 										{#if l.nextTourAt}
-											<span class="inline-flex items-center gap-1 text-sky-700 dark:text-sky-400"
-												><CalendarClock class="size-3" />{formatTourTime(
-													l.nextTourAt,
-													timezone
-												)}</span
-											>
+											<span class="inline-flex items-center gap-1 text-sky-700 dark:text-sky-400">
+												<CalendarClock class="size-3" />{formatTourTime(l.nextTourAt, timezone)}
+											</span>
 										{/if}
 										{@render followUp(l.nextFollowUpOn)}
 										<span class="ml-auto">{LEAD_SOURCE_LABELS[l.source]}</span>
@@ -294,38 +296,38 @@
 							</Table.Cell>
 							<Table.Cell class="max-w-48">
 								<span class="flex items-center gap-1.5">
-									<a href="/leasing/leads/{l.id}" class="block truncate font-medium"
-										>{leadName(l)}</a
-									>
+									<a href="/leasing/leads/{l.id}" class="block truncate font-medium">
+										{leadName(l)}
+									</a>
 									{#if l.aiScore && page.data.ai}<LeadScoreBadge
 											score={l.aiScore}
 											reason={l.aiScoreReason}
 										/>{/if}
 								</span>
-								<span class="block truncate text-xs text-muted-foreground"
-									>{l.email ?? l.phone ?? ''}</span
-								>
+								<span class="block truncate text-xs text-muted-foreground">
+									{l.email ?? l.phone ?? ''}
+								</span>
 							</Table.Cell>
 							<Table.Cell><StatusBadge status={stageOf(l)} /></Table.Cell>
-							<Table.Cell class="hidden text-muted-foreground md:table-cell"
-								>{l.listingTitle ?? l.propertyName ?? '—'}</Table.Cell
-							>
-							<Table.Cell class="hidden text-sm text-muted-foreground sm:table-cell"
-								>{@render followUp(l.nextFollowUpOn)}</Table.Cell
-							>
-							<Table.Cell class="hidden text-muted-foreground lg:table-cell"
-								>{LEAD_SOURCE_LABELS[l.source]}</Table.Cell
-							>
-							<Table.Cell class="hidden text-muted-foreground lg:table-cell"
-								>{formatRelative(l.createdAt)}</Table.Cell
-							>
+							<Table.Cell class="hidden text-muted-foreground md:table-cell">
+								{l.listingTitle ?? l.propertyName ?? '—'}
+							</Table.Cell>
+							<Table.Cell class="hidden text-sm text-muted-foreground sm:table-cell">
+								{@render followUp(l.nextFollowUpOn)}
+							</Table.Cell>
+							<Table.Cell class="hidden text-muted-foreground lg:table-cell">
+								{LEAD_SOURCE_LABELS[l.source]}
+							</Table.Cell>
+							<Table.Cell class="hidden text-muted-foreground lg:table-cell">
+								{formatRelative(l.createdAt)}
+							</Table.Cell>
 						</Table.Row>
 					{:else}
-						<Table.Row
-							><Table.Cell colspan={7} class="py-8 text-center text-muted-foreground"
-								>No leads match.</Table.Cell
-							></Table.Row
-						>
+						<Table.Row>
+							<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">
+								No leads match.
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>

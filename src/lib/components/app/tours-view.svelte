@@ -66,15 +66,16 @@
 		<ul class="divide-y rounded-lg border">
 			{#each g.items as t (t.id)}
 				<li class="flex items-center gap-3 px-3 py-2.5 sm:px-4">
-					<span class="w-16 shrink-0 text-sm font-medium tabular-nums"
-						>{formatTourTime(t.startsAt, timezone, false)}</span
-					>
+					<span class="w-16 shrink-0 text-sm font-medium tabular-nums">
+						{formatTourTime(t.startsAt, timezone, false)}
+					</span>
 					<div class="min-w-0 flex-1">
 						<a
 							href="/leasing/leads/{t.leadId}"
 							class="block truncate text-sm font-medium hover:underline"
-							>{leadName({ firstName: t.leadFirstName, lastName: t.leadLastName })}</a
 						>
+							{leadName({ firstName: t.leadFirstName, lastName: t.leadLastName })}
+						</a>
 						<p class="truncate text-xs text-muted-foreground">
 							{t.listingTitle ?? t.propertyName} · {TOUR_KIND_LABELS[t.kind]}{t.agentName
 								? ` · ${t.agentName}`
@@ -88,25 +89,27 @@
 									size="icon-sm"
 									variant="ghost"
 									aria-label="Tour actions"
-									{...props}><Ellipsis /></Button
-								>{/snippet}
+									{...props}
+								>
+									<Ellipsis />
+								</Button>{/snippet}
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end">
 							{#if t.status === 'scheduled'}
-								<DropdownMenu.Item onclick={() => setStatus(t, 'completed')}
-									>Mark done</DropdownMenu.Item
-								>
-								<DropdownMenu.Item onclick={() => setStatus(t, 'no_show')}
-									>No-show</DropdownMenu.Item
-								>
+								<DropdownMenu.Item onclick={() => setStatus(t, 'completed')}>
+									Mark done
+								</DropdownMenu.Item>
+								<DropdownMenu.Item onclick={() => setStatus(t, 'no_show')}>
+									No-show
+								</DropdownMenu.Item>
 								<DropdownMenu.Separator />
-								<DropdownMenu.Item variant="destructive" onclick={() => setStatus(t, 'cancelled')}
-									>Cancel tour</DropdownMenu.Item
-								>
+								<DropdownMenu.Item variant="destructive" onclick={() => setStatus(t, 'cancelled')}>
+									Cancel tour
+								</DropdownMenu.Item>
 							{:else}
-								<DropdownMenu.Item onclick={() => setStatus(t, 'scheduled')}
-									>Back to scheduled</DropdownMenu.Item
-								>
+								<DropdownMenu.Item onclick={() => setStatus(t, 'scheduled')}>
+									Back to scheduled
+								</DropdownMenu.Item>
 							{/if}
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
@@ -121,14 +124,14 @@
 		<Empty.Header>
 			<Empty.Media variant="icon"><CalendarDays /></Empty.Media>
 			<Empty.Title>No tours booked</Empty.Title>
-			<Empty.Description
-				>Book a tour from a lead, or turn on online booking in Settings → Leasing so prospects can
-				pick a time themselves.</Empty.Description
-			>
+			<Empty.Description>
+				Book a tour from a lead, or turn on online booking in Settings → Leasing so prospects can
+				pick a time themselves.
+			</Empty.Description>
 		</Empty.Header>
-		<Empty.Content
-			><Button variant="outline" href="/settings/leasing">Tour settings</Button></Empty.Content
-		>
+		<Empty.Content>
+			<Button variant="outline" href="/settings/leasing">Tour settings</Button>
+		</Empty.Content>
 	</Empty.Root>
 {:else}
 	<div class="max-w-3xl space-y-6">
@@ -138,9 +141,9 @@
 			<p class="text-sm text-muted-foreground">Nothing coming up.</p>
 		{/each}
 		{#if past.length}
-			<Button size="sm" variant="ghost" onclick={() => (showPast = !showPast)}
-				>{showPast ? 'Hide' : 'Show'} past tours</Button
-			>
+			<Button size="sm" variant="ghost" onclick={() => (showPast = !showPast)}>
+				{showPast ? 'Hide' : 'Show'} past tours
+			</Button>
 			{#if showPast}
 				{#each past as g (g.date)}
 					{@render day(g)}

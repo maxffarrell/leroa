@@ -46,19 +46,17 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>New inspection</Modal.Title>
-				<Modal.Description
-					>Starts with a checklist sized to the unit. A move-out reuses the move-in checklist so you
-					can compare room by room.</Modal.Description
-				>
+				<Modal.Description>
+					Starts with a checklist sized to the unit. A move-out reuses the move-in checklist so you
+					can compare room by room.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Unit</Field.Label>
 				<Select.Root type="single" bind:value={unitId}>
-					<Select.Trigger class="w-full"
-						>{selected
-							? `${selected.propertyName} · ${selected.name}`
-							: 'Select a unit'}</Select.Trigger
-					>
+					<Select.Trigger class="w-full">
+						{selected ? `${selected.propertyName} · ${selected.name}` : 'Select a unit'}
+					</Select.Trigger>
 					<Select.Content class="max-h-72">
 						{#each units as u (u.id)}
 							<Select.Item value={u.id} label={`${u.propertyName} · ${u.name}`}>
@@ -88,9 +86,9 @@
 				<Input id="insp-date" type="date" bind:value={scheduledFor} />
 			</Field.Field>
 			<Modal.Footer>
-				<Button type="submit" disabled={pending || !unitId}
-					>{pending ? 'Starting…' : 'Start inspection'}</Button
-				>
+				<Button type="submit" disabled={pending || !unitId}>
+					{pending ? 'Starting…' : 'Start inspection'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

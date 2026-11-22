@@ -142,18 +142,20 @@
 						{#if canEdit}
 							<div class="flex flex-wrap gap-2 sm:ml-auto">
 								{#if !p.account || !p.account.ready}
-									<Button size="sm" disabled={busy !== null} onclick={() => connect(p.id, p.name)}
-										><ExternalLink />
-										{p.account ? `Finish setup on ${p.name}` : `Connect ${p.name}`}</Button
-									>
+									<Button size="sm" disabled={busy !== null} onclick={() => connect(p.id, p.name)}>
+										<ExternalLink />
+										{p.account ? `Finish setup on ${p.name}` : `Connect ${p.name}`}
+									</Button>
 								{/if}
 								{#if p.account}
 									<Button
 										size="sm"
 										variant="outline"
 										disabled={busy !== null}
-										onclick={() => disconnect(p.id, p.name)}>Disconnect</Button
+										onclick={() => disconnect(p.id, p.name)}
 									>
+										Disconnect
+									</Button>
 								{/if}
 							</div>
 						{/if}
@@ -174,15 +176,17 @@
 					{p.webhookNote ?? ''}
 				</p>
 				<div class="flex items-center gap-2">
-					<code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-sm"
-						>{p.webhookUrl}</code
-					>
+					<code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-sm">
+						{p.webhookUrl}
+					</code>
 					<Button
 						size="icon"
 						variant="outline"
 						aria-label="Copy {p.name} webhook URL"
-						onclick={() => copy(p.webhookUrl)}><Copy /></Button
+						onclick={() => copy(p.webhookUrl)}
 					>
+						<Copy />
+					</Button>
 				</div>
 			</div>
 		</Card.Content>

@@ -39,9 +39,9 @@
 
 <PageHeader title="Properties">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" onclick={() => (creating = true)}>
+			<Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -53,9 +53,9 @@
 				<Empty.Title>No properties yet</Empty.Title>
 				<Empty.Description>Add a building and its units in one step.</Empty.Description>
 			</Empty.Header>
-			<Empty.Content
-				><Button onclick={() => (creating = true)}><Plus /> Add property</Button></Empty.Content
-			>
+			<Empty.Content>
+				<Button onclick={() => (creating = true)}><Plus /> Add property</Button>
+			</Empty.Content>
 		</Empty.Root>
 	{:else}
 		<div class="mb-4 flex items-center gap-3">
@@ -86,22 +86,22 @@
 							onclick={() => openHref(`/properties/${p.id}`)}
 							onmouseenter={() => (nav.index = i)}
 						>
-							<Table.Cell class="font-medium"
-								><a href="/properties/{p.id}" class="outline-none">{p.name}</a></Table.Cell
-							>
-							<Table.Cell class="hidden text-muted-foreground md:table-cell"
-								>{[p.addressLine1, p.city, p.region].filter(Boolean).join(', ')}</Table.Cell
-							>
+							<Table.Cell class="font-medium">
+								<a href="/properties/{p.id}" class="outline-none">{p.name}</a>
+							</Table.Cell>
+							<Table.Cell class="hidden text-muted-foreground md:table-cell">
+								{[p.addressLine1, p.city, p.region].filter(Boolean).join(', ')}
+							</Table.Cell>
 							<Table.Cell class="text-right tabular-nums">{p.units}</Table.Cell>
-							<Table.Cell class="text-right tabular-nums"
-								>{p.units ? Math.round((p.occupied / p.units) * 100) : 0}%</Table.Cell
-							>
-							<Table.Cell class="hidden text-right tabular-nums sm:table-cell"
-								>{formatMoney(p.marketRent)}</Table.Cell
-							>
-							<Table.Cell class="hidden text-right tabular-nums lg:table-cell"
-								>{p.openTickets || '—'}</Table.Cell
-							>
+							<Table.Cell class="text-right tabular-nums">
+								{p.units ? Math.round((p.occupied / p.units) * 100) : 0}%
+							</Table.Cell>
+							<Table.Cell class="hidden text-right tabular-nums sm:table-cell">
+								{formatMoney(p.marketRent)}
+							</Table.Cell>
+							<Table.Cell class="hidden text-right tabular-nums lg:table-cell">
+								{p.openTickets || '—'}
+							</Table.Cell>
 						</Table.Row>
 					{/each}
 				</Table.Body>

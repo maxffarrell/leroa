@@ -113,24 +113,25 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header><Modal.Title>New maintenance request</Modal.Title></Modal.Header>
 			<Field.Group class="gap-4">
-				<Field.Field
-					><Field.Label for="tk-title">What needs fixing?</Field.Label><Input
+				<Field.Field>
+					<Field.Label for="tk-title">What needs fixing?</Field.Label><Input
 						id="tk-title"
 						placeholder="Kitchen sink leaking"
 						required
 						bind:value={title}
 						autofocus
-					/></Field.Field
-				>
+					/>
+				</Field.Field>
 				<div class="grid grid-cols-2 gap-3">
 					<Field.Field>
 						<Field.Label>Property</Field.Label>
 						<Select.Root type="single" bind:value={property} onValueChange={() => (unit = '')}>
 							<Select.Trigger class="w-full">{propertyName ?? 'Select'}</Select.Trigger>
-							<Select.Content class="max-h-72"
-								>{#each properties as p (p.id)}<Select.Item value={p.id}>{p.name}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Content class="max-h-72">
+								{#each properties as p (p.id)}<Select.Item value={p.id}>
+										{p.name}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 					<Field.Field>
@@ -139,8 +140,9 @@
 							<Select.Trigger class="w-full">{unitName ?? 'Common area'}</Select.Trigger>
 							<Select.Content class="max-h-72">
 								<Select.Item value="">Common area</Select.Item>
-								{#each propertyUnits as u (u.id)}<Select.Item value={u.id}>{u.name}</Select.Item
-									>{/each}
+								{#each propertyUnits as u (u.id)}<Select.Item value={u.id}>
+										{u.name}
+									</Select.Item>{/each}
 							</Select.Content>
 						</Select.Root>
 					</Field.Field>
@@ -152,8 +154,9 @@
 							<Select.Trigger class="w-full">{assetName ?? 'None'}</Select.Trigger>
 							<Select.Content class="max-h-72">
 								<Select.Item value="">None</Select.Item>
-								{#each propertyAssets as a (a.id)}<Select.Item value={a.id}>{a.name}</Select.Item
-									>{/each}
+								{#each propertyAssets as a (a.id)}<Select.Item value={a.id}>
+										{a.name}
+									</Select.Item>{/each}
 							</Select.Content>
 						</Select.Root>
 					</Field.Field>
@@ -167,8 +170,11 @@
 								size="xs"
 								variant="ghost"
 								disabled={suggesting || !title.trim()}
-								onclick={suggest}><Sparkles /> {suggesting ? 'Suggesting…' : 'Suggest'}</Button
+								onclick={suggest}
 							>
+								<Sparkles />
+								{suggesting ? 'Suggesting…' : 'Suggest'}
+							</Button>
 						{/if}
 					</div>
 					<div class="flex gap-1.5">
@@ -187,33 +193,36 @@
 					{#if suggestion}
 						<p class="flex items-start gap-2 text-xs text-muted-foreground">
 							<Sparkles class="mt-px size-3.5 shrink-0" />
-							<span class="min-w-0 flex-1"
-								>Suggested <strong class="font-medium">{suggestion.priority}</strong
-								>{suggestion.trade ? ` · ${suggestion.trade}` : ''} — {suggestion.reason}</span
-							>
+							<span class="min-w-0 flex-1">
+								Suggested <strong class="font-medium">
+									{suggestion.priority}
+								</strong>{suggestion.trade ? ` · ${suggestion.trade}` : ''} — {suggestion.reason}
+							</span>
 							<button
 								type="button"
 								aria-label="Dismiss suggestion"
 								class="text-muted-foreground hover:text-foreground"
-								onclick={() => (suggestion = null)}><X class="size-3.5" /></button
+								onclick={() => (suggestion = null)}
 							>
+								<X class="size-3.5" />
+							</button>
 						</p>
 					{/if}
 				</Field.Field>
-				<Field.Field
-					><Field.Label for="tk-desc">Details</Field.Label><Textarea
+				<Field.Field>
+					<Field.Label for="tk-desc">Details</Field.Label><Textarea
 						id="tk-desc"
 						rows={3}
 						placeholder="Access instructions, photos to follow, etc."
 						bind:value={description}
-					/></Field.Field
-				>
+					/>
+				</Field.Field>
 			</Field.Group>
 			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
-				<Button type="submit" disabled={pending || !title.trim()}
-					>{pending ? 'Creating…' : 'Create request'}</Button
-				>
+				<Button type="submit" disabled={pending || !title.trim()}>
+					{pending ? 'Creating…' : 'Create request'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

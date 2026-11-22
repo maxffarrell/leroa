@@ -173,21 +173,21 @@
 <PageHeader title={name} crumbs={[{ label: 'Leasing', href: '/leasing' }]}>
 	{#snippet actions()}
 		{#if !closed}
-			<Button size="sm" variant="outline" onclick={() => (touring = true)}
-				><CalendarPlus /> <span class="hidden sm:inline">Book tour</span></Button
-			>
+			<Button size="sm" variant="outline" onclick={() => (touring = true)}>
+				<CalendarPlus /> <span class="hidden sm:inline">Book tour</span>
+			</Button>
 		{/if}
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>
-				{#snippet child({ props })}<Button size="sm" {...props}
-						><ArrowRight /> <span class="hidden sm:inline">Move to</span></Button
-					>{/snippet}
+				{#snippet child({ props })}<Button size="sm" {...props}>
+						<ArrowRight /> <span class="hidden sm:inline">Move to</span>
+					</Button>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end">
 				{#each LEAD_STAGES as s (s)}
-					<DropdownMenu.Item disabled={s === l.stage} onclick={() => moveTo(s)}
-						>{LEAD_STAGE_LABELS[s]}</DropdownMenu.Item
-					>
+					<DropdownMenu.Item disabled={s === l.stage} onclick={() => moveTo(s)}>
+						{LEAD_STAGE_LABELS[s]}
+					</DropdownMenu.Item>
 				{/each}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
@@ -197,19 +197,21 @@
 						size="icon-sm"
 						variant="ghost"
 						aria-label="More"
-						{...props}><Ellipsis /></Button
-					>{/snippet}
+						{...props}
+					>
+						<Ellipsis />
+					</Button>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end">
 				{#if l.email}
-					<DropdownMenu.Item onclick={() => (location.href = `mailto:${l.email}`)}
-						><Mail /> Email</DropdownMenu.Item
-					>
+					<DropdownMenu.Item onclick={() => (location.href = `mailto:${l.email}`)}>
+						<Mail /> Email
+					</DropdownMenu.Item>
 				{/if}
 				{#if l.phone}
-					<DropdownMenu.Item onclick={() => (location.href = `tel:${l.phone}`)}
-						><Phone /> Call</DropdownMenu.Item
-					>
+					<DropdownMenu.Item onclick={() => (location.href = `tel:${l.phone}`)}>
+						<Phone /> Call
+					</DropdownMenu.Item>
 				{/if}
 				{#if isAdmin}
 					<DropdownMenu.Separator />
@@ -244,13 +246,15 @@
 				{#if l.email}<a
 						href="mailto:{l.email}"
 						class="inline-flex items-center gap-1.5 hover:underline"
-						><Mail class="size-3.5" />{l.email}</a
-					>{/if}
+					>
+						<Mail class="size-3.5" />{l.email}
+					</a>{/if}
 				{#if l.phone}<a
 						href="tel:{l.phone}"
 						class="inline-flex items-center gap-1.5 hover:underline"
-						><Phone class="size-3.5" />{l.phone}</a
-					>{/if}
+					>
+						<Phone class="size-3.5" />{l.phone}
+					</a>{/if}
 			</div>
 			{#if l.stage === 'lost' && l.lostReason}
 				<p class="text-sm text-muted-foreground">Lost: {l.lostReason}</p>
@@ -260,9 +264,9 @@
 		{#if l.applicationId || l.tenantId}
 			<div class="flex flex-wrap gap-2">
 				{#if l.applicationId}
-					<Button size="sm" variant="outline" href="/leasing/applications/{l.applicationId}"
-						>Application{l.applicationStatus ? ` · ${l.applicationStatus}` : ''}</Button
-					>
+					<Button size="sm" variant="outline" href="/leasing/applications/{l.applicationId}">
+						Application{l.applicationStatus ? ` · ${l.applicationStatus}` : ''}
+					</Button>
 				{/if}
 				{#if l.tenantId}
 					<Button size="sm" variant="outline" href="/tenants/{l.tenantId}">Tenant record</Button>
@@ -307,8 +311,10 @@
 								size="sm"
 								variant={followOn === d ? 'secondary' : 'ghost'}
 								aria-pressed={followOn === d}
-								onclick={() => (followOn = followOn === d ? null : d)}>{label}</Button
+								onclick={() => (followOn = followOn === d ? null : d)}
 							>
+								{label}
+							</Button>
 						{/each}
 						<Input
 							type="date"
@@ -317,9 +323,9 @@
 							value={followOn ?? ''}
 							oninput={(e) => (followOn = e.currentTarget.value || null)}
 						/>
-						<Button type="submit" size="sm" class="ml-auto" disabled={posting || !body.trim()}
-							>{kind === 'note' ? 'Add note' : `Log ${kindLabels[kind].toLowerCase()}`}</Button
-						>
+						<Button type="submit" size="sm" class="ml-auto" disabled={posting || !body.trim()}>
+							{kind === 'note' ? 'Add note' : `Log ${kindLabels[kind].toLowerCase()}`}
+						</Button>
 					</div>
 				</form>
 			</Card.Content>
@@ -332,9 +338,9 @@
 					<li class="flex gap-3">
 						{#if item.type === 'note'}
 							{@const Icon = kindIcons[item.kind]}
-							<span class="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-muted"
-								><Icon class="size-3.5" /></span
-							>
+							<span class="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-muted">
+								<Icon class="size-3.5" />
+							</span>
 							<div class="min-w-0 flex-1">
 								<p class="text-xs text-muted-foreground">
 									{item.kind === 'inquiry'
@@ -386,10 +392,9 @@
 			<Card.Header>
 				<Card.Title>Tours</Card.Title>
 				{#if !closed}
-					<Card.Action
-						><Button size="sm" variant="ghost" onclick={() => (touring = true)}>Book</Button
-						></Card.Action
-					>
+					<Card.Action>
+						<Button size="sm" variant="ghost" onclick={() => (touring = true)}>Book</Button>
+					</Card.Action>
 				{/if}
 			</Card.Header>
 			<Card.Content>
@@ -413,20 +418,24 @@
 													size="icon-sm"
 													variant="ghost"
 													aria-label="Tour actions"
-													{...props}><Ellipsis /></Button
-												>{/snippet}
+													{...props}
+												>
+													<Ellipsis />
+												</Button>{/snippet}
 										</DropdownMenu.Trigger>
 										<DropdownMenu.Content align="end">
-											<DropdownMenu.Item onclick={() => tourStatus(t.id, 'completed')}
-												>Mark done</DropdownMenu.Item
-											>
-											<DropdownMenu.Item onclick={() => tourStatus(t.id, 'no_show')}
-												>No-show</DropdownMenu.Item
-											>
+											<DropdownMenu.Item onclick={() => tourStatus(t.id, 'completed')}>
+												Mark done
+											</DropdownMenu.Item>
+											<DropdownMenu.Item onclick={() => tourStatus(t.id, 'no_show')}>
+												No-show
+											</DropdownMenu.Item>
 											<DropdownMenu.Item
 												variant="destructive"
-												onclick={() => tourStatus(t.id, 'cancelled')}>Cancel</DropdownMenu.Item
+												onclick={() => tourStatus(t.id, 'cancelled')}
 											>
+												Cancel
+											</DropdownMenu.Item>
 										</DropdownMenu.Content>
 									</DropdownMenu.Root>
 								{:else}
@@ -452,9 +461,9 @@
 							value={l.propertyId ?? ''}
 							onValueChange={(v) => patch({ propertyId: v || null })}
 						>
-							<Select.Trigger class="w-full"
-								>{l.listingTitle ?? l.propertyName ?? 'Any property'}</Select.Trigger
-							>
+							<Select.Trigger class="w-full">
+								{l.listingTitle ?? l.propertyName ?? 'Any property'}
+							</Select.Trigger>
 							<Select.Content class="max-h-72">
 								<Select.Item value="" label="Any property" />
 								{#each properties as p (p.id)}

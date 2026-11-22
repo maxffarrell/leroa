@@ -65,20 +65,19 @@
 
 <PageHeader title={name} crumbs={[{ label: 'Tenants', href: '/tenants' }]}>
 	{#snippet actions()}
-		<Button size="sm" variant="outline" href="/messages/{id}"
-			><MessagesSquare /> <span class="hidden lg:inline">Message</span></Button
-		>
-		<Button size="sm" variant="outline" href="/tenants/{id}/portal"
-			><MonitorSmartphone /> <span class="hidden lg:inline">Portal preview</span></Button
-		>
-		<Button size="sm" variant="outline" onclick={copyPortalLink}
-			><Link />
-			<span class="hidden lg:inline">{t.portalUserId ? 'Portal linked' : 'Portal invite'}</span
-			></Button
-		>
-		<Button size="sm" href="/leases?new=1&tenant={id}"
-			><FileSignature /> <span class="hidden sm:inline">New lease</span></Button
-		>
+		<Button size="sm" variant="outline" href="/messages/{id}">
+			<MessagesSquare /> <span class="hidden lg:inline">Message</span>
+		</Button>
+		<Button size="sm" variant="outline" href="/tenants/{id}/portal">
+			<MonitorSmartphone /> <span class="hidden lg:inline">Portal preview</span>
+		</Button>
+		<Button size="sm" variant="outline" onclick={copyPortalLink}>
+			<Link />
+			<span class="hidden lg:inline">{t.portalUserId ? 'Portal linked' : 'Portal invite'}</span>
+		</Button>
+		<Button size="sm" href="/leases?new=1&tenant={id}">
+			<FileSignature /> <span class="hidden sm:inline">New lease</span>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -91,11 +90,16 @@
 				<div class="flex gap-3 text-sm text-muted-foreground">
 					{#if t.email}<a
 							class="flex items-center gap-1 hover:text-foreground"
-							href="mailto:{t.email}"><Mail class="size-3.5" /> Email</a
-						>{/if}
-					{#if t.phone}<a class="flex items-center gap-1 hover:text-foreground" href="tel:{t.phone}"
-							><Phone class="size-3.5" /> Call</a
-						>{/if}
+							href="mailto:{t.email}"
+						>
+							<Mail class="size-3.5" /> Email
+						</a>{/if}
+					{#if t.phone}<a
+							class="flex items-center gap-1 hover:text-foreground"
+							href="tel:{t.phone}"
+						>
+							<Phone class="size-3.5" /> Call
+						</a>{/if}
 				</div>
 			</div>
 		</div>
@@ -103,45 +107,45 @@
 			<Card.Content>
 				<Field.Group class="gap-3">
 					<div class="grid grid-cols-2 gap-3">
-						<Field.Field
-							><Field.Label for="first">First name</Field.Label><Input
+						<Field.Field>
+							<Field.Label for="first">First name</Field.Label><Input
 								id="first"
 								value={t.firstName}
 								onchange={(e) => save('firstName', e.currentTarget.value)}
-							/></Field.Field
-						>
-						<Field.Field
-							><Field.Label for="last">Last name</Field.Label><Input
+							/>
+						</Field.Field>
+						<Field.Field>
+							<Field.Label for="last">Last name</Field.Label><Input
 								id="last"
 								value={t.lastName}
 								onchange={(e) => save('lastName', e.currentTarget.value)}
-							/></Field.Field
-						>
+							/>
+						</Field.Field>
 					</div>
-					<Field.Field
-						><Field.Label for="email">Email</Field.Label><Input
+					<Field.Field>
+						<Field.Label for="email">Email</Field.Label><Input
 							id="email"
 							type="email"
 							value={t.email ?? ''}
 							onchange={(e) => save('email', e.currentTarget.value)}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="phone">Phone</Field.Label><Input
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="phone">Phone</Field.Label><Input
 							id="phone"
 							type="tel"
 							value={t.phone ?? ''}
 							onchange={(e) => save('phone', e.currentTarget.value)}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="notes">Notes</Field.Label><Textarea
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="notes">Notes</Field.Label><Textarea
 							id="notes"
 							rows={3}
 							value={t.notes ?? ''}
 							onchange={(e) => save('notes', e.currentTarget.value)}
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 				</Field.Group>
 			</Card.Content>
 		</Card.Root>
@@ -162,8 +166,10 @@
 				variant="ghost"
 				size="sm"
 				class="text-destructive"
-				onclick={remove}>Delete tenant</Button
-			>{/if}
+				onclick={remove}
+			>
+				Delete tenant
+			</Button>{/if}
 	</div>
 
 	<div class="space-y-6">
@@ -179,15 +185,15 @@
 						<li>
 							<a href="/leases/{l.id}" class="flex items-center gap-3 px-4 py-3 hover:bg-muted/50">
 								<StatusBadge status={l.status} />
-								<span class="min-w-0 flex-1 truncate text-sm font-medium"
-									>{l.propertyName} · {l.unitName}</span
-								>
+								<span class="min-w-0 flex-1 truncate text-sm font-medium">
+									{l.propertyName} · {l.unitName}
+								</span>
 								<span class="text-sm tabular-nums">{formatMoney(l.rentAmount, l.currency)}/mo</span>
-								<span class="hidden text-xs text-muted-foreground sm:block"
-									>{formatDate(l.startDate, true)} – {l.endDate
+								<span class="hidden text-xs text-muted-foreground sm:block">
+									{formatDate(l.startDate, true)} – {l.endDate
 										? formatDate(l.endDate, true)
-										: 'open'}</span
-								>
+										: 'open'}
+								</span>
 							</a>
 						</li>
 					{/each}

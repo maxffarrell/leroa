@@ -30,9 +30,9 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>No properties yet</Card.Title>
-			<Card.Description
-				>Properties appear here once they are assigned to this owner.</Card.Description
-			>
+			<Card.Description>
+				Properties appear here once they are assigned to this owner.
+			</Card.Description>
 		</Card.Header>
 	</Card.Root>
 {:else}
@@ -93,9 +93,9 @@
 						aria-label="{monthLabel(m.month)}: {money(m.collected)} collected of {money(m.due)}"
 						title="{monthLabel(m.month)}: {money(m.collected)} of {money(m.due)}"
 					>
-						<span class="text-[10px] text-muted-foreground tabular-nums"
-							>{m.due ? `${pct(m.collected, m.due)}%` : ''}</span
-						>
+						<span class="text-[10px] text-muted-foreground tabular-nums">
+							{m.due ? `${pct(m.collected, m.due)}%` : ''}
+						</span>
 						<div class="relative w-full max-w-12 flex-1">
 							<div
 								class="absolute inset-x-0 bottom-0 rounded-t bg-muted"
@@ -111,12 +111,12 @@
 				{/each}
 			</div>
 			<div class="mt-3 flex gap-4 text-xs text-muted-foreground">
-				<span class="flex items-center gap-1.5"
-					><span class="size-2.5 rounded-sm bg-primary"></span>Collected</span
-				>
-				<span class="flex items-center gap-1.5"
-					><span class="size-2.5 rounded-sm bg-muted"></span>Charged</span
-				>
+				<span class="flex items-center gap-1.5">
+					<span class="size-2.5 rounded-sm bg-primary"></span>Collected
+				</span>
+				<span class="flex items-center gap-1.5">
+					<span class="size-2.5 rounded-sm bg-muted"></span>Charged
+				</span>
 			</div>
 		</Card.Content>
 	</Card.Root>
@@ -146,25 +146,22 @@
 						<Table.Row>
 							<Table.Cell class="max-w-40 pl-4">
 								<span class="font-medium">{u.name}</span>
-								{#if u.tenants}<span class="block truncate text-xs text-muted-foreground sm:hidden"
-										>{u.tenants}</span
-									>{/if}
+								{#if u.tenants}<span class="block truncate text-xs text-muted-foreground sm:hidden">
+										{u.tenants}
+									</span>{/if}
 							</Table.Cell>
-							<Table.Cell class="hidden max-w-56 truncate sm:table-cell"
-								>{u.tenants ?? ''}</Table.Cell
-							>
-							<Table.Cell class="text-right tabular-nums"
-								>{u.leaseRent != null ? money(u.leaseRent) : '—'}</Table.Cell
-							>
-							<Table.Cell class="hidden text-muted-foreground md:table-cell"
-								>{u.tenants
-									? u.leaseEnd
-										? formatDate(u.leaseEnd)
-										: 'Month-to-month'
-									: ''}</Table.Cell
-							>
-							<Table.Cell class="pr-4"><StatusBadge status={u.rentStatus ?? u.status} /></Table.Cell
-							>
+							<Table.Cell class="hidden max-w-56 truncate sm:table-cell">
+								{u.tenants ?? ''}
+							</Table.Cell>
+							<Table.Cell class="text-right tabular-nums">
+								{u.leaseRent != null ? money(u.leaseRent) : '—'}
+							</Table.Cell>
+							<Table.Cell class="hidden text-muted-foreground md:table-cell">
+								{u.tenants ? (u.leaseEnd ? formatDate(u.leaseEnd) : 'Month-to-month') : ''}
+							</Table.Cell>
+							<Table.Cell class="pr-4">
+								<StatusBadge status={u.rentStatus ?? u.status} />
+							</Table.Cell>
 						</Table.Row>
 					{/each}
 				</Table.Body>
@@ -242,9 +239,9 @@
 												: ''}
 										</p>
 									</div>
-									<span class="shrink-0 tabular-nums"
-										>{m.costAmount != null ? money(m.costAmount) : '—'}</span
-									>
+									<span class="shrink-0 tabular-nums">
+										{m.costAmount != null ? money(m.costAmount) : '—'}
+									</span>
 								</li>
 							{/each}
 						</ul>

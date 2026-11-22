@@ -103,9 +103,9 @@
 
 <PageHeader title="Tenants">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" onclick={() => (creating = true)}>
+			<Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -117,9 +117,9 @@
 				<Empty.Title>No tenants yet</Empty.Title>
 				<Empty.Description>Add tenants here, or while creating a lease.</Empty.Description>
 			</Empty.Header>
-			<Empty.Content
-				><Button onclick={() => (creating = true)}><Plus /> Add tenant</Button></Empty.Content
-			>
+			<Empty.Content>
+				<Button onclick={() => (creating = true)}><Plus /> Add tenant</Button>
+			</Empty.Content>
 		</Empty.Root>
 	{:else}
 		<div class="mb-4 flex items-center gap-3">
@@ -186,15 +186,15 @@
 
 {#snippet nameCell(t: Row)}
 	<a href="/tenants/{t.id}" class="flex items-center gap-2.5 font-medium outline-none">
-		<Avatar.Root class="size-7"
-			><Avatar.Fallback class="text-xs">{initials(tenantName(t))}</Avatar.Fallback></Avatar.Root
-		>
+		<Avatar.Root class="size-7">
+			<Avatar.Fallback class="text-xs">{initials(tenantName(t))}</Avatar.Fallback>
+		</Avatar.Root>
 		{tenantName(t)}
 	</a>
 {/snippet}
 
 {#snippet residenceCell(t: Row)}
-	<span class="text-muted-foreground"
-		>{t.propertyName ? `${t.propertyName} · ${t.unitName}` : 'No active lease'}</span
-	>
+	<span class="text-muted-foreground">
+		{t.propertyName ? `${t.propertyName} · ${t.unitName}` : 'No active lease'}
+	</span>
 {/snippet}

@@ -85,17 +85,15 @@
 				{#each passes as p (p.id)}
 					<Table.Row>
 						<Table.Cell class="font-medium">{p.guestName}</Table.Cell>
-						<Table.Cell
-							>{`${p.tenantFirst ?? ''} ${p.tenantLast ?? ''}`.trim() ||
-								p.tenantCompany ||
-								'—'}</Table.Cell
-						>
-						<Table.Cell class="hidden text-muted-foreground md:table-cell"
-							>{p.propertyName}{p.unitName ? ` · ${p.unitName}` : ''}</Table.Cell
-						>
-						<Table.Cell class="text-muted-foreground tabular-nums"
-							>{formatDate(p.startsOn, true)} → {formatDate(p.endsOn, true)}</Table.Cell
-						>
+						<Table.Cell>
+							{`${p.tenantFirst ?? ''} ${p.tenantLast ?? ''}`.trim() || p.tenantCompany || '—'}
+						</Table.Cell>
+						<Table.Cell class="hidden text-muted-foreground md:table-cell">
+							{p.propertyName}{p.unitName ? ` · ${p.unitName}` : ''}
+						</Table.Cell>
+						<Table.Cell class="text-muted-foreground tabular-nums">
+							{formatDate(p.startsOn, true)} → {formatDate(p.endsOn, true)}
+						</Table.Cell>
 						<Table.Cell>
 							{#if active(p)}
 								<Badge>Active</Badge>
@@ -112,8 +110,10 @@
 								<Button
 									size="sm"
 									variant="outline"
-									onclick={() => closePass({ id: p.id, status: 'used' })}>Used</Button
+									onclick={() => closePass({ id: p.id, status: 'used' })}
 								>
+									Used
+								</Button>
 								<Button
 									size="sm"
 									variant="ghost"
@@ -128,17 +128,19 @@
 													toast.error('Could not void')
 												);
 											}
-										})}>Void</Button
+										})}
 								>
+									Void
+								</Button>
 							{/if}
 						</Table.Cell>
 					</Table.Row>
 				{:else}
-					<Table.Row
-						><Table.Cell colspan={6} class="py-8 text-center text-muted-foreground"
-							>No active guest passes.</Table.Cell
-						></Table.Row
-					>
+					<Table.Row>
+						<Table.Cell colspan={6} class="py-8 text-center text-muted-foreground">
+							No active guest passes.
+						</Table.Cell>
+					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>

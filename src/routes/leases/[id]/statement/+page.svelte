@@ -107,8 +107,8 @@
 								<span class="uppercase">{p.method}</span>{#if p.reference}<span
 										class="text-neutral-500"
 									>
-										· {p.reference}</span
-									>{/if}
+										· {p.reference}
+									</span>{/if}
 							</td>
 							<td class="py-2 text-neutral-500">{formatDate(p.receivedOn)}</td>
 							<td class="py-2 text-right tabular-nums">{formatMoney(p.amount, l.currency)}</td>

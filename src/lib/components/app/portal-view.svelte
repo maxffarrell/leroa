@@ -138,13 +138,14 @@
 								variant={i === 0 ? 'default' : 'outline'}
 								disabled={preview || paying !== null}
 								onclick={() => pay(l.id, option.id, option.newTab)}
-								><CreditCard />
+							>
+								<CreditCard />
 								{paying === `${l.id}:${option.id}`
 									? 'Opening…'
 									: l.payWith.length === 1
 										? 'Pay now'
-										: option.label}</Button
-							>
+										: option.label}
+							</Button>
 						{/each}
 					</div>
 				{/if}
@@ -181,9 +182,9 @@
 			<ul class="divide-y rounded-lg border text-sm">
 				{#each l.charges as c (c.id)}
 					<li class="flex items-center gap-3 px-3 py-2">
-						<span class="w-16 text-muted-foreground tabular-nums"
-							>{formatDate(c.dueDate, true)}</span
-						>
+						<span class="w-16 text-muted-foreground tabular-nums">
+							{formatDate(c.dueDate, true)}
+						</span>
 						<span class="flex-1">{c.description ?? c.kind}</span>
 						<span class="tabular-nums">{formatMoney(c.amount, l.currency)}</span>
 						<StatusBadge status={c.paid >= c.amount ? 'paid' : c.paid > 0 ? 'partial' : 'due'} />
@@ -198,16 +199,16 @@
 			<ul class="divide-y rounded-lg border text-sm">
 				{#each l.payments as pay (pay.id)}
 					<li class="flex items-center gap-3 px-3 py-2">
-						<span class="w-16 text-muted-foreground tabular-nums"
-							>{formatDate(pay.receivedOn, true)}</span
-						>
-						<span class="min-w-0 flex-1 truncate"
-							>{methodLabels[pay.method] ?? pay.method}{#if pay.reference}<span
+						<span class="w-16 text-muted-foreground tabular-nums">
+							{formatDate(pay.receivedOn, true)}
+						</span>
+						<span class="min-w-0 flex-1 truncate">
+							{methodLabels[pay.method] ?? pay.method}{#if pay.reference}<span
 									class="text-muted-foreground"
 								>
-									· {pay.reference}</span
-								>{/if}</span
-						>
+									· {pay.reference}
+								</span>{/if}
+						</span>
 						<span class="tabular-nums">{formatMoney(pay.amount, l.currency)}</span>
 					</li>
 				{:else}
@@ -219,35 +220,35 @@
 			<Card.Footer class="block border-t pt-6">
 				<form class="space-y-3" onsubmit={(e) => submit(e, l.id)}>
 					<h2 class="text-sm font-medium">Request maintenance</h2>
-					<Field.Field
-						><Field.Label for="req-title-{l.id}">What's wrong?</Field.Label><Input
+					<Field.Field>
+						<Field.Label for="req-title-{l.id}">What's wrong?</Field.Label><Input
 							id="req-title-{l.id}"
 							placeholder="Dishwasher won't drain"
 							required
 							bind:value={title}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="req-desc-{l.id}">Details (optional)</Field.Label><Textarea
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="req-desc-{l.id}">Details (optional)</Field.Label><Textarea
 							id="req-desc-{l.id}"
 							rows={3}
 							bind:value={description}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="req-photos-{l.id}">Photos (optional)</Field.Label><Input
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="req-photos-{l.id}">Photos (optional)</Field.Label><Input
 							id="req-photos-{l.id}"
 							type="file"
 							accept="image/*"
 							multiple
 							bind:files={photos}
-						/><Field.Description
-							>Up to 10. A photo helps us send the right person.</Field.Description
-						></Field.Field
-					>
-					<Button type="submit" disabled={pending || !title.trim()}
-						>{pending ? 'Sending…' : 'Send request'}</Button
-					>
+						/><Field.Description>
+							Up to 10. A photo helps us send the right person.
+						</Field.Description>
+					</Field.Field>
+					<Button type="submit" disabled={pending || !title.trim()}>
+						{pending ? 'Sending…' : 'Send request'}
+					</Button>
 				</form>
 			</Card.Footer>
 		{/if}
@@ -266,8 +267,10 @@
 				{#each p.tickets as t (t.id)}
 					<li class="flex items-center gap-3 px-6 py-2.5 text-sm">
 						<StatusBadge status={t.status} /><span class="flex-1">#{t.number} {t.title}</span><span
-							class="text-xs text-muted-foreground">{formatRelative(t.createdAt)}</span
+							class="text-xs text-muted-foreground"
 						>
+							{formatRelative(t.createdAt)}
+						</span>
 					</li>
 				{/each}
 			</ul>

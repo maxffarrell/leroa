@@ -127,27 +127,29 @@
 						size="icon-sm"
 						variant="ghost"
 						aria-label="More"
-						{...props}><Ellipsis /></Button
-					>{/snippet}
+						{...props}
+					>
+						<Ellipsis />
+					</Button>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end">
-				<DropdownMenu.Item onclick={() => (location.href = `mailto:${a.email}`)}
-					><Mail /> Email applicant</DropdownMenu.Item
-				>
+				<DropdownMenu.Item onclick={() => (location.href = `mailto:${a.email}`)}>
+					<Mail /> Email applicant
+				</DropdownMenu.Item>
 				{#if a.status !== 'approved'}
 					<DropdownMenu.Separator />
 					{#if a.status !== 'reviewing'}
-						<DropdownMenu.Item onclick={() => setStatus('reviewing')}
-							>Mark reviewing</DropdownMenu.Item
-						>
+						<DropdownMenu.Item onclick={() => setStatus('reviewing')}>
+							Mark reviewing
+						</DropdownMenu.Item>
 					{/if}
 					{#if a.status !== 'new'}
 						<DropdownMenu.Item onclick={() => setStatus('new')}>Mark new</DropdownMenu.Item>
 					{/if}
 					{#if a.status !== 'withdrawn'}
-						<DropdownMenu.Item onclick={() => setStatus('withdrawn')}
-							>Applicant withdrew</DropdownMenu.Item
-						>
+						<DropdownMenu.Item onclick={() => setStatus('withdrawn')}>
+							Applicant withdrew
+						</DropdownMenu.Item>
 					{/if}
 				{/if}
 			</DropdownMenu.Content>
@@ -166,8 +168,10 @@
 				Applied {formatRelative(a.createdAt)} for
 				{#if a.listingId}<a
 						class="underline-offset-2 hover:underline"
-						href="/leasing/listings/{a.listingId}">{a.listingTitle}</a
-					>{:else}a listing that was deleted{/if}
+						href="/leasing/listings/{a.listingId}"
+					>
+						{a.listingTitle}
+					</a>{:else}a listing that was deleted{/if}
 				{#if a.propertyName}· {a.propertyName} · {a.unitName}{/if}
 			</p>
 		</div>
@@ -179,12 +183,12 @@
 					A tenant record and a draft lease were created. Send a lease agreement from the lease,
 					then mark it active when it's signed.
 					<span class="mt-2 flex gap-2">
-						{#if a.leaseId}<Button size="sm" variant="outline" href="/leases/{a.leaseId}"
-								>Lease</Button
-							>{/if}
-						{#if a.tenantId}<Button size="sm" variant="outline" href="/tenants/{a.tenantId}"
-								>Tenant</Button
-							>{/if}
+						{#if a.leaseId}<Button size="sm" variant="outline" href="/leases/{a.leaseId}">
+								Lease
+							</Button>{/if}
+						{#if a.tenantId}<Button size="sm" variant="outline" href="/tenants/{a.tenantId}">
+								Tenant
+							</Button>{/if}
 					</span>
 				</Alert.Description>
 			</Alert.Root>
@@ -198,12 +202,12 @@
 			<Card.Root size="sm">
 				<Card.Header><Card.Title>Contact</Card.Title></Card.Header>
 				<Card.Content class="space-y-2 text-sm">
-					<a href="mailto:{a.email}" class="flex items-center gap-2 break-all hover:underline"
-						><Mail class="size-4 shrink-0 text-muted-foreground" />{a.email}</a
-					>
-					{#if a.phone}<a href="tel:{a.phone}" class="flex items-center gap-2 hover:underline"
-							><Phone class="size-4 shrink-0 text-muted-foreground" />{a.phone}</a
-						>{/if}
+					<a href="mailto:{a.email}" class="flex items-center gap-2 break-all hover:underline">
+						<Mail class="size-4 shrink-0 text-muted-foreground" />{a.email}
+					</a>
+					{#if a.phone}<a href="tel:{a.phone}" class="flex items-center gap-2 hover:underline">
+							<Phone class="size-4 shrink-0 text-muted-foreground" />{a.phone}
+						</a>{/if}
 					{#if a.currentAddress}<p class="text-muted-foreground">
 							Lives at {a.currentAddress}
 						</p>{/if}
@@ -214,9 +218,9 @@
 				<Card.Header><Card.Title>Income</Card.Title></Card.Header>
 				<Card.Content class="space-y-1 text-sm">
 					<p class="text-lg font-semibold tabular-nums">
-						{formatMoney(a.monthlyIncome)}<span class="text-sm font-normal text-muted-foreground"
-							>/mo</span
-						>
+						{formatMoney(a.monthlyIncome)}<span class="text-sm font-normal text-muted-foreground">
+							/mo
+						</span>
 					</p>
 					{#if ratio}<p class="text-muted-foreground">
 							{ratio.toFixed(1)}× the listed rent of {formatMoney(a.listingRent)}
@@ -273,10 +277,10 @@
 		<form onsubmit={approve} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>Approve {a.firstName}</Modal.Title>
-				<Modal.Description
-					>Creates a tenant and a draft lease, and closes the listing. Nothing is charged until you
-					activate the lease.</Modal.Description
-				>
+				<Modal.Description>
+					Creates a tenant and a draft lease, and closes the listing. Nothing is charged until you
+					activate the lease.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Group class="gap-4">
 				<div class="grid grid-cols-2 gap-3">

@@ -59,18 +59,20 @@
 					'rounded-md px-3 py-1.5 text-sm whitespace-nowrap hover:bg-muted',
 					current.href === t.href && 'bg-muted font-medium'
 				)}
-				aria-current={current.href === t.href ? 'page' : undefined}>{t.label}</a
+				aria-current={current.href === t.href ? 'page' : undefined}
 			>
+				{t.label}
+			</a>
 		{/each}
 	</nav>
 	<div class="max-w-3xl min-w-0 flex-1 space-y-6">
 		{#if page.data.demo && lockedInDemo.includes(current.href)}
 			<Alert.Root>
 				<Alert.Title>Read-only in the public demo</Alert.Title>
-				<Alert.Description
-					>Invites, integrations, webhooks and API keys are turned off here. Deploy your own copy to
-					try them.</Alert.Description
-				>
+				<Alert.Description>
+					Invites, integrations, webhooks and API keys are turned off here. Deploy your own copy to
+					try them.
+				</Alert.Description>
 			</Alert.Root>
 		{/if}
 		{@render children()}

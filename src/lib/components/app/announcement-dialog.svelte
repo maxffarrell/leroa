@@ -61,10 +61,10 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>New announcement</Modal.Title>
-				<Modal.Description
-					>Shown in the resident portal for residents on an active lease. Use it for building
-					notices like water shut-offs, pest control or events.</Modal.Description
-				>
+				<Modal.Description>
+					Shown in the resident portal for residents on an active lease. Use it for building notices
+					like water shut-offs, pest control or events.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Send to</Field.Label>
@@ -109,8 +109,9 @@
 				<Button
 					type="submit"
 					disabled={pending || !subject.trim() || !body.trim() || audience?.residents === 0}
-					>{pending ? 'Sending…' : 'Send announcement'}</Button
 				>
+					{pending ? 'Sending…' : 'Send announcement'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

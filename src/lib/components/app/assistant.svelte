@@ -122,8 +122,10 @@
 									{#each suggestions as s (s)}
 										<button
 											class="rounded-full border px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent"
-											onclick={() => void ask(s)}>{s}</button
+											onclick={() => void ask(s)}
 										>
+											{s}
+										</button>
 									{/each}
 								</div>
 							</div>
@@ -143,8 +145,10 @@
 													{#each m.sources as s (s.href)}
 														<a
 															class="text-xs text-primary underline-offset-2 hover:underline"
-															href={s.href}>{s.label}</a
+															href={s.href}
 														>
+															{s.label}
+														</a>
 													{/each}
 												</div>
 											{/if}
@@ -155,15 +159,17 @@
 														<Badge
 															variant={m.action.input.priority === 'urgent'
 																? 'destructive'
-																: 'secondary'}>{m.action.input.priority}</Badge
+																: 'secondary'}
 														>
+															{m.action.input.priority}
+														</Badge>
 													</div>
 													{#if m.done}
 														<p class="text-xs text-muted-foreground">Ticket created.</p>
 													{:else}
-														<Button size="sm" onclick={() => void confirmTicket(m)}
-															>Create ticket</Button
-														>
+														<Button size="sm" onclick={() => void confirmTicket(m)}>
+															Create ticket
+														</Button>
 													{/if}
 												</div>
 											{:else if m.action?.type === 'draft_reply'}
@@ -175,16 +181,20 @@
 														<p class="text-sm whitespace-pre-wrap">{m.action.body}</p>
 														<a
 															class="text-xs text-primary underline-offset-2 hover:underline"
-															href="/messages/{m.action.tenantId}">Open thread</a
+															href="/messages/{m.action.tenantId}"
 														>
+															Open thread
+														</a>
 													{:else}
 														<Textarea bind:value={m.action.body} rows={4} class="text-sm" />
 														<Button
 															size="sm"
 															onclick={() =>
 																m.action?.type === 'draft_reply' &&
-																void confirmReply(m, m.action.body)}>Send</Button
+																void confirmReply(m, m.action.body)}
 														>
+															Send
+														</Button>
 													{/if}
 												</div>
 											{/if}

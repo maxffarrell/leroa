@@ -187,18 +187,20 @@
 				<Field.Field>
 					<Field.Label>Unit</Field.Label>
 					<Select.Root type="single" bind:value={unit}>
-						<Select.Trigger class="w-full"
-							>{selectedUnit
+						<Select.Trigger class="w-full">
+							{selectedUnit
 								? `${selectedUnit.propertyName} · ${selectedUnit.name}`
-								: 'Select a unit'}</Select.Trigger
-						>
+								: 'Select a unit'}
+						</Select.Trigger>
 						<Select.Content class="max-h-72">
 							{#each pickable as u (u.id)}
 								<Select.Item value={u.id} label={`${u.propertyName} · ${u.name}`}>
 									{u.propertyName} · {u.name}
 									{#if u.status !== 'vacant'}<span
-											class="ml-auto text-xs text-muted-foreground capitalize">{u.status}</span
-										>{/if}
+											class="ml-auto text-xs text-muted-foreground capitalize"
+										>
+											{u.status}
+										</span>{/if}
 								</Select.Item>
 							{/each}
 						</Select.Content>
@@ -216,8 +218,9 @@
 									class="rounded-sm hover:bg-muted-foreground/20"
 									aria-label="Remove"
 									onclick={() => (tenantIds = tenantIds.filter((x) => x !== tid))}
-									><X class="size-3" /></button
 								>
+									<X class="size-3" />
+								</button>
 							</Badge>
 						{/each}
 						<Select.Root
@@ -237,68 +240,70 @@
 							size="sm"
 							variant="ghost"
 							class="h-7"
-							onclick={() => (addingTenant = true)}><Plus /> New</Button
+							onclick={() => (addingTenant = true)}
 						>
+							<Plus /> New
+						</Button>
 					</div>
 					{#if extractHint}<Field.Description>{extractHint}</Field.Description>{/if}
 				</Field.Field>
 				<div class="grid grid-cols-2 gap-3">
-					<Field.Field
-						><Field.Label for="l-start">Start</Field.Label><Input
+					<Field.Field>
+						<Field.Label for="l-start">Start</Field.Label><Input
 							id="l-start"
 							type="date"
 							required
 							bind:value={startDate}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="l-end">End</Field.Label><Input
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="l-end">End</Field.Label><Input
 							id="l-end"
 							type="date"
 							bind:value={endDate}
-						/><Field.Description>Blank for month-to-month.</Field.Description></Field.Field
-					>
+						/><Field.Description>Blank for month-to-month.</Field.Description>
+					</Field.Field>
 				</div>
 				<div class="grid grid-cols-[1fr_1fr_6rem] gap-3">
-					<Field.Field
-						><Field.Label for="l-rent">Monthly rent</Field.Label><MoneyInput
+					<Field.Field>
+						<Field.Label for="l-rent">Monthly rent</Field.Label><MoneyInput
 							id="l-rent"
 							required
 							bind:value={rentAmount}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="l-dep">Deposit</Field.Label><MoneyInput
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="l-dep">Deposit</Field.Label><MoneyInput
 							id="l-dep"
 							bind:value={depositAmount}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="l-due">Due day</Field.Label><Input
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="l-due">Due day</Field.Label><Input
 							id="l-due"
 							type="number"
 							min={1}
 							max={28}
 							bind:value={rentDueDay}
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 				</div>
 				<div class="grid grid-cols-2 gap-3">
-					<Field.Field
-						><Field.Label for="l-late">Late fee</Field.Label><MoneyInput
+					<Field.Field>
+						<Field.Label for="l-late">Late fee</Field.Label><MoneyInput
 							id="l-late"
 							bind:value={lateFeeAmount}
-						/><Field.Description>Optional flat fee.</Field.Description></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="l-grace">Grace days</Field.Label><Input
+						/><Field.Description>Optional flat fee.</Field.Description>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="l-grace">Grace days</Field.Label><Input
 							id="l-grace"
 							type="number"
 							min={0}
 							max={31}
 							bind:value={lateFeeGraceDays}
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 				</div>
 			</Field.Group>
 			<Modal.Footer>

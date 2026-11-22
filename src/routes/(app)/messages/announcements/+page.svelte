@@ -56,15 +56,14 @@
 			<Empty.Header>
 				<Empty.Media variant="icon"><Megaphone /></Empty.Media>
 				<Empty.Title>No announcements yet</Empty.Title>
-				<Empty.Description
-					>Post a notice to one property or all of them. Residents see it in their portal, and you
-					can email it too.</Empty.Description
-				>
+				<Empty.Description>
+					Post a notice to one property or all of them. Residents see it in their portal, and you
+					can email it too.
+				</Empty.Description>
 			</Empty.Header>
-			<Empty.Content
-				><Button onclick={() => (composing = true)}><Megaphone /> New announcement</Button
-				></Empty.Content
-			>
+			<Empty.Content>
+				<Button onclick={() => (composing = true)}><Megaphone /> New announcement</Button>
+			</Empty.Content>
 		</Empty.Root>
 	{:else}
 		<ul class="space-y-3">
@@ -79,9 +78,9 @@
 								<Badge variant="secondary">{a.propertyName ?? 'All properties'}</Badge>
 								<span>{formatDate(a.createdAt)}{a.sentByName ? ` · ${a.sentByName}` : ''}</span>
 								<span>{a.recipientCount} resident{a.recipientCount === 1 ? '' : 's'}</span>
-								{#if a.emailed}<span class="inline-flex items-center gap-1"
-										><Mail class="size-3" /> Emailed</span
-									>{/if}
+								{#if a.emailed}<span class="inline-flex items-center gap-1">
+										<Mail class="size-3" /> Emailed
+									</span>{/if}
 							</p>
 						</div>
 						<Button
@@ -89,8 +88,10 @@
 							variant="ghost"
 							class="-mt-1 -mr-2 text-muted-foreground"
 							aria-label="Remove announcement"
-							onclick={() => remove(a.id, a.subject)}><Trash /></Button
+							onclick={() => remove(a.id, a.subject)}
 						>
+							<Trash />
+						</Button>
 					</div>
 					<p class="mt-3 line-clamp-6 text-sm whitespace-pre-wrap">{a.body}</p>
 				</li>

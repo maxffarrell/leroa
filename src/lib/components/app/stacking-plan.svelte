@@ -36,9 +36,9 @@
 <div class="space-y-2">
 	<div class="flex flex-wrap gap-3">
 		{#each LEGEND as [tone, label] (tone)}
-			<span class="flex items-center gap-1.5 text-xs text-muted-foreground"
-				><span class="inline-block size-2.5 rounded-sm border {TONES[tone]}"></span>{label}</span
-			>
+			<span class="flex items-center gap-1.5 text-xs text-muted-foreground">
+				<span class="inline-block size-2.5 rounded-sm border {TONES[tone]}"></span>{label}
+			</span>
 		{/each}
 	</div>
 	<div class="overflow-x-auto rounded-lg border">
@@ -62,9 +62,9 @@
 										<div class="flex items-center justify-between gap-1">
 											<span class="text-xs font-semibold">{u.name}</span>
 											{#if cell.tone === 'expiring'}
-												<Badge variant="outline" class="px-1 text-[10px]"
-													>{formatDate(u.leaseEnd!, true)}</Badge
-												>
+												<Badge variant="outline" class="px-1 text-[10px]">
+													{formatDate(u.leaseEnd!, true)}
+												</Badge>
 											{/if}
 										</div>
 										<div class="mt-0.5 text-[11px] leading-tight">
@@ -76,8 +76,8 @@
 												<span class="capitalize">{u.status}</span>
 											{/if}
 											{#if u.areaSqft}<span class="text-muted-foreground">
-													· {u.areaSqft.toLocaleString()} sf</span
-												>{/if}
+													· {u.areaSqft.toLocaleString()} sf
+												</span>{/if}
 										</div>
 									</div>
 								{/if}

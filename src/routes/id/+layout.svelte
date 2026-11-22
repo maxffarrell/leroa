@@ -13,9 +13,9 @@
 		<div class="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
 			<Logo />
 			<a href="/id" class="font-semibold">Leroa Profile</a>
-			<span class="ml-auto hidden truncate text-sm text-muted-foreground sm:block"
-				>{data.user.email}</span
-			>
+			<span class="ml-auto hidden truncate text-sm text-muted-foreground sm:block">
+				{data.user.email}
+			</span>
 			<Button
 				size="sm"
 				variant="ghost"
@@ -23,8 +23,10 @@
 				onclick={async () => {
 					await authClient.signOut();
 					await goto('/login?next=/id', { invalidateAll: true });
-				}}>Sign out</Button
+				}}
 			>
+				Sign out
+			</Button>
 		</div>
 	</header>
 	<main class="mx-auto max-w-2xl space-y-6 p-4 py-8">

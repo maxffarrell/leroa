@@ -140,11 +140,11 @@
 
 <PageHeader title={meta.title} crumbs={[{ label: 'Reports', href: '/reports' }]}>
 	{#snippet actions()}
-		<Button size="sm" variant="outline" href="/api/reports/{key}/csv?{query}" download
-			><Download /> <span class="hidden sm:inline">Export CSV</span><span class="sm:hidden"
-				>CSV</span
-			></Button
-		>
+		<Button size="sm" variant="outline" href="/api/reports/{key}/csv?{query}" download>
+			<Download /> <span class="hidden sm:inline">Export CSV</span><span class="sm:hidden">
+				CSV
+			</span>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -317,10 +317,11 @@
 								type="button"
 								class="inline-flex items-center gap-1 whitespace-nowrap hover:text-foreground"
 								onclick={() => toggleSort(c)}
-								>{c.label}{#if sort?.key === c.key}{#if sort.dir === 1}<ArrowUp
-											class="size-3"
-										/>{:else}<ArrowDown class="size-3" />{/if}{/if}</button
 							>
+								{c.label}{#if sort?.key === c.key}{#if sort.dir === 1}<ArrowUp
+											class="size-3"
+										/>{:else}<ArrowDown class="size-3" />{/if}{/if}
+							</button>
 						</Table.Head>
 					{/each}
 				</Table.Row>
@@ -335,9 +336,9 @@
 					>
 						{#each report.columns as c, ci (c.key)}
 							<Table.Cell class="{cls(c)} {ci === 0 ? 'font-medium' : ''} max-w-64 truncate">
-								{#if ci === 0 && link}<a href={link} class="hover:underline"
-										>{show(c, row[c.key])}</a
-									>{:else}{show(c, row[c.key])}{/if}
+								{#if ci === 0 && link}<a href={link} class="hover:underline">
+										{show(c, row[c.key])}
+									</a>{:else}{show(c, row[c.key])}{/if}
 							</Table.Cell>
 						{/each}
 					</Table.Row>
@@ -346,10 +347,9 @@
 						<Table.Cell
 							colspan={report.columns.length}
 							class="py-10 text-center text-muted-foreground"
-							>{report.rows.length
-								? 'No rows match the filter.'
-								: 'Nothing to report yet.'}</Table.Cell
 						>
+							{report.rows.length ? 'No rows match the filter.' : 'Nothing to report yet.'}
+						</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>
@@ -357,13 +357,13 @@
 				<Table.Footer>
 					<Table.Row>
 						{#each report.columns as c, ci (c.key)}
-							<Table.Cell class="{cls(c)} font-medium whitespace-nowrap"
-								>{ci === 0
+							<Table.Cell class="{cls(c)} font-medium whitespace-nowrap">
+								{ci === 0
 									? report.totals[c.key]
 									: report.totals[c.key] == null
 										? ''
-										: show(c, report.totals[c.key])}</Table.Cell
-							>
+										: show(c, report.totals[c.key])}
+							</Table.Cell>
 						{/each}
 					</Table.Row>
 				</Table.Footer>
