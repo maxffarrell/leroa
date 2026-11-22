@@ -1,5 +1,11 @@
 # leroa
 
+## 0.4.4
+
+### Patch Changes
+
+- 60d04ed: Restore "Try the live demo" copy on the demo sign-in card so the installed deploy helper's login verification matches again.
+
 ## 0.4.3
 
 ### Patch Changes
