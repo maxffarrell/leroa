@@ -77,16 +77,16 @@
 
 <PageHeader title="Leasing">
 	{#snippet actions()}
-		<Button size="sm" variant="outline" onclick={copyLink}
-			><Link /> <span class="hidden sm:inline">Copy public link</span></Button
-		>
-		<Button size="sm" onclick={create}
-			><Plus />
-			<span class="hidden sm:inline"
-				>{tab === 'leads' || tab === 'tours' ? 'New lead' : 'New listing'}</span
-			>
-			<Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" variant="outline" onclick={copyLink}>
+			<Link /> <span class="hidden sm:inline">Copy public link</span>
+		</Button>
+		<Button size="sm" onclick={create}>
+			<Plus />
+			<span class="hidden sm:inline">
+				{tab === 'leads' || tab === 'tours' ? 'New lead' : 'New listing'}
+			</span>
+			<Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -95,18 +95,19 @@
 		<Tabs.List class="mb-4 max-w-full justify-start overflow-x-auto">
 			<Tabs.Trigger value="leads">Leads</Tabs.Trigger>
 			<Tabs.Trigger value="tours">Tours</Tabs.Trigger>
-			<Tabs.Trigger value="applications"
-				>Applications
+			<Tabs.Trigger value="applications">
+				Applications
 				{#if newCount}<span
 						class="ml-1 rounded-full bg-sky-500/15 px-1.5 text-xs text-sky-700 tabular-nums dark:text-sky-400"
-						>{newCount} new</span
-					>{/if}</Tabs.Trigger
-			>
-			<Tabs.Trigger value="listings"
-				>Listings <span class="ml-1 text-xs text-muted-foreground tabular-nums"
-					>{liveCount} live</span
-				></Tabs.Trigger
-			>
+					>
+						{newCount} new
+					</span>{/if}
+			</Tabs.Trigger>
+			<Tabs.Trigger value="listings">
+				Listings <span class="ml-1 text-xs text-muted-foreground tabular-nums">
+					{liveCount} live
+				</span>
+			</Tabs.Trigger>
 		</Tabs.List>
 
 		<Tabs.Content value="leads">
@@ -123,13 +124,13 @@
 					<Empty.Header>
 						<Empty.Media variant="icon"><Inbox /></Empty.Media>
 						<Empty.Title>No applications yet</Empty.Title>
-						<Empty.Description
-							>Publish a listing and share its link. Applications land here.</Empty.Description
-						>
+						<Empty.Description>
+							Publish a listing and share its link. Applications land here.
+						</Empty.Description>
 					</Empty.Header>
-					<Empty.Content
-						><Button onclick={() => (creating = true)}><Plus /> New listing</Button></Empty.Content
-					>
+					<Empty.Content>
+						<Button onclick={() => (creating = true)}><Plus /> New listing</Button>
+					</Empty.Content>
 				</Empty.Root>
 			{:else}
 				<div class="mb-3 flex gap-1" role="group" aria-label="Filter applications">
@@ -138,8 +139,10 @@
 							size="sm"
 							variant={filter === value ? 'secondary' : 'ghost'}
 							aria-pressed={filter === value}
-							onclick={() => ((filter = value), (nav.index = -1))}>{label}</Button
+							onclick={() => ((filter = value), (nav.index = -1))}
 						>
+							{label}
+						</Button>
 					{/each}
 				</div>
 				<div class="overflow-x-auto rounded-lg border">
@@ -166,32 +169,35 @@
 									<Table.Cell class="max-w-48">
 										<a
 											href="/leasing/applications/{a.id}"
-											class="block truncate font-medium outline-none">{a.firstName} {a.lastName}</a
+											class="block truncate font-medium outline-none"
 										>
-										<span class="block truncate text-xs text-muted-foreground sm:hidden"
-											>{a.propertyName ?? '—'} · {a.unitName ?? ''}</span
-										>
+											{a.firstName}
+											{a.lastName}
+										</a>
+										<span class="block truncate text-xs text-muted-foreground sm:hidden">
+											{a.propertyName ?? '—'} · {a.unitName ?? ''}
+										</span>
 									</Table.Cell>
-									<Table.Cell class="hidden text-muted-foreground sm:table-cell"
-										>{a.propertyName ? `${a.propertyName} · ${a.unitName}` : '—'}</Table.Cell
-									>
-									<Table.Cell class="hidden text-muted-foreground md:table-cell"
-										>{formatDate(a.moveInDate, true)}</Table.Cell
-									>
-									<Table.Cell class="hidden text-right tabular-nums md:table-cell"
-										>{formatMoney(a.monthlyIncome)}</Table.Cell
-									>
-									<Table.Cell class="hidden text-muted-foreground lg:table-cell"
-										>{formatRelative(a.createdAt)}</Table.Cell
-									>
+									<Table.Cell class="hidden text-muted-foreground sm:table-cell">
+										{a.propertyName ? `${a.propertyName} · ${a.unitName}` : '—'}
+									</Table.Cell>
+									<Table.Cell class="hidden text-muted-foreground md:table-cell">
+										{formatDate(a.moveInDate, true)}
+									</Table.Cell>
+									<Table.Cell class="hidden text-right tabular-nums md:table-cell">
+										{formatMoney(a.monthlyIncome)}
+									</Table.Cell>
+									<Table.Cell class="hidden text-muted-foreground lg:table-cell">
+										{formatRelative(a.createdAt)}
+									</Table.Cell>
 									<Table.Cell><StatusBadge status={a.status} /></Table.Cell>
 								</Table.Row>
 							{:else}
-								<Table.Row
-									><Table.Cell colspan={6} class="py-8 text-center text-muted-foreground"
-										>Nothing here.</Table.Cell
-									></Table.Row
-								>
+								<Table.Row>
+									<Table.Cell colspan={6} class="py-8 text-center text-muted-foreground">
+										Nothing here.
+									</Table.Cell>
+								</Table.Row>
 							{/each}
 						</Table.Body>
 					</Table.Root>
@@ -205,13 +211,13 @@
 					<Empty.Header>
 						<Empty.Media variant="icon"><Megaphone /></Empty.Media>
 						<Empty.Title>No listings yet</Empty.Title>
-						<Empty.Description
-							>List a vacant unit to get a public page with an online application.</Empty.Description
-						>
+						<Empty.Description>
+							List a vacant unit to get a public page with an online application.
+						</Empty.Description>
 					</Empty.Header>
-					<Empty.Content
-						><Button onclick={() => (creating = true)}><Plus /> New listing</Button></Empty.Content
-					>
+					<Empty.Content>
+						<Button onclick={() => (creating = true)}><Plus /> New listing</Button>
+					</Empty.Content>
 				</Empty.Root>
 			{:else}
 				<ul class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

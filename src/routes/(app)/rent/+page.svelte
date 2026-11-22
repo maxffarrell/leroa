@@ -183,13 +183,13 @@
 <main class="space-y-4 p-4 md:p-6">
 	<div class="flex flex-wrap items-center gap-3">
 		<div class="flex items-center gap-1">
-			<Button size="icon-sm" variant="ghost" aria-label="Previous month" onclick={() => shift(-1)}
-				><ChevronLeft /></Button
-			>
+			<Button size="icon-sm" variant="ghost" aria-label="Previous month" onclick={() => shift(-1)}>
+				<ChevronLeft />
+			</Button>
 			<h1 class="w-40 text-center text-lg font-semibold tabular-nums">{label}</h1>
-			<Button size="icon-sm" variant="ghost" aria-label="Next month" onclick={() => shift(1)}
-				><ChevronRight /></Button
-			>
+			<Button size="icon-sm" variant="ghost" aria-label="Next month" onclick={() => shift(1)}>
+				<ChevronRight />
+			</Button>
 		</div>
 		<div class="flex min-w-48 flex-1 items-center gap-3">
 			<Progress value={totals.due ? (totals.paid / totals.due) * 100 : 0} class="max-w-48" />
@@ -261,13 +261,13 @@
 						{/each}
 					</Table.Row>
 				{:else}
-					<Table.Row
-						><Table.Cell colspan={columns.length} class="py-10 text-center text-muted-foreground"
-							>{roll.length
+					<Table.Row>
+						<Table.Cell colspan={columns.length} class="py-10 text-center text-muted-foreground">
+							{roll.length
 								? 'Nothing matches this filter.'
-								: 'No charges this month. Active leases generate rent automatically.'}</Table.Cell
-						></Table.Row
-					>
+								: 'No charges this month. Active leases generate rent automatically.'}
+						</Table.Cell>
+					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>
@@ -278,8 +278,9 @@
 
 {#snippet tenantCell(r: Row)}
 	<span class="flex max-w-56 items-center gap-1.5">
-		<a href="/leases/{r.leaseId}" class="truncate font-medium hover:underline">{r.tenants || '—'}</a
-		>
+		<a href="/leases/{r.leaseId}" class="truncate font-medium hover:underline">
+			{r.tenants || '—'}
+		</a>
 		{#if watch.has(r.leaseId)}
 			<Badge
 				variant="outline"
@@ -302,8 +303,10 @@
 			<Button
 				size="sm"
 				variant={r.status === 'overdue' ? 'default' : 'outline'}
-				onclick={() => pay(r)}>Record</Button
+				onclick={() => pay(r)}
 			>
+				Record
+			</Button>
 		</div>
 	{/if}
 {/snippet}

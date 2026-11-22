@@ -36,10 +36,11 @@
 				<a
 					href="/l/{data.org.slug}/p/{p.id}"
 					class="rounded-full border px-3 py-1 text-sm transition-colors hover:bg-muted"
-					>{p.name}{#if p.publishedListings}<span class="ml-1.5 text-muted-foreground tabular-nums"
-							>{p.publishedListings}</span
-						>{/if}</a
 				>
+					{p.name}{#if p.publishedListings}<span class="ml-1.5 text-muted-foreground tabular-nums">
+							{p.publishedListings}
+						</span>{/if}
+				</a>
 			{/each}
 		</nav>
 	{/if}
@@ -65,14 +66,17 @@
 						{/if}
 						<span
 							class="absolute top-3 left-3 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium backdrop-blur"
-							>{availability(l.availableOn, today)}</span
 						>
+							{availability(l.availableOn, today)}
+						</span>
 					</div>
 					<div class="mt-3 space-y-0.5">
 						<p class="text-lg font-semibold tabular-nums">
 							{formatMoney(l.rentAmount, l.currency)}<span
-								class="text-sm font-normal text-muted-foreground">/mo</span
+								class="text-sm font-normal text-muted-foreground"
 							>
+								/mo
+							</span>
 						</p>
 						{#if unitFacts(l)}<p class="text-sm">{unitFacts(l)}</p>{/if}
 						<p class="truncate text-sm font-medium group-hover:underline">{l.title}</p>

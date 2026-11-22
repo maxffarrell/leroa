@@ -27,9 +27,9 @@
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator class="hidden md:block" />
 			{/each}
-			<Breadcrumb.Item class="min-w-0"
-				><Breadcrumb.Page class="truncate font-medium">{title}</Breadcrumb.Page></Breadcrumb.Item
-			>
+			<Breadcrumb.Item class="min-w-0">
+				<Breadcrumb.Page class="truncate font-medium">{title}</Breadcrumb.Page>
+			</Breadcrumb.Item>
 		</Breadcrumb.List>
 	</Breadcrumb.Root>
 	<div class="ml-auto flex items-center gap-2">

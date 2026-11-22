@@ -50,14 +50,14 @@
 <Card.Root>
 	<Card.Header>
 		<Card.Title>Public page</Card.Title>
-		<Card.Description
-			>A marketing page for this property with its available homes, a contact form and tour booking.
-			It's shown automatically while a listing here is published.</Card.Description
-		>
+		<Card.Description>
+			A marketing page for this property with its available homes, a contact form and tour booking.
+			It's shown automatically while a listing here is published.
+		</Card.Description>
 		<Card.Action>
-			<Button size="sm" variant="outline" href={url} target="_blank"
-				><ExternalLink /> <span class="hidden sm:inline">{live ? 'View' : 'Preview'}</span></Button
-			>
+			<Button size="sm" variant="outline" href={url} target="_blank">
+				<ExternalLink /> <span class="hidden sm:inline">{live ? 'View' : 'Preview'}</span>
+			</Button>
 		</Card.Action>
 	</Card.Header>
 	<Card.Content>
@@ -68,9 +68,9 @@
 					checked={m.publicPage}
 					onCheckedChange={(v) => save({ publicPage: v })}
 				/>
-				<Field.Label for="pm-public" class="font-normal"
-					>Always show, even with nothing listed (for waitlist sign-ups)</Field.Label
-				>
+				<Field.Label for="pm-public" class="font-normal">
+					Always show, even with nothing listed (for waitlist sign-ups)
+				</Field.Label>
 			</Field.Field>
 			<Field.Field>
 				<Field.Label for="pm-desc">About the property</Field.Label>
@@ -97,8 +97,9 @@
 									class="rounded-full p-0.5 hover:bg-muted"
 									aria-label="Remove {a}"
 									onclick={() => save({ amenities: m.amenities.filter((x) => x !== a) })}
-									><X class="size-3" /></button
 								>
+									<X class="size-3" />
+								</button>
 							</li>
 						{/each}
 					</ul>

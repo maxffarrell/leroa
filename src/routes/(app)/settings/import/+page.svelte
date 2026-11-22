@@ -157,10 +157,10 @@
 <Card.Root>
 	<Card.Header>
 		<Card.Title>Import from CSV</Card.Title>
-		<Card.Description
-			>Bring in records from a spreadsheet or another system’s export. Nothing is saved until you
-			review the check and confirm.</Card.Description
-		>
+		<Card.Description>
+			Bring in records from a spreadsheet or another system’s export. Nothing is saved until you
+			review the check and confirm.
+		</Card.Description>
 	</Card.Header>
 	<Card.Content class="space-y-5">
 		<div class="space-y-2">
@@ -185,9 +185,9 @@
 					should only cover earlier months.
 				</p>
 			{/if}
-			<Button size="sm" variant="link" class="h-auto px-0" onclick={downloadTemplate}
-				><Download /> Download a template</Button
-			>
+			<Button size="sm" variant="link" class="h-auto px-0" onclick={downloadTemplate}>
+				<Download /> Download a template
+			</Button>
 		</div>
 
 		<div class="space-y-2">
@@ -196,12 +196,14 @@
 				class="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed p-4 text-sm focus-within:ring-2 focus-within:ring-ring hover:bg-muted/50"
 			>
 				<FileUp class="size-5 text-muted-foreground" />
-				<span class="min-w-0 flex-1 truncate"
-					>{#if fileName}<span class="font-medium">{fileName}</span>
-						<span class="text-muted-foreground">· {rowCount.toLocaleString('en-US')} rows</span
-						>{:else}<span class="text-muted-foreground">CSV file, up to 2 MB and 2,000 rows</span
-						>{/if}</span
-				>
+				<span class="min-w-0 flex-1 truncate">
+					{#if fileName}<span class="font-medium">{fileName}</span>
+						<span class="text-muted-foreground">
+							· {rowCount.toLocaleString('en-US')} rows
+						</span>{:else}<span class="text-muted-foreground">
+							CSV file, up to 2 MB and 2,000 rows
+						</span>{/if}
+				</span>
 				<span class="font-medium">{fileName ? 'Replace' : 'Browse'}</span>
 				<input type="file" accept=".csv,text/csv" class="sr-only" onchange={onfile} />
 			</label>
@@ -211,9 +213,9 @@
 			<div class="space-y-2">
 				<p class="text-sm font-medium">
 					3. Match the columns
-					{#if aiMapped.length}<span class="font-normal text-muted-foreground"
-							>— AI filled {aiMapped.length} for you</span
-						>{/if}
+					{#if aiMapped.length}<span class="font-normal text-muted-foreground">
+							— AI filled {aiMapped.length} for you
+						</span>{/if}
 				</p>
 				<div class="overflow-x-auto rounded-lg border">
 					<Table.Root>
@@ -227,11 +229,11 @@
 						<Table.Body>
 							{#each spec.fields as f (f.key)}
 								<Table.Row>
-									<Table.Cell class="font-medium whitespace-nowrap"
-										>{f.label}{#if f.required}<span class="text-destructive" aria-label="required">
-												*</span
-											>{/if}</Table.Cell
-									>
+									<Table.Cell class="font-medium whitespace-nowrap">
+										{f.label}{#if f.required}<span class="text-destructive" aria-label="required">
+												*
+											</span>{/if}
+									</Table.Cell>
 									<Table.Cell>
 										<NativeSelect.Root
 											aria-label="Column for {f.label}"
@@ -245,15 +247,15 @@
 										>
 											<NativeSelect.Option value="">— Not in file —</NativeSelect.Option>
 											{#each headers as h, i (i)}
-												<NativeSelect.Option value={String(i)}
-													>{h || `Column ${i + 1}`}</NativeSelect.Option
-												>
+												<NativeSelect.Option value={String(i)}>
+													{h || `Column ${i + 1}`}
+												</NativeSelect.Option>
 											{/each}
 										</NativeSelect.Root>
 									</Table.Cell>
-									<Table.Cell class="hidden max-w-48 truncate text-muted-foreground sm:table-cell"
-										>{mapping[f.key] == null ? '' : (sample[mapping[f.key]!] ?? '')}</Table.Cell
-									>
+									<Table.Cell class="hidden max-w-48 truncate text-muted-foreground sm:table-cell">
+										{mapping[f.key] == null ? '' : (sample[mapping[f.key]!] ?? '')}
+									</Table.Cell>
 								</Table.Row>
 							{/each}
 						</Table.Body>
@@ -268,8 +270,10 @@
 					<Button
 						variant={preview ? 'outline' : 'default'}
 						disabled={pending || missing.length > 0 || needsName}
-						onclick={() => run(true)}>{pending && !preview ? 'Checking…' : 'Check file'}</Button
+						onclick={() => run(true)}
 					>
+						{pending && !preview ? 'Checking…' : 'Check file'}
+					</Button>
 				</div>
 			</div>
 		{/if}
@@ -280,9 +284,10 @@
 				<div class="flex flex-wrap gap-2 text-sm">
 					{#each ['create', 'update', 'skip', 'error'] as const as s (s)}
 						{#if preview.counts[s]}
-							<span class="rounded-md px-2 py-0.5 {tone[s]}"
-								>{preview.counts[s]} {statusLabel[s].toLowerCase()}{s === 'error' ? 's' : ''}</span
-							>
+							<span class="rounded-md px-2 py-0.5 {tone[s]}">
+								{preview.counts[s]}
+								{statusLabel[s].toLowerCase()}{s === 'error' ? 's' : ''}
+							</span>
 						{/if}
 					{/each}
 				</div>
@@ -297,22 +302,22 @@
 						<Table.Body>
 							{#each shown as r (r.line)}
 								<Table.Row>
-									<Table.Cell class="w-16 text-muted-foreground tabular-nums"
-										>Row {r.line}</Table.Cell
-									>
-									<Table.Cell class="w-20"
-										><Badge variant="outline" class="border-0 {tone[r.status]}"
-											>{statusLabel[r.status]}</Badge
-										></Table.Cell
-									>
+									<Table.Cell class="w-16 text-muted-foreground tabular-nums">
+										Row {r.line}
+									</Table.Cell>
+									<Table.Cell class="w-20">
+										<Badge variant="outline" class="border-0 {tone[r.status]}">
+											{statusLabel[r.status]}
+										</Badge>
+									</Table.Cell>
 									<Table.Cell class="whitespace-normal">{r.message}</Table.Cell>
 								</Table.Row>
 							{:else}
-								<Table.Row
-									><Table.Cell class="py-6 text-center text-muted-foreground"
-										>No problems.</Table.Cell
-									></Table.Row
-								>
+								<Table.Row>
+									<Table.Cell class="py-6 text-center text-muted-foreground">
+										No problems.
+									</Table.Cell>
+								</Table.Row>
 							{/each}
 						</Table.Body>
 					</Table.Root>
@@ -324,10 +329,11 @@
 					<Button
 						disabled={pending || preview.counts.create + preview.counts.update === 0}
 						onclick={() => run(false)}
-						>{pending
-							? 'Importing…'
-							: `Import ${(preview.counts.create + preview.counts.update).toLocaleString('en-US')} rows`}</Button
 					>
+						{pending
+							? 'Importing…'
+							: `Import ${(preview.counts.create + preview.counts.update).toLocaleString('en-US')} rows`}
+					</Button>
 					{#if preview.counts.error}
 						<p class="text-sm text-muted-foreground">
 							Rows with problems are skipped. Fix them in the file and import it again; rows already
@@ -347,9 +353,9 @@
 						? `, ${done.counts.error} with problems`
 						: ''}.
 				</p>
-				<a href={landing[kind]} class="mt-1 inline-block underline-offset-4 hover:underline"
-					>Open {IMPORT_TYPES[kind].title.toLowerCase()} →</a
-				>
+				<a href={landing[kind]} class="mt-1 inline-block underline-offset-4 hover:underline">
+					Open {IMPORT_TYPES[kind].title.toLowerCase()} →
+				</a>
 			</div>
 		{/if}
 	</Card.Content>

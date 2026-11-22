@@ -202,9 +202,9 @@
 
 <PageHeader title="Residents">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (loggingPackage = true)}
-			><Plus /> <span class="hidden sm:inline">Log package</span></Button
-		>
+		<Button size="sm" onclick={() => (loggingPackage = true)}>
+			<Plus /> <span class="hidden sm:inline">Log package</span>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -243,49 +243,50 @@
 					<Table.Body>
 						{#each packages as p (p.id)}
 							<Table.Row>
-								<Table.Cell class="text-sm text-muted-foreground"
-									>{formatRelative(p.createdAt)}</Table.Cell
-								>
-								<Table.Cell class="font-medium"
-									>{p.tenantId
+								<Table.Cell class="text-sm text-muted-foreground">
+									{formatRelative(p.createdAt)}
+								</Table.Cell>
+								<Table.Cell class="font-medium">
+									{p.tenantId
 										? `${p.tenantFirst} ${p.tenantLast}`.trim() || p.tenantCompany
 										: 'Front desk'}{#if p.notifiedAt}
-										<Bell class="ml-1 inline size-3 text-muted-foreground" />{/if}</Table.Cell
-								>
-								<Table.Cell class="hidden text-muted-foreground md:table-cell"
-									>{p.propertyName}{p.unitName ? ` · ${p.unitName}` : ''}</Table.Cell
-								>
-								<Table.Cell class="hidden text-muted-foreground sm:table-cell"
-									>{p.carrier ?? '—'}{#if p.tracking}
-										<span class="block text-xs tabular-nums">{p.tracking}</span>{/if}</Table.Cell
-								>
-								<Table.Cell class="hidden max-w-48 truncate text-muted-foreground lg:table-cell"
-									>{p.description ?? '—'}</Table.Cell
-								>
-								<Table.Cell
-									>{#if p.status === 'picked_up'}
+										<Bell class="ml-1 inline size-3 text-muted-foreground" />{/if}
+								</Table.Cell>
+								<Table.Cell class="hidden text-muted-foreground md:table-cell">
+									{p.propertyName}{p.unitName ? ` · ${p.unitName}` : ''}
+								</Table.Cell>
+								<Table.Cell class="hidden text-muted-foreground sm:table-cell">
+									{p.carrier ?? '—'}{#if p.tracking}
+										<span class="block text-xs tabular-nums">{p.tracking}</span>{/if}
+								</Table.Cell>
+								<Table.Cell class="hidden max-w-48 truncate text-muted-foreground lg:table-cell">
+									{p.description ?? '—'}
+								</Table.Cell>
+								<Table.Cell>
+									{#if p.status === 'picked_up'}
 										<Badge variant="secondary">Picked up</Badge>
 									{:else}
 										<Badge>Awaiting pickup</Badge>
-									{/if}</Table.Cell
-								>
+									{/if}
+								</Table.Cell>
 								<Table.Cell class="text-right">
 									{#if p.status === 'awaiting_pickup'}
-										<Button size="sm" variant="outline" onclick={() => markPickedUp(p.id)}
-											><CheckCheck /> Picked up</Button
-										>
+										<Button size="sm" variant="outline" onclick={() => markPickedUp(p.id)}>
+											<CheckCheck /> Picked up
+										</Button>
 									{:else if p.pickedUpAt}
-										<span class="text-xs text-muted-foreground">{formatRelative(p.pickedUpAt)}</span
-										>
+										<span class="text-xs text-muted-foreground">
+											{formatRelative(p.pickedUpAt)}
+										</span>
 									{/if}
 								</Table.Cell>
 							</Table.Row>
 						{:else}
-							<Table.Row
-								><Table.Cell colspan={7} class="py-8 text-center text-muted-foreground"
-									>No packages waiting.</Table.Cell
-								></Table.Row
-							>
+							<Table.Row>
+								<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">
+									No packages waiting.
+								</Table.Cell>
+							</Table.Row>
 						{/each}
 					</Table.Body>
 				</Table.Root>
@@ -298,15 +299,14 @@
 					<Empty.Header>
 						<Empty.Media variant="icon"><Armchair /></Empty.Media>
 						<Empty.Title>No amenities yet</Empty.Title>
-						<Empty.Description
-							>Add a clubhouse, gym or rooftop residents can book, then take bookings here.</Empty.Description
-						>
+						<Empty.Description>
+							Add a clubhouse, gym or rooftop residents can book, then take bookings here.
+						</Empty.Description>
 					</Empty.Header>
 					{#if isAdmin}
-						<Empty.Content
-							><Button onclick={() => (addingAmenity = true)}><Plus /> Add amenity</Button
-							></Empty.Content
-						>
+						<Empty.Content>
+							<Button onclick={() => (addingAmenity = true)}><Plus /> Add amenity</Button>
+						</Empty.Content>
 					{/if}
 				</Empty.Root>
 			{:else}
@@ -336,13 +336,15 @@
 														await deleteAmenity(a.id).catch(() => toast.error('Could not delete'));
 													}
 												});
-											}}><Trash2 class="size-4 text-muted-foreground" /></Button
+											}}
 										>
+											<Trash2 class="size-4 text-muted-foreground" />
+										</Button>
 									{/if}
 								</div>
-								<span class="block truncate text-xs text-muted-foreground"
-									>{a.propertyName} · {a.openHour}:00–{a.closeHour}:00</span
-								>
+								<span class="block truncate text-xs text-muted-foreground">
+									{a.propertyName} · {a.openHour}:00–{a.closeHour}:00
+								</span>
 							</button>
 						{/each}
 						{#if isAdmin}
@@ -350,8 +352,10 @@
 								variant="outline"
 								size="sm"
 								class="w-full border-dashed"
-								onclick={() => (addingAmenity = true)}><Plus /> Add amenity</Button
+								onclick={() => (addingAmenity = true)}
 							>
+								<Plus /> Add amenity
+							</Button>
 						{/if}
 					</div>
 
@@ -362,10 +366,10 @@
 									<div class="flex flex-wrap items-center gap-3">
 										<div>
 											<Card.Title>{amenity.name}</Card.Title>
-											<Card.Description
-												>{amenity.propertyName} · {amenity.openHour}:00–{amenity.closeHour}:00 ·
-												{amenity.slotMinutes} min slots</Card.Description
-											>
+											<Card.Description>
+												{amenity.propertyName} · {amenity.openHour}:00–{amenity.closeHour}:00 ·
+												{amenity.slotMinutes} min slots
+											</Card.Description>
 										</div>
 										<Input
 											type="date"
@@ -391,8 +395,10 @@
 												<Button
 													variant="outline"
 													class="justify-start tabular-nums"
-													onclick={() => (bookingSlot = s.start)}>{s.label}</Button
+													onclick={() => (bookingSlot = s.start)}
 												>
+													{s.label}
+												</Button>
 											{/if}
 										{/each}
 									</div>
@@ -404,21 +410,24 @@
 									<h3 class="text-sm font-medium">Upcoming bookings</h3>
 									{#each upcoming as b (b.id)}
 										<div class="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
-											<span class="tabular-nums"
-												>{formatDate(b.startsAt)}
+											<span class="tabular-nums">
+												{formatDate(b.startsAt)}
 												{new Date(b.startsAt).toLocaleTimeString('en-US', {
 													hour: 'numeric',
 													minute: '2-digit'
-												})}</span
+												})}
+											</span>
+											<span class="truncate">
+												{`${b.tenantFirst} ${b.tenantLast}`.trim() || b.tenantCompany || 'Resident'}
+											</span>
+											<Button
+												variant="ghost"
+												size="sm"
+												class="ml-auto"
+												onclick={() => cancel(b.id)}
 											>
-											<span class="truncate"
-												>{`${b.tenantFirst} ${b.tenantLast}`.trim() ||
-													b.tenantCompany ||
-													'Resident'}</span
-											>
-											<Button variant="ghost" size="sm" class="ml-auto" onclick={() => cancel(b.id)}
-												>Cancel</Button
-											>
+												Cancel
+											</Button>
 										</div>
 									{/each}
 								</div>
@@ -488,9 +497,9 @@
 				<Input bind:value={pkgDesc} placeholder="Box, envelope, perishable…" />
 			</Field.Field>
 			<Modal.Footer>
-				<Button type="button" variant="outline" onclick={() => (loggingPackage = false)}
-					>Cancel</Button
-				>
+				<Button type="button" variant="outline" onclick={() => (loggingPackage = false)}>
+					Cancel
+				</Button>
 				<Button type="submit" disabled={!pkgProperty}>Log package</Button>
 			</Modal.Footer>
 		</form>
@@ -508,15 +517,15 @@
 >
 	<Modal.Content class="sm:max-w-sm">
 		<Modal.Header>
-			<Modal.Title
-				>Book {amenity?.name} · {bookingSlot?.toLocaleTimeString('en-US', {
+			<Modal.Title>
+				Book {amenity?.name} · {bookingSlot?.toLocaleTimeString('en-US', {
 					hour: 'numeric',
 					minute: '2-digit'
-				})}</Modal.Title
-			>
-			<Modal.Description
-				>{formatDate(bookingSlot)} · {amenity?.slotMinutes} minutes</Modal.Description
-			>
+				})}
+			</Modal.Title>
+			<Modal.Description>
+				{formatDate(bookingSlot)} · {amenity?.slotMinutes} minutes
+			</Modal.Description>
 		</Modal.Header>
 		<div class="space-y-3">
 			<Field.Field>
@@ -539,8 +548,10 @@
 				onclick={() => {
 					bookingSlot = null;
 					bookingTenant = bookingNotes = '';
-				}}>Cancel</Button
+				}}
 			>
+				Cancel
+			</Button>
 			<Button onclick={confirmBooking}>Book</Button>
 		</Modal.Footer>
 	</Modal.Content>
@@ -589,9 +600,9 @@
 				</Field.Field>
 			</div>
 			<Modal.Footer>
-				<Button type="button" variant="outline" onclick={() => (addingAmenity = false)}
-					>Cancel</Button
-				>
+				<Button type="button" variant="outline" onclick={() => (addingAmenity = false)}>
+					Cancel
+				</Button>
 				<Button type="submit" disabled={!aProperty || !aName.trim()}>Add</Button>
 			</Modal.Footer>
 		</form>

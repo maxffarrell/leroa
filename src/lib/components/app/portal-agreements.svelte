@@ -95,14 +95,14 @@
 						id="consent-{a.id}"
 						bind:checked={() => consent[a.id] ?? false, (v) => (consent[a.id] = v)}
 					/>
-					<Field.Label for="consent-{a.id}" class="text-sm leading-snug font-normal"
-						>I agree to sign electronically, and that typing my name is my legal signature on this
-						document.</Field.Label
-					>
+					<Field.Label for="consent-{a.id}" class="text-sm leading-snug font-normal">
+						I agree to sign electronically, and that typing my name is my legal signature on this
+						document.
+					</Field.Label>
 				</Field.Field>
-				<Button type="submit" disabled={signing !== null}
-					>{signing === a.id ? 'Signing…' : 'Sign lease'}</Button
-				>
+				<Button type="submit" disabled={signing !== null}>
+					{signing === a.id ? 'Signing…' : 'Sign lease'}
+				</Button>
 			</form>
 		{/if}
 	</div>
@@ -118,8 +118,10 @@
 						href={pdf(a.id)}
 						target="_blank"
 						rel="noopener"
-						class="min-w-0 flex-1 truncate hover:underline">{a.title}</a
+						class="min-w-0 flex-1 truncate hover:underline"
 					>
+						{a.title}
+					</a>
 					<span class="hidden text-xs text-muted-foreground sm:inline">
 						{a.status === 'signed'
 							? `Signed ${formatDate(a.completedAt)}`

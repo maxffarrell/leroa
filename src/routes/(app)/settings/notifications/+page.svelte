@@ -71,22 +71,24 @@
 				Sending through {settings.provider === 'resend' ? 'Resend' : 'SMTP'}.
 			{:else}
 				No email provider is set up, so emails are only written to the server log. Set <code
-					class="font-mono text-xs">RESEND_API_KEY</code
+					class="font-mono text-xs"
 				>
+					RESEND_API_KEY
+				</code>
 				or <code class="font-mono text-xs">SMTP_URL</code> to send them.
 			{/if}
 			{#if !settings.cron}
-				Reminders go out when someone opens Leroa. Set <code class="font-mono text-xs"
-					>CRON_SECRET</code
-				>
+				Reminders go out when someone opens Leroa. Set <code class="font-mono text-xs">
+					CRON_SECRET
+				</code>
 				and call <code class="font-mono text-xs">/api/cron</code> daily to send them on time.
 			{/if}
 		</Card.Description>
 		{#if canEdit}
 			<Card.Action>
-				<Button size="sm" variant="outline" disabled={testing} onclick={test}
-					><Send /> Send test</Button
-				>
+				<Button size="sm" variant="outline" disabled={testing} onclick={test}>
+					<Send /> Send test
+				</Button>
 			</Card.Action>
 		{/if}
 	</Card.Header>

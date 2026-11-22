@@ -57,46 +57,46 @@
 					<ToggleGroup.Item value="company">Company</ToggleGroup.Item>
 				</ToggleGroup.Root>
 				{#if form.kind === 'company'}
-					<Field.Field
-						><Field.Label for="t-co">Company name</Field.Label><Input
+					<Field.Field>
+						<Field.Label for="t-co">Company name</Field.Label><Input
 							id="t-co"
 							required
 							bind:value={form.companyName}
 							autofocus
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 				{/if}
 				<div class="grid grid-cols-2 gap-3">
-					<Field.Field
-						><Field.Label for="t-first"
-							>{form.kind === 'company' ? 'Contact first name' : 'First name'}</Field.Label
-						><Input
+					<Field.Field>
+						<Field.Label for="t-first">
+							{form.kind === 'company' ? 'Contact first name' : 'First name'}
+						</Field.Label><Input
 							id="t-first"
 							required={form.kind === 'person'}
 							bind:value={form.firstName}
 							autofocus={form.kind === 'person'}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="t-last">Last name</Field.Label><Input
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="t-last">Last name</Field.Label><Input
 							id="t-last"
 							bind:value={form.lastName}
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 				</div>
-				<Field.Field
-					><Field.Label for="t-email">Email</Field.Label><Input
+				<Field.Field>
+					<Field.Label for="t-email">Email</Field.Label><Input
 						id="t-email"
 						type="email"
 						bind:value={form.email}
-					/></Field.Field
-				>
-				<Field.Field
-					><Field.Label for="t-phone">Phone</Field.Label><PhoneInput
+					/>
+				</Field.Field>
+				<Field.Field>
+					<Field.Label for="t-phone">Phone</Field.Label><PhoneInput
 						id="t-phone"
 						bind:value={form.phone}
-					/></Field.Field
-				>
+					/>
+				</Field.Field>
 			</Field.Group>
 			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>

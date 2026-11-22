@@ -30,7 +30,8 @@
 		Every report downloads as CSV. Moving from another system? <a
 			href="/settings/import"
 			class="inline-flex items-center gap-1 font-medium text-foreground underline-offset-4 hover:underline"
-			><Upload class="size-3.5" /> Import properties, tenants and leases</a
 		>
+			<Upload class="size-3.5" /> Import properties, tenants and leases
+		</a>
 	</p>
 </main>

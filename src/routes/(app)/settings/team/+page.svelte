@@ -114,11 +114,11 @@
 
 {#if canManage}
 	<Card.Root>
-		<Card.Header
-			><Card.Title>Invite a teammate</Card.Title><Card.Description
-				>Admins can manage settings, integrations and the team.</Card.Description
-			></Card.Header
-		>
+		<Card.Header>
+			<Card.Title>Invite a teammate</Card.Title><Card.Description>
+				Admins can manage settings, integrations and the team.
+			</Card.Description>
+		</Card.Header>
 		<Card.Content class="space-y-3">
 			<form class="flex flex-wrap gap-2" onsubmit={invite}>
 				<Input
@@ -130,11 +130,11 @@
 				/>
 				<Select.Root type="single" bind:value={role}>
 					<Select.Trigger class="w-28 capitalize">{role}</Select.Trigger>
-					<Select.Content
-						><Select.Item value="member">Member</Select.Item><Select.Item value="admin"
-							>Admin</Select.Item
-						></Select.Content
-					>
+					<Select.Content>
+						<Select.Item value="member">Member</Select.Item><Select.Item value="admin">
+							Admin
+						</Select.Item>
+					</Select.Content>
 				</Select.Root>
 				<Button type="submit">Invite</Button>
 			</form>
@@ -147,8 +147,9 @@
 						aria-label="Copy link"
 						onclick={() =>
 							navigator.clipboard.writeText(inviteLink!).then(() => toast.success('Copied'))}
-						><Copy /></Button
 					>
+						<Copy />
+					</Button>
 				</div>
 				<p class="text-xs text-muted-foreground">
 					Send this link to your teammate. It expires in 48 hours.
@@ -165,11 +166,11 @@
 			{#each members as m (m.id)}
 				{@const a = access.get(m.id)}
 				<li class="flex flex-wrap items-center gap-3 px-6 py-3">
-					<Avatar.Root class="size-8"
-						>{#if m.image}<Avatar.Image src={m.image} alt={m.name} />{/if}<Avatar.Fallback
-							>{initials(m.name)}</Avatar.Fallback
-						></Avatar.Root
-					>
+					<Avatar.Root class="size-8">
+						{#if m.image}<Avatar.Image src={m.image} alt={m.name} />{/if}<Avatar.Fallback>
+							{initials(m.name)}
+						</Avatar.Fallback>
+					</Avatar.Root>
 					<div class="min-w-0 flex-1">
 						<p class="truncate text-sm font-medium">
 							{m.name}{m.userId === page.data.user?.id ? ' (you)' : ''}
@@ -188,11 +189,11 @@
 								value={a?.customRoleId ?? ''}
 								onValueChange={(v) => changeCustomRole(m.id, v || null)}
 							>
-								<Select.Trigger size="sm" class="w-36"
-									>{a?.customRoleId
+								<Select.Trigger size="sm" class="w-36">
+									{a?.customRoleId
 										? (roles.find((r) => r.id === a.customRoleId)?.name ?? 'Role')
-										: 'Full access'}</Select.Trigger
-								>
+										: 'Full access'}
+								</Select.Trigger>
 								<Select.Content>
 									<Select.Item value="">Full access</Select.Item>
 									{#each roles as r (r.id)}
@@ -206,19 +207,20 @@
 							variant="ghost"
 							aria-label="Property scope"
 							onclick={() => openScope(m.id, m.name)}
-							><Building2 />{a?.propertyIds.length ? a.propertyIds.length : 'All'}</Button
 						>
+							<Building2 />{a?.propertyIds.length ? a.propertyIds.length : 'All'}
+						</Button>
 						<Select.Root type="single" value={m.role} onValueChange={(v) => changeRole(m.id, v)}>
 							<Select.Trigger size="sm" class="w-24 capitalize">{m.role}</Select.Trigger>
-							<Select.Content
-								><Select.Item value="member">Member</Select.Item><Select.Item value="admin"
-									>Admin</Select.Item
-								></Select.Content
-							>
+							<Select.Content>
+								<Select.Item value="member">Member</Select.Item><Select.Item value="admin">
+									Admin
+								</Select.Item>
+							</Select.Content>
 						</Select.Root>
-						<Button size="sm" variant="ghost" class="text-destructive" onclick={() => remove(m.id)}
-							>Remove</Button
-						>
+						<Button size="sm" variant="ghost" class="text-destructive" onclick={() => remove(m.id)}>
+							Remove
+						</Button>
 					{:else}
 						<span class="text-xs text-muted-foreground capitalize">{m.role}</span>
 					{/if}
@@ -232,10 +234,10 @@
 	<Modal.Content class="sm:max-w-md">
 		<Modal.Header>
 			<Modal.Title>Properties for {scopeFor?.name}</Modal.Title>
-			<Modal.Description
-				>Limit which properties this member can see and work on. "All properties" includes future
-				ones.</Modal.Description
-			>
+			<Modal.Description>
+				Limit which properties this member can see and work on. "All properties" includes future
+				ones.
+			</Modal.Description>
 		</Modal.Header>
 		<div class="space-y-2">
 			<div class="flex items-center gap-2">

@@ -75,9 +75,9 @@
 					{#if s.status === 'closed'}<Badge variant="outline">Closed</Badge>{/if}
 					<span class="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
 						{#if s.avgRating !== null}
-							<Star class="size-3.5 fill-amber-400 text-amber-400" /><span class="tabular-nums"
-								>{s.avgRating.toFixed(1)}</span
-							>
+							<Star class="size-3.5 fill-amber-400 text-amber-400" /><span class="tabular-nums">
+								{s.avgRating.toFixed(1)}
+							</span>
 						{/if}
 						{s.responses} response{s.responses === 1 ? '' : 's'} · {formatRelative(s.createdAt)}
 					</span>
@@ -97,9 +97,9 @@
 		<form class="space-y-4" onsubmit={save}>
 			<Modal.Header>
 				<Modal.Title>New pulse survey</Modal.Title>
-				<Modal.Description
-					>One question, a 1–5 rating and an optional comment — answered in the resident portal.</Modal.Description
-				>
+				<Modal.Description>
+					One question, a 1–5 rating and an optional comment — answered in the resident portal.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Title</Field.Label>
@@ -141,18 +141,17 @@
 	<Modal.Content class="sm:max-w-lg">
 		<Modal.Header>
 			<Modal.Title>{viewingSurvey?.title}</Modal.Title>
-			<Modal.Description
-				>{viewingSurvey?.question} · {viewingSurvey?.propertyName ??
-					'All properties'}</Modal.Description
-			>
+			<Modal.Description>
+				{viewingSurvey?.question} · {viewingSurvey?.propertyName ?? 'All properties'}
+			</Modal.Description>
 		</Modal.Header>
 		<div class="max-h-80 space-y-2 overflow-y-auto">
 			{#each responses as r (r.id)}
 				<div class="rounded-md border p-3 text-sm">
 					<div class="flex items-center gap-2">
-						<span class="font-medium"
-							>{`${r.tenantFirst ?? ''} ${r.tenantLast ?? ''}`.trim() || r.tenantCompany}</span
-						>
+						<span class="font-medium">
+							{`${r.tenantFirst ?? ''} ${r.tenantLast ?? ''}`.trim() || r.tenantCompany}
+						</span>
 						{#if r.rating}
 							<span class="flex items-center gap-0.5 text-xs text-muted-foreground">
 								{#each { length: 5 } as _, i (i)}
@@ -188,8 +187,10 @@
 				onclick={() => {
 					viewing = '';
 					closing = false;
-				}}>Done</Button
+				}}
 			>
+				Done
+			</Button>
 		</Modal.Footer>
 	</Modal.Content>
 </Modal.Root>

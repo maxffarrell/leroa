@@ -80,12 +80,12 @@
 	<div class="flex items-center gap-2">
 		<h2 class="text-sm font-medium">Clauses & critical dates</h2>
 		<div class="ml-auto flex gap-2">
-			<Button size="sm" variant="outline" onclick={() => (addingClause = true)}
-				><Plus /> Clause</Button
-			>
-			<Button size="sm" variant="outline" onclick={() => (addingDate = true)}
-				><CalendarClock /> Date</Button
-			>
+			<Button size="sm" variant="outline" onclick={() => (addingClause = true)}>
+				<Plus /> Clause
+			</Button>
+			<Button size="sm" variant="outline" onclick={() => (addingDate = true)}>
+				<CalendarClock /> Date
+			</Button>
 		</div>
 	</div>
 	{#if !clauses.length && !dates.length}
@@ -119,8 +119,10 @@
 										getClauses(leaseId).refresh();
 										getCriticalDates(leaseId).refresh();
 									}
-								})}><Trash2 /></Button
+								})}
 						>
+							<Trash2 />
+						</Button>
 					</div>
 				</div>
 			{/each}
@@ -146,15 +148,15 @@
 								</span>
 							</td>
 							<td class="px-3 py-2 tabular-nums">
-								<span class={overdue ? 'font-medium text-red-600 dark:text-red-400' : ''}
-									>{formatDate(d.date, true)}</span
-								>
+								<span class={overdue ? 'font-medium text-red-600 dark:text-red-400' : ''}>
+									{formatDate(d.date, true)}
+								</span>
 							</td>
 							<td class="px-3 py-2">
 								{d.label}
-								{#if d.clauseTitle}<span class="ml-1 text-xs text-muted-foreground"
-										>· {d.clauseTitle}</span
-									>{/if}
+								{#if d.clauseTitle}<span class="ml-1 text-xs text-muted-foreground">
+										· {d.clauseTitle}
+									</span>{/if}
 								{#if overdue}<Badge variant="destructive" class="ml-1.5">Due</Badge>{/if}
 							</td>
 							<td class="px-3 py-2 text-right text-xs whitespace-nowrap text-muted-foreground">
@@ -171,8 +173,10 @@
 												await removeCriticalDate(d.id).catch(() => toast.error('Could not delete'));
 												getCriticalDates(leaseId).refresh();
 											}
-										})}><Trash2 /></Button
+										})}
 								>
+									<Trash2 />
+								</Button>
 							</td>
 						</tr>
 					{/each}
@@ -187,9 +191,9 @@
 		<form class="space-y-4" onsubmit={saveClause}>
 			<Modal.Header>
 				<Modal.Title>New clause</Modal.Title>
-				<Modal.Description
-					>A named provision on this lease — mostly used on commercial deals.</Modal.Description
-				>
+				<Modal.Description>
+					A named provision on this lease — mostly used on commercial deals.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Kind</Field.Label>
@@ -212,9 +216,9 @@
 				/>
 			</Field.Field>
 			<Modal.Footer>
-				<Button type="button" variant="outline" onclick={() => (addingClause = false)}
-					>Cancel</Button
-				>
+				<Button type="button" variant="outline" onclick={() => (addingClause = false)}>
+					Cancel
+				</Button>
 				<Button type="submit" disabled={!fTitle.trim()}>Add clause</Button>
 			</Modal.Footer>
 		</form>
@@ -226,9 +230,9 @@
 		<form class="space-y-4" onsubmit={saveDate}>
 			<Modal.Header>
 				<Modal.Title>New critical date</Modal.Title>
-				<Modal.Description
-					>Managers get a reminder inside the lead window — in the inbox and by email.</Modal.Description
-				>
+				<Modal.Description>
+					Managers get a reminder inside the lead window — in the inbox and by email.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Label</Field.Label>

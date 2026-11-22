@@ -53,13 +53,13 @@
 
 <div>
 	<div class="mb-2 flex items-center gap-2">
-		<Button size="icon-sm" variant="outline" onclick={() => shift(-1)} aria-label="Previous month"
-			><ChevronLeft /></Button
-		>
+		<Button size="icon-sm" variant="outline" onclick={() => shift(-1)} aria-label="Previous month">
+			<ChevronLeft />
+		</Button>
 		<p class="min-w-36 text-center text-sm font-medium">{label}</p>
-		<Button size="icon-sm" variant="outline" onclick={() => shift(1)} aria-label="Next month"
-			><ChevronRight /></Button
-		>
+		<Button size="icon-sm" variant="outline" onclick={() => shift(1)} aria-label="Next month">
+			<ChevronRight />
+		</Button>
 	</div>
 	<div class="overflow-x-auto rounded-lg border">
 		<div class="grid grid-cols-7 border-b bg-muted/40 text-center text-xs text-muted-foreground">
@@ -91,14 +91,18 @@
 										title={item.sub ? `${item.title} · ${item.sub}` : item.title}
 										class="block truncate rounded px-1 py-0.5 text-[11px] leading-tight hover:underline {tones[
 											item.tone ?? 'default'
-										]}">{item.title}</a
+										]}"
 									>
+										{item.title}
+									</a>
 								{:else}
 									<span
 										class="block truncate rounded px-1 py-0.5 text-[11px] leading-tight {tones[
 											item.tone ?? 'default'
-										]}">{item.title}</span
+										]}"
 									>
+										{item.title}
+									</span>
 								{/if}
 							{/each}
 						</div>

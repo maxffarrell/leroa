@@ -51,9 +51,9 @@
 				</p>
 			</div>
 		</div>
-		<Button href={pdf(i.id)} target="_blank" rel="noopener" variant="outline" size="sm"
-			>Open report</Button
-		>
+		<Button href={pdf(i.id)} target="_blank" rel="noopener" variant="outline" size="sm">
+			Open report
+		</Button>
 		{#if preview}
 			<p class="text-xs text-muted-foreground">Awaiting the tenant's review.</p>
 		{:else}
@@ -67,9 +67,9 @@
 					bind:value={() => comments[i.id] ?? '', (v) => (comments[i.id] = v)}
 				/>
 			</Field.Field>
-			<Button type="submit" disabled={busy !== null}
-				>{busy === i.id ? 'Saving…' : 'I’ve reviewed this report'}</Button
-			>
+			<Button type="submit" disabled={busy !== null}>
+				{busy === i.id ? 'Saving…' : 'I’ve reviewed this report'}
+			</Button>
 		{/if}
 	</form>
 {/each}
@@ -85,13 +85,12 @@
 						target="_blank"
 						rel="noopener"
 						class="min-w-0 flex-1 truncate hover:underline"
-						>{KIND_LABEL[i.kind]} inspection · {formatDate(i.completedAt)}</a
 					>
-					<span class="text-xs text-muted-foreground"
-						>Reviewed {formatDate(i.acknowledgedAt)}{i.tenantComment
-							? ' · with comments'
-							: ''}</span
-					>
+						{KIND_LABEL[i.kind]} inspection · {formatDate(i.completedAt)}
+					</a>
+					<span class="text-xs text-muted-foreground">
+						Reviewed {formatDate(i.acknowledgedAt)}{i.tenantComment ? ' · with comments' : ''}
+					</span>
 				</li>
 			{/each}
 		</ul>

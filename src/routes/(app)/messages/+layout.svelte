@@ -53,14 +53,14 @@
 <PageHeader title="Messages">
 	{#snippet actions()}
 		{#if onAnnouncements}
-			<Button size="sm" href="/messages/announcements?new=1"
-				><Megaphone /> <span class="hidden sm:inline">New announcement</span></Button
-			>
+			<Button size="sm" href="/messages/announcements?new=1">
+				<Megaphone /> <span class="hidden sm:inline">New announcement</span>
+			</Button>
 		{:else}
-			<Button size="sm" onclick={() => (composing = true)}
-				><SquarePen /> <span class="hidden sm:inline">New message</span>
-				<Kbd class="hidden sm:inline-flex">C</Kbd></Button
-			>
+			<Button size="sm" onclick={() => (composing = true)}>
+				<SquarePen /> <span class="hidden sm:inline">New message</span>
+				<Kbd class="hidden sm:inline-flex">C</Kbd>
+			</Button>
 		{/if}
 	{/snippet}
 </PageHeader>
@@ -69,12 +69,13 @@
 	class={cn('flex gap-1 border-b px-4 py-1.5 md:px-6', selected && 'hidden md:flex')}
 	aria-label="Messages"
 >
-	<a href="/messages" class={tabClass(!onAnnouncements)}
-		>Inbox {#if unread}<span
+	<a href="/messages" class={tabClass(!onAnnouncements)}>
+		Inbox {#if unread}<span
 				class="rounded-full bg-primary px-1.5 text-xs text-primary-foreground tabular-nums"
-				>{unread}</span
-			>{/if}</a
-	>
+			>
+				{unread}
+			</span>{/if}
+	</a>
 	<a href="/messages/announcements" class={tabClass(onAnnouncements)}>Announcements</a>
 </nav>
 
@@ -94,15 +95,14 @@
 						<Empty.Header>
 							<Empty.Media variant="icon"><MessagesSquare /></Empty.Media>
 							<Empty.Title>No messages yet</Empty.Title>
-							<Empty.Description
-								>Message a tenant and they can reply from the resident portal. Everything stays in
-								one thread per tenant.</Empty.Description
-							>
+							<Empty.Description>
+								Message a tenant and they can reply from the resident portal. Everything stays in
+								one thread per tenant.
+							</Empty.Description>
 						</Empty.Header>
-						<Empty.Content
-							><Button onclick={() => (composing = true)}><SquarePen /> New message</Button
-							></Empty.Content
-						>
+						<Empty.Content>
+							<Button onclick={() => (composing = true)}><SquarePen /> New message</Button>
+						</Empty.Content>
 					</Empty.Root>
 				{/snippet}
 			</ThreadList>

@@ -203,9 +203,9 @@
 	crumbs={[{ label: 'Inspections', href: '/inspections' }]}
 >
 	{#snippet actions()}
-		<Button size="sm" variant="outline" href={pdf} target="_blank" rel="noopener"
-			><FileText /> <span class="hidden sm:inline">PDF</span></Button
-		>
+		<Button size="sm" variant="outline" href={pdf} target="_blank" rel="noopener">
+			<FileText /> <span class="hidden sm:inline">PDF</span>
+		</Button>
 		{#if editable}
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
@@ -213,13 +213,15 @@
 							size="icon-sm"
 							variant="ghost"
 							aria-label="More"
-							{...props}><Ellipsis /></Button
-						>{/snippet}
+							{...props}
+						>
+							<Ellipsis />
+						</Button>{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item variant="destructive" onclick={remove}
-						>Delete inspection</DropdownMenu.Item
-					>
+					<DropdownMenu.Item variant="destructive" onclick={remove}>
+						Delete inspection
+					</DropdownMenu.Item>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 		{/if}
@@ -230,9 +232,9 @@
 	<div class="space-y-1">
 		<div class="flex flex-wrap items-center gap-2">
 			<h1 class="text-xl font-semibold tracking-tight">
-				<a href="/properties/{i.propertyId}" class="hover:underline"
-					>{i.propertyName} · {i.unitName}</a
-				>
+				<a href="/properties/{i.propertyId}" class="hover:underline">
+					{i.propertyName} · {i.unitName}
+				</a>
 			</h1>
 			<StatusBadge status={i.status} />
 		</div>
@@ -284,9 +286,9 @@
 		<section class="space-y-2">
 			<h2 class="flex items-baseline gap-2 text-sm font-medium">
 				{g.area}
-				<span class="text-xs font-normal text-muted-foreground"
-					>{g.items.filter((it) => it.condition).length}/{g.items.length}</span
-				>
+				<span class="text-xs font-normal text-muted-foreground">
+					{g.items.filter((it) => it.condition).length}/{g.items.length}
+				</span>
 			</h2>
 			<ul class="divide-y rounded-lg border">
 				{#each g.items as it (it.id)}
@@ -308,8 +310,8 @@
 										Move-in: {it.before.condition ? CONDITION_LABEL[it.before.condition] : '—'}
 										{#if it.before.notes}· {it.before.notes}{/if}
 										{#if worse}<span class="font-medium text-red-600 dark:text-red-400">
-												· Worse than move-in</span
-											>{/if}
+												· Worse than move-in
+											</span>{/if}
 									</p>
 								{/if}
 							</div>
@@ -327,16 +329,17 @@
 									aria-label="Condition of {it.label}"
 								>
 									{#each itemConditions as c (c)}
-										<ToggleGroup.Item value={c} class={cn('flex-1 px-2.5 text-xs', tone[c])}
-											>{CONDITION_LABEL[c]}</ToggleGroup.Item
-										>
+										<ToggleGroup.Item value={c} class={cn('flex-1 px-2.5 text-xs', tone[c])}>
+											{CONDITION_LABEL[c]}
+										</ToggleGroup.Item>
 									{/each}
 								</ToggleGroup.Root>
 							{:else if it.condition}
 								<span
 									class={cn('rounded-full px-2 py-0.5 text-xs font-medium', badge[it.condition])}
-									>{CONDITION_LABEL[it.condition]}</span
 								>
+									{CONDITION_LABEL[it.condition]}
+								</span>
 							{/if}
 						</div>
 
@@ -360,13 +363,14 @@
 										target="_blank"
 										rel="noreferrer"
 										class="size-14 overflow-hidden rounded-md bg-muted"
-										><img
+									>
+										<img
 											src="/api/documents/{p.id}"
 											alt={p.name}
 											loading="lazy"
 											class="size-full object-cover"
-										/></a
-									>
+										/>
+									</a>
 								{/each}
 								{#if editable}
 									<label
@@ -391,8 +395,10 @@
 											size="sm"
 											variant="ghost"
 											class="h-8 px-2 text-xs text-muted-foreground"
-											onclick={() => (notesOpen[it.id] = true)}><StickyNote /> Note</Button
+											onclick={() => (notesOpen[it.id] = true)}
 										>
+											<StickyNote /> Note
+										</Button>
 									{/if}
 								{/if}
 								{#if needsRepair(it.condition)}
@@ -400,8 +406,10 @@
 										size="sm"
 										variant="ghost"
 										class="h-8 px-2 text-xs"
-										onclick={() => repair(it.id)}><Wrench /> Create request</Button
+										onclick={() => repair(it.id)}
 									>
+										<Wrench /> Create request
+									</Button>
 								{/if}
 								{#if editable}
 									<Button
@@ -409,8 +417,10 @@
 										variant="ghost"
 										class="ml-auto text-muted-foreground"
 										aria-label="Remove {it.label}"
-										onclick={() => removeItem(it.id)}><X /></Button
+										onclick={() => removeItem(it.id)}
 									>
+										<X />
+									</Button>
 								{/if}
 							</div>
 						{/if}
@@ -430,8 +440,10 @@
 								size="sm"
 								variant="ghost"
 								disabled={!newItem[g.area]?.trim()}
-								aria-label="Add item"><Plus /></Button
+								aria-label="Add item"
 							>
+								<Plus />
+							</Button>
 						</form>
 					</li>
 				{/if}
@@ -454,8 +466,10 @@
 					type="submit"
 					size="sm"
 					variant="outline"
-					disabled={!newArea.trim() || !newItem['\u0000']?.trim()}>Add</Button
+					disabled={!newArea.trim() || !newItem['\u0000']?.trim()}
 				>
+					Add
+				</Button>
 			</div>
 		</form>
 
@@ -488,14 +502,14 @@
 			<div class="min-w-0 flex-1 space-y-1">
 				<p class="text-xs text-muted-foreground tabular-nums">
 					{rated} of {items.length} rated{#if flagged}<span class="text-red-600 dark:text-red-400">
-							· {flagged} need attention</span
-						>{/if}
+							· {flagged} need attention
+						</span>{/if}
 				</p>
 				<Progress value={items.length ? (rated / items.length) * 100 : 0} class="h-1.5" />
 			</div>
-			<Button disabled={rated < items.length || !items.length} onclick={() => (completing = true)}
-				>Complete</Button
-			>
+			<Button disabled={rated < items.length || !items.length} onclick={() => (completing = true)}>
+				Complete
+			</Button>
 		</div>
 	</div>
 {/if}

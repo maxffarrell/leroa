@@ -22,9 +22,9 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>No properties linked yet</Card.Title>
-			<Card.Description
-				>Ask your property manager for an owner portal invite link, then open it while signed in.</Card.Description
-			>
+			<Card.Description>
+				Ask your property manager for an owner portal invite link, then open it while signed in.
+			</Card.Description>
 		</Card.Header>
 	</Card.Root>
 {/each}

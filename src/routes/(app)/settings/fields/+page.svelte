@@ -87,17 +87,17 @@
 						{#each fields as f (f.id)}
 							<Table.Row class={f.archivedAt ? 'opacity-50' : ''}>
 								<Table.Cell class="text-sm font-medium">{f.name}</Table.Cell>
-								<Table.Cell
-									><Badge variant="outline" class="font-normal">{f.type}</Badge></Table.Cell
-								>
-								<Table.Cell class="text-xs text-muted-foreground"
-									>{f.type === 'select' ? (f.options ?? []).join(', ') || '—' : '—'}</Table.Cell
-								>
+								<Table.Cell>
+									<Badge variant="outline" class="font-normal">{f.type}</Badge>
+								</Table.Cell>
+								<Table.Cell class="text-xs text-muted-foreground">
+									{f.type === 'select' ? (f.options ?? []).join(', ') || '—' : '—'}
+								</Table.Cell>
 								<Table.Cell class="text-right">
 									{#if isAdmin}
-										<Button variant="ghost" size="sm" class="h-7" onclick={() => toggle(f)}
-											>{f.archivedAt ? 'Restore' : 'Archive'}</Button
-										>
+										<Button variant="ghost" size="sm" class="h-7" onclick={() => toggle(f)}>
+											{f.archivedAt ? 'Restore' : 'Archive'}
+										</Button>
 									{/if}
 								</Table.Cell>
 							</Table.Row>

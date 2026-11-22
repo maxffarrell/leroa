@@ -32,9 +32,9 @@
 						onSelect={() => pick(t.id)}
 					>
 						<span class="truncate">{name}</span>
-						{#if t.unitName}<span class="ml-auto truncate text-xs text-muted-foreground"
-								>{t.propertyName} · {t.unitName}</span
-							>{/if}
+						{#if t.unitName}<span class="ml-auto truncate text-xs text-muted-foreground">
+								{t.propertyName} · {t.unitName}
+							</span>{/if}
 					</Command.Item>
 				{/each}
 			</Command.List>

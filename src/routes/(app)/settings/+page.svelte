@@ -48,74 +48,74 @@
 </script>
 
 <Card.Root>
-	<Card.Header
-		><Card.Title>Workspace</Card.Title><Card.Description
-			>Shown to your team and in the tenant portal.</Card.Description
-		></Card.Header
-	>
+	<Card.Header>
+		<Card.Title>Workspace</Card.Title><Card.Description>
+			Shown to your team and in the tenant portal.
+		</Card.Description>
+	</Card.Header>
 	<Card.Content>
 		<form class="flex items-end gap-3" onsubmit={save}>
-			<Field.Field class="flex-1"
-				><Field.Label for="org-name">Name</Field.Label><Input
+			<Field.Field class="flex-1">
+				<Field.Label for="org-name">Name</Field.Label><Input
 					id="org-name"
 					bind:value={name}
 					disabled={!canEdit}
 					required
-				/></Field.Field
-			>
+				/>
+			</Field.Field>
 			<Button type="submit" disabled={!canEdit || name === org.name}>Save</Button>
 		</form>
 	</Card.Content>
 </Card.Root>
 {#if enterprise}
 	<Card.Root>
-		<Card.Header
-			><Card.Title>Branding</Card.Title><Card.Description
-				>Shown on your public listing pages and the resident portal. Enterprise feature.</Card.Description
-			></Card.Header
-		>
+		<Card.Header>
+			<Card.Title>Branding</Card.Title><Card.Description>
+				Shown on your public listing pages and the resident portal. Enterprise feature.
+			</Card.Description>
+		</Card.Header>
 		<Card.Content>
 			<form class="flex flex-wrap items-end gap-3" onsubmit={saveBrand}>
-				<Field.Field class="min-w-56 flex-1"
-					><Field.Label for="portal-title">Resident-facing name</Field.Label><Input
+				<Field.Field class="min-w-56 flex-1">
+					<Field.Label for="portal-title">Resident-facing name</Field.Label><Input
 						id="portal-title"
 						bind:value={portalTitle}
 						placeholder={org.name}
 						disabled={!canEdit}
-					/></Field.Field
-				>
-				<Field.Field
-					><Field.Label for="accent-color">Accent color</Field.Label><Input
+					/>
+				</Field.Field>
+				<Field.Field>
+					<Field.Label for="accent-color">Accent color</Field.Label><Input
 						id="accent-color"
 						type="color"
 						class="h-9 w-20 cursor-pointer p-1"
 						bind:value={accentColor}
 						disabled={!canEdit}
-					/></Field.Field
-				>
+					/>
+				</Field.Field>
 				<Button type="submit" disabled={!canEdit || brandingPending}>Save branding</Button>
 			</form>
 		</Card.Content>
 	</Card.Root>
 {/if}
 <Card.Root>
-	<Card.Header
-		><Card.Title>Get familiar</Card.Title><Card.Description
-			>Take the guided tour of the interface again — it opens on the dashboard.</Card.Description
-		></Card.Header
-	>
+	<Card.Header>
+		<Card.Title>Get familiar</Card.Title><Card.Description>
+			Take the guided tour of the interface again — it opens on the dashboard.
+		</Card.Description>
+	</Card.Header>
 	<Card.Content>
 		<Button variant="outline" onclick={() => goto('/dashboard?tour=1')}>Replay the tour</Button>
 	</Card.Content>
 </Card.Root>
 <Card.Root>
-	<Card.Header
-		><Card.Title>Workspace ID</Card.Title><Card.Description
-			>Use this when calling the API or configuring integrations.</Card.Description
-		></Card.Header
-	>
-	<Card.Content
-		><div class="flex min-w-0 items-center gap-2">
+	<Card.Header>
+		<Card.Title>Workspace ID</Card.Title><Card.Description>
+			Use this when calling the API or configuring integrations.
+		</Card.Description>
+	</Card.Header>
+	<Card.Content>
+		<div class="flex min-w-0 items-center gap-2">
 			<code class="min-w-0 truncate rounded bg-muted px-2 py-1 font-mono text-sm">{org.id}</code>
 			<CopyButton
 				size="icon-sm"
@@ -124,6 +124,6 @@
 				aria-label="Copy workspace ID"
 				text={org.id}
 			/>
-		</div></Card.Content
-	>
+		</div>
+	</Card.Content>
 </Card.Root>

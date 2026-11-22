@@ -63,8 +63,10 @@
 										title: 'Delete webhook?',
 										description: h.url,
 										onConfirm: () => deleteWebhook(h.id)
-									})}><Trash /></Button
+									})}
 							>
+								<Trash />
+							</Button>
 						</div>
 						<div
 							class="flex flex-wrap items-center gap-x-4 gap-y-1 pl-12 text-xs text-muted-foreground"
@@ -75,14 +77,16 @@
 								size="sm"
 								class="h-auto px-1 text-xs text-muted-foreground hover:text-foreground [&_svg]:size-3"
 								onCopy={(status) => status === 'success' && toast.success('Secret copied')}
-								>Copy signing secret</CopyButton
 							>
+								Copy signing secret
+							</CopyButton>
 							<span>Events: {h.events.join(', ')}</span>
 							{#if h.lastDeliveryAt}<span
 									class={h.lastDeliveryStatus && h.lastDeliveryStatus < 300 ? '' : 'text-red-600'}
-									>Last delivery {formatRelative(h.lastDeliveryAt)} · {h.lastDeliveryStatus ??
-										'failed'}</span
-								>{/if}
+								>
+									Last delivery {formatRelative(h.lastDeliveryAt)} · {h.lastDeliveryStatus ??
+										'failed'}
+								</span>{/if}
 						</div>
 					</li>
 				{/each}

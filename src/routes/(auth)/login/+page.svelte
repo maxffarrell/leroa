@@ -62,9 +62,9 @@
 			</p>
 		</div>
 		<Button type="submit" class="w-full"><Sparkles /> Staff view</Button>
-		<Button type="submit" formaction="/demo?view=member" variant="outline" class="w-full"
-			><Sparkles /> Resident view</Button
-		>
+		<Button type="submit" formaction="/demo?view=member" variant="outline" class="w-full">
+			<Sparkles /> Resident view
+		</Button>
 	</form>
 {/if}
 
@@ -114,9 +114,9 @@
 				/>
 			{/if}
 			{#if page.data.security}
-				<Button type="button" variant="outline" onclick={passkey}
-					><KeyRound /> Sign in with a passkey</Button
-				>
+				<Button type="button" variant="outline" onclick={passkey}>
+					<KeyRound /> Sign in with a passkey
+				</Button>
 				<Button type="button" variant="outline" onclick={() => (showSso = !showSso)}>
 					<Building />
 					{showSso ? 'Use a password instead' : 'Single sign-on (SAML / OIDC)'}
@@ -127,7 +127,9 @@
 	{#if !page.data.demo}<p class="text-center text-sm text-muted-foreground">
 			New to Leroa? <a
 				href="/signup{page.url.search}"
-				class="font-medium text-foreground underline-offset-4 hover:underline">Create an account</a
+				class="font-medium text-foreground underline-offset-4 hover:underline"
 			>
+				Create an account
+			</a>
 		</p>{/if}
 </form>

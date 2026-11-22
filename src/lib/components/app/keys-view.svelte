@@ -82,22 +82,19 @@
 			<Table.Body>
 				{#each keys as k (k.id)}
 					<Table.Row>
-						<Table.Cell class="font-medium"
-							>{k.label}
-							<span class="text-xs text-muted-foreground">{KEY_KIND_LABELS[k.kind]}</span
-							></Table.Cell
-						>
-						<Table.Cell
-							>{`${k.tenantFirst ?? ''} ${k.tenantLast ?? ''}`.trim() ||
-								k.tenantCompany ||
-								'—'}</Table.Cell
-						>
-						<Table.Cell class="hidden text-muted-foreground md:table-cell"
-							>{k.propertyName}{k.unitName ? ` · ${k.unitName}` : ''}</Table.Cell
-						>
-						<Table.Cell class="hidden text-muted-foreground sm:table-cell"
-							>{k.issuedAt ? formatRelative(k.issuedAt) : '—'}</Table.Cell
-						>
+						<Table.Cell class="font-medium">
+							{k.label}
+							<span class="text-xs text-muted-foreground">{KEY_KIND_LABELS[k.kind]}</span>
+						</Table.Cell>
+						<Table.Cell>
+							{`${k.tenantFirst ?? ''} ${k.tenantLast ?? ''}`.trim() || k.tenantCompany || '—'}
+						</Table.Cell>
+						<Table.Cell class="hidden text-muted-foreground md:table-cell">
+							{k.propertyName}{k.unitName ? ` · ${k.unitName}` : ''}
+						</Table.Cell>
+						<Table.Cell class="hidden text-muted-foreground sm:table-cell">
+							{k.issuedAt ? formatRelative(k.issuedAt) : '—'}
+						</Table.Cell>
 						<Table.Cell>
 							{#if k.status === 'issued'}
 								<Badge>Issued</Badge>
@@ -109,24 +106,26 @@
 						</Table.Cell>
 						<Table.Cell class="text-right">
 							{#if k.status === 'issued'}
-								<Button size="sm" variant="outline" onclick={() => close(k.id, 'returned')}
-									>Returned</Button
-								>
+								<Button size="sm" variant="outline" onclick={() => close(k.id, 'returned')}>
+									Returned
+								</Button>
 								<Button
 									size="sm"
 									variant="ghost"
 									class="text-muted-foreground"
-									onclick={() => close(k.id, 'lost')}>Lost</Button
+									onclick={() => close(k.id, 'lost')}
 								>
+									Lost
+								</Button>
 							{/if}
 						</Table.Cell>
 					</Table.Row>
 				{:else}
-					<Table.Row
-						><Table.Cell colspan={6} class="py-8 text-center text-muted-foreground"
-							>Nothing issued.</Table.Cell
-						></Table.Row
-					>
+					<Table.Row>
+						<Table.Cell colspan={6} class="py-8 text-center text-muted-foreground">
+							Nothing issued.
+						</Table.Cell>
+					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>

@@ -49,9 +49,9 @@
 	<div class="grid gap-2">
 		{#each providers as p (p)}
 			<Button type="button" variant="outline" disabled={!!pending} onclick={() => signIn(p)}>
-				<svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true"
-					><path d={SOCIAL_ICONS[p]} /></svg
-				>
+				<svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
+					<path d={SOCIAL_ICONS[p]} />
+				</svg>
 				{pending === p ? 'Redirecting…' : `Continue with ${SOCIAL_LABELS[p]}`}
 			</Button>
 		{/each}

@@ -89,12 +89,22 @@
 						if (e.key === 'Escape') naming = false;
 					}}
 				/>
-				<Button size="icon" class="size-8 shrink-0" onclick={save} disabled={saving || !name.trim()}
-					><Check class="size-4" /></Button
+				<Button
+					size="icon"
+					class="size-8 shrink-0"
+					onclick={save}
+					disabled={saving || !name.trim()}
 				>
-				<Button size="icon" variant="ghost" class="size-8 shrink-0" onclick={() => (naming = false)}
-					><X class="size-4" /></Button
+					<Check class="size-4" />
+				</Button>
+				<Button
+					size="icon"
+					variant="ghost"
+					class="size-8 shrink-0"
+					onclick={() => (naming = false)}
 				>
+					<X class="size-4" />
+				</Button>
 			</div>
 			<p class="px-2 pb-2 text-xs text-muted-foreground">Current: {summarize(current())}</p>
 		{:else}
@@ -112,9 +122,9 @@
 							</button>
 						{/if}
 					</span>
-					<span class="line-clamp-1 text-xs font-normal text-muted-foreground"
-						>{summarize(v.state)}{v.creatorName ? ` · ${v.creatorName}` : ''}</span
-					>
+					<span class="line-clamp-1 text-xs font-normal text-muted-foreground">
+						{summarize(v.state)}{v.creatorName ? ` · ${v.creatorName}` : ''}
+					</span>
 				</DropdownMenu.Item>
 			{/each}
 			{#if views.length}<DropdownMenu.Separator />{/if}

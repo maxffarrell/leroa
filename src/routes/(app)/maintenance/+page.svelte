@@ -195,20 +195,20 @@
 
 <PageHeader title="Maintenance">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" onclick={() => (creating = true)}>
+			<Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
 <main class="flex min-h-0 flex-1 flex-col gap-4 p-4 md:p-6">
 	<Tabs.Root bind:value={tab} class="flex min-h-0 flex-1 flex-col gap-4">
 		<Tabs.List class="max-w-full justify-start overflow-x-auto">
-			<Tabs.Trigger value="requests"
-				>Requests <span class="ml-1 text-xs text-muted-foreground tabular-nums"
-					>{tickets.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length}</span
-				></Tabs.Trigger
-			>
+			<Tabs.Trigger value="requests">
+				Requests <span class="ml-1 text-xs text-muted-foreground tabular-nums">
+					{tickets.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length}
+				</span>
+			</Tabs.Trigger>
 			<Tabs.Trigger value="turns">Turns</Tabs.Trigger>
 			<Tabs.Trigger value="schedules">Schedules</Tabs.Trigger>
 			<Tabs.Trigger value="assets">Assets</Tabs.Trigger>
@@ -255,32 +255,30 @@
 											/>
 										</span>
 									</Table.Cell>
-									<Table.Cell class="text-xs text-muted-foreground tabular-nums"
-										>{t.number}</Table.Cell
-									>
+									<Table.Cell class="text-xs text-muted-foreground tabular-nums">
+										{t.number}
+									</Table.Cell>
 									<Table.Cell class="max-w-64 truncate font-medium">{t.title}</Table.Cell>
-									<Table.Cell class="hidden text-muted-foreground md:table-cell"
-										>{t.propertyName}{t.unitName ? ` · ${t.unitName}` : ''}</Table.Cell
-									>
-									<Table.Cell class="hidden text-muted-foreground sm:table-cell"
-										>{t.vendorName ?? '—'}</Table.Cell
-									>
-									<Table.Cell
-										>{#if t.priority !== 'normal'}<StatusBadge
-												status={t.priority}
-											/>{:else}—{/if}</Table.Cell
-									>
+									<Table.Cell class="hidden text-muted-foreground md:table-cell">
+										{t.propertyName}{t.unitName ? ` · ${t.unitName}` : ''}
+									</Table.Cell>
+									<Table.Cell class="hidden text-muted-foreground sm:table-cell">
+										{t.vendorName ?? '—'}
+									</Table.Cell>
+									<Table.Cell>
+										{#if t.priority !== 'normal'}<StatusBadge status={t.priority} />{:else}—{/if}
+									</Table.Cell>
 									<Table.Cell><StatusBadge status={t.status} /></Table.Cell>
-									<Table.Cell class="hidden text-right text-xs text-muted-foreground lg:table-cell"
-										>{formatRelative(t.updatedAt)}</Table.Cell
-									>
+									<Table.Cell class="hidden text-right text-xs text-muted-foreground lg:table-cell">
+										{formatRelative(t.updatedAt)}
+									</Table.Cell>
 								</Table.Row>
 							{:else}
-								<Table.Row
-									><Table.Cell colspan={8} class="py-8 text-center text-muted-foreground"
-										>No requests.</Table.Cell
-									></Table.Row
-								>
+								<Table.Row>
+									<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">
+										No requests.
+									</Table.Cell>
+								</Table.Row>
 							{/each}
 						</Table.Body>
 					</Table.Root>
@@ -327,9 +325,9 @@
 											</div>
 											<div class="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
 												{#if t.priority !== 'normal'}<StatusBadge status={t.priority} />{/if}
-												<span class="truncate"
-													>{t.propertyName}{t.unitName ? ` · ${t.unitName}` : ''}</span
-												>
+												<span class="truncate">
+													{t.propertyName}{t.unitName ? ` · ${t.unitName}` : ''}
+												</span>
 												<span class="ml-auto shrink-0">{formatRelative(t.createdAt)}</span>
 											</div>
 											{#if t.vendorName}
@@ -414,13 +412,13 @@
 	<Sheet.Content class="w-full gap-0 sm:max-w-md">
 		{#if selected}
 			<Sheet.Header>
-				<Sheet.Description
-					>#{selected.number} · {selected.propertyName}{selected.unitName
+				<Sheet.Description>
+					#{selected.number} · {selected.propertyName}{selected.unitName
 						? ` · ${selected.unitName}`
 						: ''}{selected.assetName ? ` · ${selected.assetName}` : ''}{selected.scheduleId
 						? ' · recurring'
-						: ''}</Sheet.Description
-				>
+						: ''}
+				</Sheet.Description>
 				<Sheet.Title class="text-lg">{selected.title}</Sheet.Title>
 			</Sheet.Header>
 			<div class="space-y-4 overflow-y-auto px-4 pb-4">
@@ -429,12 +427,13 @@
 						class="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
 					>
 						<Copy class="mt-0.5 size-4 shrink-0" />
-						<span
-							>AI flagged this as a possible duplicate of
-							<a class="font-medium underline" href="?ticket={selected.duplicateOf}"
-								>#{selected.dupNumber} {selected.dupTitle}</a
-							>.</span
-						>
+						<span>
+							AI flagged this as a possible duplicate of
+							<a class="font-medium underline" href="?ticket={selected.duplicateOf}">
+								#{selected.dupNumber}
+								{selected.dupTitle}
+							</a>.
+						</span>
 					</p>
 				{/if}
 				<div class="grid grid-cols-2 gap-3">
@@ -446,11 +445,11 @@
 							onValueChange={(v) => patch(selected!.id, { status: v as Ticket['status'] })}
 						>
 							<Select.Trigger class="w-full capitalize">{label(selected.status)}</Select.Trigger>
-							<Select.Content
-								>{#each ticketStatuses as s (s)}<Select.Item value={s} class="capitalize"
-										>{label(s)}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Content>
+								{#each ticketStatuses as s (s)}<Select.Item value={s} class="capitalize">
+										{label(s)}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 					<Field.Field>
@@ -461,11 +460,11 @@
 							onValueChange={(v) => patch(selected!.id, { priority: v as Ticket['priority'] })}
 						>
 							<Select.Trigger class="w-full capitalize">{selected.priority}</Select.Trigger>
-							<Select.Content
-								>{#each ticketPriorities as p (p)}<Select.Item value={p} class="capitalize"
-										>{p}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Content>
+								{#each ticketPriorities as p (p)}<Select.Item value={p} class="capitalize">
+										{p}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 				</div>
@@ -479,13 +478,16 @@
 										class="text-xs text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
 										disabled={suggesting}
 										onclick={() => suggestVendor(selected!)}
-										>{suggesting ? 'Thinking…' : 'Ask AI'}</button
 									>
+										{suggesting ? 'Thinking…' : 'Ask AI'}
+									</button>
 								{/if}
 								{#if selected.vendorId}<a
 										href="/vendors/{selected.vendorId}"
-										class="text-xs text-muted-foreground hover:underline">View vendor</a
-									>{/if}
+										class="text-xs text-muted-foreground hover:underline"
+									>
+										View vendor
+									</a>{/if}
 							</div>
 						</div>
 						<Select.Root
@@ -496,21 +498,21 @@
 									? (addingVendor = true)
 									: patch(selected!.id, { vendorId: v === '__none' ? null : v })}
 						>
-							<Select.Trigger class="w-full"
-								><span class="truncate">{selected.vendorName ?? 'Unassigned'}</span></Select.Trigger
-							>
+							<Select.Trigger class="w-full">
+								<span class="truncate">{selected.vendorName ?? 'Unassigned'}</span>
+							</Select.Trigger>
 							<Select.Content>
 								<Select.Item value="__none">Unassigned</Select.Item>
 								{#each vendors as v (v.id)}
-									<Select.Item value={v.id} label={v.name}
-										>{v.name}<span class="ml-auto pl-3 text-xs text-muted-foreground"
-											>{v.trades[0] ?? ''}</span
-										></Select.Item
-									>
+									<Select.Item value={v.id} label={v.name}>
+										{v.name}<span class="ml-auto pl-3 text-xs text-muted-foreground">
+											{v.trades[0] ?? ''}
+										</span>
+									</Select.Item>
 								{/each}
 								<Select.Item value="__new" label="New vendor">
-									<Plus class="size-4" /> New vendor…</Select.Item
-								>
+									<Plus class="size-4" /> New vendor…
+								</Select.Item>
 							</Select.Content>
 						</Select.Root>
 					</Field.Field>
@@ -529,15 +531,16 @@
 									? undefined
 									: 'Add an email address to this vendor first'}
 								onclick={() => sendToVendor(selected!)}
-								><Mail />{sending
+							>
+								<Mail />{sending
 									? 'Sending…'
 									: selected.vendorSentAt
 										? 'Resend work order'
-										: 'Send work order'}</Button
-							>
-							<Button size="sm" variant="outline" onclick={() => copyLink(selected!)}
-								><LinkIcon /> Copy link</Button
-							>
+										: 'Send work order'}
+							</Button>
+							<Button size="sm" variant="outline" onclick={() => copyLink(selected!)}>
+								<LinkIcon /> Copy link
+							</Button>
 						</div>
 						<p class="text-xs text-muted-foreground">
 							{selected.vendorSentAt
@@ -570,12 +573,12 @@
 				</Field.Field>
 				{#if selected.tenantId}
 					<p class="text-sm">
-						Reported by <a class="font-medium hover:underline" href="/tenants/{selected.tenantId}"
-							>{tenantName({
+						Reported by <a class="font-medium hover:underline" href="/tenants/{selected.tenantId}">
+							{tenantName({
 								firstName: selected.tenantFirstName ?? '',
 								lastName: selected.tenantLastName ?? ''
-							})}</a
-						>
+							})}
+						</a>
 					</p>
 				{/if}
 				<svelte:boundary>

@@ -134,9 +134,9 @@
 			</div>
 			<Field.Field orientation="horizontal">
 				<Checkbox id="nl-wait" bind:checked={form.waitlist} />
-				<Field.Label for="nl-wait" class="font-normal"
-					>Add to the waitlist for a matching home</Field.Label
-				>
+				<Field.Label for="nl-wait" class="font-normal">
+					Add to the waitlist for a matching home
+				</Field.Label>
 			</Field.Field>
 			<Modal.Footer>
 				<Button type="submit" disabled={pending || !form.firstName.trim()}>Add lead</Button>

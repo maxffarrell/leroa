@@ -41,10 +41,10 @@
 
 <PageHeader title="Owners">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> <span class="hidden sm:inline">New owner</span>
-			<Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" onclick={() => (creating = true)}>
+			<Plus /> <span class="hidden sm:inline">New owner</span>
+			<Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -54,14 +54,14 @@
 			<Empty.Header>
 				<Empty.Media variant="icon"><Landmark /></Empty.Media>
 				<Empty.Title>No owners yet</Empty.Title>
-				<Empty.Description
-					>Add the people or companies who own the properties you manage. Each gets a read-only
-					portal with occupancy, rent collection and maintenance.</Empty.Description
-				>
+				<Empty.Description>
+					Add the people or companies who own the properties you manage. Each gets a read-only
+					portal with occupancy, rent collection and maintenance.
+				</Empty.Description>
 			</Empty.Header>
-			<Empty.Content
-				><Button onclick={() => (creating = true)}><Plus /> New owner</Button></Empty.Content
-			>
+			<Empty.Content>
+				<Button onclick={() => (creating = true)}><Plus /> New owner</Button>
+			</Empty.Content>
 		</Empty.Root>
 	{:else}
 		<div class="mb-3 flex flex-wrap items-center gap-3">
@@ -96,30 +96,30 @@
 							onmouseenter={() => (nav.index = i)}
 						>
 							<Table.Cell class="max-w-56">
-								<a href="/owners/{o.id}" class="block truncate font-medium outline-none"
-									>{o.name}{o.archivedAt ? ' (archived)' : ''}</a
-								>
-								<span class="block truncate text-xs text-muted-foreground md:hidden"
-									>{o.properties.join(', ') || 'No properties'}</span
-								>
-								{#if o.email}<span class="hidden truncate text-xs text-muted-foreground md:block"
-										>{o.email}</span
-									>{/if}
+								<a href="/owners/{o.id}" class="block truncate font-medium outline-none">
+									{o.name}{o.archivedAt ? ' (archived)' : ''}
+								</a>
+								<span class="block truncate text-xs text-muted-foreground md:hidden">
+									{o.properties.join(', ') || 'No properties'}
+								</span>
+								{#if o.email}<span class="hidden truncate text-xs text-muted-foreground md:block">
+										{o.email}
+									</span>{/if}
 							</Table.Cell>
-							<Table.Cell class="hidden max-w-72 truncate text-muted-foreground md:table-cell"
-								>{o.properties.join(', ') || '—'}</Table.Cell
-							>
+							<Table.Cell class="hidden max-w-72 truncate text-muted-foreground md:table-cell">
+								{o.properties.join(', ') || '—'}
+							</Table.Cell>
 							<Table.Cell class="text-right tabular-nums">{o.unitCount}</Table.Cell>
-							<Table.Cell class="hidden text-muted-foreground sm:table-cell"
-								>{o.portalLinked ? 'Linked' : 'Not invited'}</Table.Cell
-							>
+							<Table.Cell class="hidden text-muted-foreground sm:table-cell">
+								{o.portalLinked ? 'Linked' : 'Not invited'}
+							</Table.Cell>
 						</Table.Row>
 					{:else}
-						<Table.Row
-							><Table.Cell colspan={4} class="py-8 text-center text-muted-foreground"
-								>No owners match.</Table.Cell
-							></Table.Row
-						>
+						<Table.Row>
+							<Table.Cell colspan={4} class="py-8 text-center text-muted-foreground">
+								No owners match.
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>

@@ -88,8 +88,9 @@
 						<Select.Root type="single" bind:value={form.type}>
 							<Select.Trigger class="w-full">{typeLabels[form.type]}</Select.Trigger>
 							<Select.Content>
-								{#each propertyTypes as t (t)}<Select.Item value={t}>{typeLabels[t]}</Select.Item
-									>{/each}
+								{#each propertyTypes as t (t)}<Select.Item value={t}>
+										{typeLabels[t]}
+									</Select.Item>{/each}
 							</Select.Content>
 						</Select.Root>
 					</Field.Field>
@@ -99,24 +100,21 @@
 					<Input id="p-addr" autocomplete="address-line1" bind:value={form.addressLine1} />
 				</Field.Field>
 				<div class="grid grid-cols-[1fr_5rem_6rem] gap-3">
-					<Field.Field
-						><Field.Label for="p-city">City</Field.Label><Input
-							id="p-city"
-							bind:value={form.city}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="p-region">State</Field.Label><Input
+					<Field.Field>
+						<Field.Label for="p-city">City</Field.Label><Input id="p-city" bind:value={form.city} />
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="p-region">State</Field.Label><Input
 							id="p-region"
 							bind:value={form.region}
-						/></Field.Field
-					>
-					<Field.Field
-						><Field.Label for="p-zip">ZIP</Field.Label><Input
+						/>
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="p-zip">ZIP</Field.Label><Input
 							id="p-zip"
 							bind:value={form.postalCode}
-						/></Field.Field
-					>
+						/>
+					</Field.Field>
 				</div>
 				{#if form.type !== 'single_family'}
 					<Field.Field>

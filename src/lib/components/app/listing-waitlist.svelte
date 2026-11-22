@@ -31,23 +31,26 @@
 <Card.Root size="sm">
 	<Card.Header>
 		<Card.Description>Waitlist</Card.Description>
-		<Card.Title class="text-xl tabular-nums"
-			>{waiting.length}
-			<span class="text-sm font-normal text-muted-foreground">waiting</span></Card.Title
-		>
+		<Card.Title class="text-xl tabular-nums">
+			{waiting.length}
+			<span class="text-sm font-normal text-muted-foreground">waiting</span>
+		</Card.Title>
 	</Card.Header>
 	{#if waiting.length}
 		<Card.Content>
 			<ul class="space-y-1.5 text-sm">
 				{#each waiting.slice(0, 6) as w (w.id)}
 					<li class="flex items-center gap-2">
-						<a href="/leasing/leads/{w.id}" class="min-w-0 flex-1 truncate hover:underline"
-							>{leadName(w)}</a
-						>
+						<a href="/leasing/leads/{w.id}" class="min-w-0 flex-1 truncate hover:underline">
+							{leadName(w)}
+						</a>
 						{#if w.notified}<span
 								class="inline-flex items-center gap-0.5 text-xs text-emerald-700 dark:text-emerald-400"
-								><Check class="size-3" />Emailed</span
-							>{:else if !w.email}<span class="text-xs text-muted-foreground">No email</span>{/if}
+							>
+								<Check class="size-3" />Emailed
+							</span>{:else if !w.email}<span class="text-xs text-muted-foreground">
+								No email
+							</span>{/if}
 					</li>
 				{/each}
 				{#if waiting.length > 6}<li class="text-xs text-muted-foreground">
@@ -67,9 +70,10 @@
 						? 'Publish the listing first'
 						: undefined}
 				onclick={send}
-				><Mail />
-				{pendingCount ? `Email ${pendingCount} waiting` : 'Everyone emailed'}</Button
 			>
+				<Mail />
+				{pendingCount ? `Email ${pendingCount} waiting` : 'Everyone emailed'}
+			</Button>
 		</Card.Footer>
 	{:else}
 		<Card.Content>

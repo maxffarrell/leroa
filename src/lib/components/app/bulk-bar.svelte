@@ -27,8 +27,8 @@
 			<Button variant="ghost" size="sm" onclick={onselectall}>All {total}</Button>
 		{/if}
 		{@render actions()}
-		<Button variant="ghost" size="icon-sm" aria-label="Clear selection" onclick={onclear}
-			><X /></Button
-		>
+		<Button variant="ghost" size="icon-sm" aria-label="Clear selection" onclick={onclear}>
+			<X />
+		</Button>
 	</div>
 {/if}

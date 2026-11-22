@@ -198,21 +198,19 @@
 							</p>
 							{#if s.priority !== 'normal'}<StatusBadge status={s.priority} class="mt-1" />{/if}
 						</Table.Cell>
-						<Table.Cell class="hidden sm:table-cell"
-							>{s.propertyName}{s.unitName ? ` · ${s.unitName}` : ''}{s.assetName
+						<Table.Cell class="hidden sm:table-cell">
+							{s.propertyName}{s.unitName ? ` · ${s.unitName}` : ''}{s.assetName
 								? ` — ${s.assetName}`
-								: ''}</Table.Cell
-						>
-						<Table.Cell class="hidden whitespace-nowrap md:table-cell"
-							>{describeInterval(s.every, s.interval)}{s.leadDays
-								? ` · ${s.leadDays}d lead`
-								: ''}</Table.Cell
-						>
+								: ''}
+						</Table.Cell>
+						<Table.Cell class="hidden whitespace-nowrap md:table-cell">
+							{describeInterval(s.every, s.interval)}{s.leadDays ? ` · ${s.leadDays}d lead` : ''}
+						</Table.Cell>
 						<Table.Cell class="whitespace-nowrap">
 							{#if s.enabled && isDue(s.nextRunOn, s.leadDays, today)}
-								<span class="font-medium text-red-600 dark:text-red-400"
-									>Due — runs at the next check</span
-								>
+								<span class="font-medium text-red-600 dark:text-red-400">
+									Due — runs at the next check
+								</span>
 							{:else}{formatDate(s.nextRunOn, true)}{/if}
 							{#if s.lastRunOn}
 								<p class="text-xs text-muted-foreground">last {formatDate(s.lastRunOn, true)}</p>
@@ -233,11 +231,13 @@
 									size="icon"
 									title="Issue work order now"
 									disabled={!s.enabled}
-									onclick={() => runNow(s)}><Play /></Button
+									onclick={() => runNow(s)}
 								>
-								<Button variant="ghost" size="icon" title="Edit" onclick={() => (editing = s)}
-									><Pencil /></Button
-								>
+									<Play />
+								</Button>
+								<Button variant="ghost" size="icon" title="Edit" onclick={() => (editing = s)}>
+									<Pencil />
+								</Button>
 							</div>
 						</Table.Cell>
 					</Table.Row>
@@ -250,10 +250,9 @@
 <Modal.Root open={dialogOpen} onOpenChange={setOpen}>
 	<Modal.Content class="sm:max-w-xl">
 		<form onsubmit={submit} class="space-y-5">
-			<Modal.Header
-				><Modal.Title>{editing ? 'Edit schedule' : 'New preventive schedule'}</Modal.Title
-				></Modal.Header
-			>
+			<Modal.Header>
+				<Modal.Title>{editing ? 'Edit schedule' : 'New preventive schedule'}</Modal.Title>
+			</Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field>
 					<Field.Label for="sc-title">What should happen?</Field.Label>
@@ -271,21 +270,22 @@
 							}}
 							disabled={!!editing}
 						>
-							<Select.Trigger class="w-full"
-								>{selName(properties, fProperty) ?? 'Select'}</Select.Trigger
-							>
-							<Select.Content class="max-h-72"
-								>{#each properties as p (p.id)}<Select.Item value={p.id}>{p.name}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Trigger class="w-full">
+								{selName(properties, fProperty) ?? 'Select'}
+							</Select.Trigger>
+							<Select.Content class="max-h-72">
+								{#each properties as p (p.id)}<Select.Item value={p.id}>
+										{p.name}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 					<Field.Field>
 						<Field.Label>Unit</Field.Label>
 						<Select.Root type="single" bind:value={fUnit} disabled={!fProperty}>
-							<Select.Trigger class="w-full"
-								>{selName(propUnits, fUnit) ?? 'Whole property'}</Select.Trigger
-							>
+							<Select.Trigger class="w-full">
+								{selName(propUnits, fUnit) ?? 'Whole property'}
+							</Select.Trigger>
 							<Select.Content class="max-h-72">
 								<Select.Item value="">Whole property</Select.Item>
 								{#each propUnits as u (u.id)}<Select.Item value={u.id}>{u.name}</Select.Item>{/each}
@@ -297,12 +297,14 @@
 					<Field.Field>
 						<Field.Label>Asset</Field.Label>
 						<Select.Root type="single" bind:value={fAsset} disabled={!fProperty}>
-							<Select.Trigger class="w-full">{selName(propAssets, fAsset) ?? 'None'}</Select.Trigger
-							>
+							<Select.Trigger class="w-full">
+								{selName(propAssets, fAsset) ?? 'None'}
+							</Select.Trigger>
 							<Select.Content class="max-h-72">
 								<Select.Item value="">None</Select.Item>
-								{#each propAssets as a (a.id)}<Select.Item value={a.id}>{a.name}</Select.Item
-									>{/each}
+								{#each propAssets as a (a.id)}<Select.Item value={a.id}>
+										{a.name}
+									</Select.Item>{/each}
 							</Select.Content>
 						</Select.Root>
 					</Field.Field>
@@ -321,13 +323,14 @@
 					<Field.Field>
 						<Field.Label>Assignee</Field.Label>
 						<Select.Root type="single" bind:value={fAssignee}>
-							<Select.Trigger class="w-full"
-								>{members.find((m) => m.userId === fAssignee)?.name ?? 'Nobody'}</Select.Trigger
-							>
+							<Select.Trigger class="w-full">
+								{members.find((m) => m.userId === fAssignee)?.name ?? 'Nobody'}
+							</Select.Trigger>
 							<Select.Content class="max-h-72">
 								<Select.Item value="">Nobody</Select.Item>
-								{#each members as m (m.userId)}<Select.Item value={m.userId}>{m.name}</Select.Item
-									>{/each}
+								{#each members as m (m.userId)}<Select.Item value={m.userId}>
+										{m.name}
+									</Select.Item>{/each}
 							</Select.Content>
 						</Select.Root>
 					</Field.Field>
@@ -335,11 +338,11 @@
 						<Field.Label>Priority</Field.Label>
 						<Select.Root type="single" bind:value={fPriority}>
 							<Select.Trigger class="w-full capitalize">{fPriority}</Select.Trigger>
-							<Select.Content
-								>{#each ticketPriorities as p (p)}<Select.Item value={p} class="capitalize"
-										>{p}</Select.Item
-									>{/each}</Select.Content
-							>
+							<Select.Content>
+								{#each ticketPriorities as p (p)}<Select.Item value={p} class="capitalize">
+										{p}
+									</Select.Item>{/each}
+							</Select.Content>
 						</Select.Root>
 					</Field.Field>
 				</div>
@@ -358,11 +361,11 @@
 							/>
 							<Select.Root type="single" bind:value={fInterval}>
 								<Select.Trigger class="w-28 capitalize">{fInterval}</Select.Trigger>
-								<Select.Content
-									>{#each PM_INTERVALS as i (i)}<Select.Item value={i} class="capitalize"
-											>{i}</Select.Item
-										>{/each}</Select.Content
-								>
+								<Select.Content>
+									{#each PM_INTERVALS as i (i)}<Select.Item value={i} class="capitalize">
+											{i}
+										</Select.Item>{/each}
+								</Select.Content>
 							</Select.Root>
 						</div>
 					</Field.Field>
@@ -389,9 +392,9 @@
 			</Field.Group>
 			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => setOpen(false)}>Cancel</Button>
-				<Button type="submit" disabled={pending || !fTitle.trim() || !fProperty || !fNext}
-					>{pending ? 'Saving…' : editing ? 'Save' : 'Create schedule'}</Button
-				>
+				<Button type="submit" disabled={pending || !fTitle.trim() || !fProperty || !fNext}>
+					{pending ? 'Saving…' : editing ? 'Save' : 'Create schedule'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

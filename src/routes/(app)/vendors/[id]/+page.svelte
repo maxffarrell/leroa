@@ -45,9 +45,9 @@
 
 <PageHeader title={v.name} crumbs={[{ label: 'Vendors', href: '/vendors' }]}>
 	{#snippet actions()}
-		<Button size="sm" variant="outline" onclick={() => (editing = true)}
-			><Pencil /> <span class="hidden sm:inline">Edit</span></Button
-		>
+		<Button size="sm" variant="outline" onclick={() => (editing = true)}>
+			<Pencil /> <span class="hidden sm:inline">Edit</span>
+		</Button>
 		{#if page.data.role !== 'member'}
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
@@ -55,16 +55,18 @@
 							size="icon-sm"
 							variant="ghost"
 							aria-label="More"
-							{...props}><Ellipsis /></Button
-						>{/snippet}
+							{...props}
+						>
+							<Ellipsis />
+						</Button>{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
 					{#if v.archivedAt}
 						<DropdownMenu.Item onclick={() => setArchived(false)}>Restore vendor</DropdownMenu.Item>
 					{:else}
-						<DropdownMenu.Item variant="destructive" onclick={() => setArchived(true)}
-							>Archive vendor</DropdownMenu.Item
-						>
+						<DropdownMenu.Item variant="destructive" onclick={() => setArchived(true)}>
+							Archive vendor
+						</DropdownMenu.Item>
 					{/if}
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
@@ -103,28 +105,28 @@
 								<a
 									href="/maintenance?ticket={j.id}"
 									class="block truncate font-medium hover:underline"
-									><span class="text-muted-foreground tabular-nums">#{j.number}</span> {j.title}</a
 								>
-								<span class="block truncate text-xs text-muted-foreground"
-									><span class="sm:hidden">{j.propertyName} · </span>{formatRelative(
-										j.createdAt
-									)}</span
-								>
+									<span class="text-muted-foreground tabular-nums">#{j.number}</span>
+									{j.title}
+								</a>
+								<span class="block truncate text-xs text-muted-foreground">
+									<span class="sm:hidden">{j.propertyName} · </span>{formatRelative(j.createdAt)}
+								</span>
 							</Table.Cell>
-							<Table.Cell class="hidden text-muted-foreground sm:table-cell"
-								>{j.propertyName}{j.unitName ? ` · ${j.unitName}` : ''}</Table.Cell
-							>
-							<Table.Cell class="text-right tabular-nums"
-								>{j.costAmount == null ? '—' : formatMoney(j.costAmount)}</Table.Cell
-							>
+							<Table.Cell class="hidden text-muted-foreground sm:table-cell">
+								{j.propertyName}{j.unitName ? ` · ${j.unitName}` : ''}
+							</Table.Cell>
+							<Table.Cell class="text-right tabular-nums">
+								{j.costAmount == null ? '—' : formatMoney(j.costAmount)}
+							</Table.Cell>
 							<Table.Cell><StatusBadge status={j.status} /></Table.Cell>
 						</Table.Row>
 					{:else}
-						<Table.Row
-							><Table.Cell colspan={4} class="py-8 text-center text-muted-foreground"
-								>No work orders yet. Assign {v.name} from a maintenance request.</Table.Cell
-							></Table.Row
-						>
+						<Table.Row>
+							<Table.Cell colspan={4} class="py-8 text-center text-muted-foreground">
+								No work orders yet. Assign {v.name} from a maintenance request.
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>
@@ -138,14 +140,14 @@
 		</Card.Header>
 		<Card.Content class="space-y-3 text-sm">
 			{#if v.email}
-				<a href="mailto:{v.email}" class="flex items-center gap-2 hover:underline"
-					><Mail class="size-4 text-muted-foreground" />{v.email}</a
-				>
+				<a href="mailto:{v.email}" class="flex items-center gap-2 hover:underline">
+					<Mail class="size-4 text-muted-foreground" />{v.email}
+				</a>
 			{/if}
 			{#if v.phone}
-				<a href="tel:{v.phone}" class="flex items-center gap-2 tabular-nums hover:underline"
-					><Phone class="size-4 text-muted-foreground" />{v.phone}</a
-				>
+				<a href="tel:{v.phone}" class="flex items-center gap-2 tabular-nums hover:underline">
+					<Phone class="size-4 text-muted-foreground" />{v.phone}
+				</a>
 			{/if}
 			{#if !v.email && !v.phone}<p class="text-muted-foreground">No contact details.</p>{/if}
 			<div>

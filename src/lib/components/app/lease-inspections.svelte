@@ -32,14 +32,14 @@
 		<h2 class="text-sm font-medium">Inspections</h2>
 		<div class="ml-auto flex gap-2">
 			{#if !has('move_in') && status !== 'ended' && status !== 'terminated'}
-				<Button size="sm" variant="outline" disabled={busy} onclick={() => start('move_in')}
-					><ClipboardCheck /> Move-in</Button
-				>
+				<Button size="sm" variant="outline" disabled={busy} onclick={() => start('move_in')}>
+					<ClipboardCheck /> Move-in
+				</Button>
 			{/if}
 			{#if !has('move_out') && status !== 'draft'}
-				<Button size="sm" variant="outline" disabled={busy} onclick={() => start('move_out')}
-					><ClipboardCheck /> Move-out</Button
-				>
+				<Button size="sm" variant="outline" disabled={busy} onclick={() => start('move_out')}>
+					<ClipboardCheck /> Move-out
+				</Button>
 			{/if}
 		</div>
 	</div>

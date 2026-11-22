@@ -35,9 +35,9 @@
 
 <Card.Root>
 	<Card.Header>
-		<Card.Title class="flex items-center gap-1.5 text-sm"
-			><Sparkles class="size-4 text-muted-foreground" /> AI summary</Card.Title
-		>
+		<Card.Title class="flex items-center gap-1.5 text-sm">
+			<Sparkles class="size-4 text-muted-foreground" /> AI summary
+		</Card.Title>
 		{#if ran}
 			<Card.Action>
 				<Button size="icon" variant="ghost" disabled={loading} onclick={run} aria-label="Refresh">

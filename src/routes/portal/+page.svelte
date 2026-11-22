@@ -27,9 +27,9 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>No home linked yet</Card.Title>
-			<Card.Description
-				>Ask your property manager for a portal invite link, then open it while signed in.</Card.Description
-			>
+			<Card.Description>
+				Ask your property manager for a portal invite link, then open it while signed in.
+			</Card.Description>
 		</Card.Header>
 	</Card.Root>
 {:else}

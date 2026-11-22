@@ -87,10 +87,10 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>{owner ? 'Edit owner' : 'New owner'}</Modal.Title>
-				<Modal.Description
-					>Owners get a read-only portal with occupancy, rent collection and maintenance for their
-					properties.</Modal.Description
-				>
+				<Modal.Description>
+					Owners get a read-only portal with occupancy, rent collection and maintenance for their
+					properties.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Group class="gap-4">
 				<Field.Field>
@@ -126,8 +126,9 @@
 									class="inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {on
 										? 'border-primary bg-primary text-primary-foreground'
 										: 'hover:bg-muted'}"
-									>{#if on}<Check class="size-3" />{/if}{p.name}</button
 								>
+									{#if on}<Check class="size-3" />{/if}{p.name}
+								</button>
 							{/each}
 						</div>
 					{:else}
@@ -146,9 +147,9 @@
 			</Field.Group>
 			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (open = false)}>Cancel</Button>
-				<Button type="submit" disabled={pending || !form.name.trim()}
-					>{pending ? 'Saving…' : owner ? 'Save' : 'Add owner'}</Button
-				>
+				<Button type="submit" disabled={pending || !form.name.trim()}>
+					{pending ? 'Saving…' : owner ? 'Save' : 'Add owner'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

@@ -18,12 +18,12 @@
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<span class="text-sm font-medium">Permissions</span>
 		<div class="flex gap-1">
-			<Button type="button" size="sm" variant="ghost" onclick={() => (value = everything('read'))}
-				>Read-only</Button
-			>
-			<Button type="button" size="sm" variant="ghost" onclick={() => (value = everything('write'))}
-				>Full access</Button
-			>
+			<Button type="button" size="sm" variant="ghost" onclick={() => (value = everything('read'))}>
+				Read-only
+			</Button>
+			<Button type="button" size="sm" variant="ghost" onclick={() => (value = everything('write'))}>
+				Full access
+			</Button>
 			<Button type="button" size="sm" variant="ghost" onclick={() => (value = {})}>Clear</Button>
 		</div>
 	</div>

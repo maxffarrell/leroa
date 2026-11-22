@@ -122,9 +122,12 @@
 <header class="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
 	<div class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4">
 		<a href="/l/{data.org.slug}" class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
-			<ArrowLeft class="size-4 shrink-0" /><span class="truncate" style:color={data.org.accentColor}
-				>{brandName}</span
+			<ArrowLeft class="size-4 shrink-0" /><span
+				class="truncate"
+				style:color={data.org.accentColor}
 			>
+				{brandName}
+			</span>
 		</a>
 		<Button size="sm" href="#apply" class="hidden sm:inline-flex">Apply now</Button>
 	</div>
@@ -160,8 +163,9 @@
 				<Carousel.Next class="right-3 hidden sm:inline-flex" />
 				<span
 					class="pointer-events-none absolute right-3 bottom-3 rounded-full bg-background/90 px-2 py-0.5 text-xs font-medium"
-					>{data.photos.length} photos</span
 				>
+					{data.photos.length} photos
+				</span>
 			{/if}
 		</Carousel.Root>
 	{:else}
@@ -182,15 +186,17 @@
 					</p>
 				{/if}
 				<p class="text-sm">
-					<a href="/l/{data.org.slug}/p/{l.propertyId}" class="underline underline-offset-2"
-						>More about {l.propertyName}</a
-					>
+					<a href="/l/{data.org.slug}/p/{l.propertyId}" class="underline underline-offset-2">
+						More about {l.propertyName}
+					</a>
 				</p>
 				<div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-1">
 					<p class="text-xl font-semibold tabular-nums">
 						{formatMoney(l.rentAmount, l.currency)}<span
-							class="text-sm font-normal text-muted-foreground">/mo</span
+							class="text-sm font-normal text-muted-foreground"
 						>
+							/mo
+						</span>
 					</p>
 					{#if facts}<p>{facts}</p>{/if}
 					<p class="text-sm text-emerald-700 dark:text-emerald-400">
@@ -384,8 +390,10 @@
 			<div class="space-y-3 rounded-xl border p-5">
 				<p class="text-2xl font-semibold tabular-nums">
 					{formatMoney(l.rentAmount, l.currency)}<span
-						class="text-sm font-normal text-muted-foreground">/mo</span
+						class="text-sm font-normal text-muted-foreground"
 					>
+						/mo
+					</span>
 				</p>
 				<p class="text-sm text-muted-foreground">{availability(l.availableOn, today)}</p>
 				<Button href="#apply" class="w-full">Apply now</Button>
@@ -413,8 +421,10 @@
 		<div class="min-w-0">
 			<p class="font-semibold tabular-nums">
 				{formatMoney(l.rentAmount, l.currency)}<span
-					class="text-sm font-normal text-muted-foreground">/mo</span
+					class="text-sm font-normal text-muted-foreground"
 				>
+					/mo
+				</span>
 			</p>
 			<p class="truncate text-xs text-muted-foreground">{availability(l.availableOn, today)}</p>
 		</div>

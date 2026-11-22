@@ -55,14 +55,14 @@
 	<ul class="grid grid-cols-4 gap-2">
 		{#each a.photos as p (p.id)}
 			<li class="aspect-square overflow-hidden rounded-md bg-muted">
-				<a href="/api/documents/{p.id}" target="_blank" rel="noreferrer"
-					><img
+				<a href="/api/documents/{p.id}" target="_blank" rel="noreferrer">
+					<img
 						src="/api/documents/{p.id}"
 						alt={p.name}
 						loading="lazy"
 						class="size-full object-cover"
-					/></a
-				>
+					/>
+				</a>
 			</li>
 		{/each}
 		<li>
@@ -94,9 +94,9 @@
 				<li class="rounded-md p-2.5 text-sm {n.internal ? 'border border-dashed' : 'bg-muted/50'}">
 					<p class="flex items-center gap-1.5 text-xs text-muted-foreground">
 						<span class="font-medium text-foreground">{n.authorName}</span>
-						{#if tag[n.authorType]}<span class="rounded bg-background px-1"
-								>{tag[n.authorType]}</span
-							>{/if}
+						{#if tag[n.authorType]}<span class="rounded bg-background px-1">
+								{tag[n.authorType]}
+							</span>{/if}
 						{#if n.internal}<Lock class="size-3" /><span>Internal</span>{/if}
 						<span class="ml-auto">{formatRelative(n.createdAt)}</span>
 					</p>
@@ -117,9 +117,9 @@
 				<Checkbox id="ticket-internal" bind:checked={internal} />
 				<Label for="ticket-internal" class="font-normal">Internal only</Label>
 			</span>
-			<Button type="submit" size="sm" class="ml-auto" disabled={pending || !body.trim()}
-				>{pending ? 'Adding…' : 'Add note'}</Button
-			>
+			<Button type="submit" size="sm" class="ml-auto" disabled={pending || !body.trim()}>
+				{pending ? 'Adding…' : 'Add note'}
+			</Button>
 		</div>
 	</form>
 </section>

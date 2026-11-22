@@ -118,9 +118,9 @@
 		<h2 class="text-sm font-medium">Lease documents</h2>
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger class="ml-auto">
-				{#snippet child({ props })}<Button size="sm" variant="outline" disabled={busy} {...props}
-						><Plus /> Agreement</Button
-					>{/snippet}
+				{#snippet child({ props })}<Button size="sm" variant="outline" disabled={busy} {...props}>
+						<Plus /> Agreement
+					</Button>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end" class="w-60">
 				<DropdownMenu.Label>Create from template</DropdownMenu.Label>
@@ -130,9 +130,9 @@
 					<DropdownMenu.Item onclick={() => create()}>Starter residential lease</DropdownMenu.Item>
 				{/each}
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item onclick={() => (location.href = '/settings/templates')}
-					>Manage templates…</DropdownMenu.Item
-				>
+				<DropdownMenu.Item onclick={() => (location.href = '/settings/templates')}>
+					Manage templates…
+				</DropdownMenu.Item>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</div>
@@ -148,8 +148,10 @@
 							href={pdf(a.id)}
 							target="_blank"
 							rel="noopener"
-							class="block truncate font-medium hover:underline">{a.title}</a
+							class="block truncate font-medium hover:underline"
 						>
+							{a.title}
+						</a>
 						<p class="truncate text-xs text-muted-foreground">
 							{#if a.status === 'draft'}Created {formatRelative(a.createdAt)}
 							{:else if a.status === 'sent'}{signed} of {a.signers.length} signed · waiting on {a.signers
@@ -165,8 +167,10 @@
 						<Button
 							size="sm"
 							variant="ghost"
-							onclick={() => (editing = { id: a.id, title: a.title, body: a.body })}>Edit</Button
+							onclick={() => (editing = { id: a.id, title: a.title, body: a.body })}
 						>
+							Edit
+						</Button>
 						<Button size="sm" disabled={busy} onclick={() => send(a.id)}><Send /> Send</Button>
 					{:else if a.status === 'signed'}
 						<Button size="sm" variant="outline" href="{pdf(a.id)}?download">Download</Button>
@@ -178,21 +182,23 @@
 										size="icon-sm"
 										variant="ghost"
 										aria-label="More"
-										{...props}><Ellipsis /></Button
-									>{/snippet}
+										{...props}
+									>
+										<Ellipsis />
+									</Button>{/snippet}
 							</DropdownMenu.Trigger>
 							<DropdownMenu.Content align="end">
-								<DropdownMenu.Item onclick={() => window.open(pdf(a.id), '_blank')}
-									>Preview PDF</DropdownMenu.Item
-								>
+								<DropdownMenu.Item onclick={() => window.open(pdf(a.id), '_blank')}>
+									Preview PDF
+								</DropdownMenu.Item>
 								{#if a.status === 'draft'}
-									<DropdownMenu.Item variant="destructive" onclick={() => remove(a.id)}
-										>Delete draft</DropdownMenu.Item
-									>
+									<DropdownMenu.Item variant="destructive" onclick={() => remove(a.id)}>
+										Delete draft
+									</DropdownMenu.Item>
 								{:else}
-									<DropdownMenu.Item variant="destructive" onclick={() => voidIt(a.id)}
-										>Void</DropdownMenu.Item
-									>
+									<DropdownMenu.Item variant="destructive" onclick={() => voidIt(a.id)}>
+										Void
+									</DropdownMenu.Item>
 								{/if}
 							</DropdownMenu.Content>
 						</DropdownMenu.Root>
@@ -213,10 +219,10 @@
 			<form onsubmit={save} class="flex max-h-[80vh] flex-col gap-4">
 				<Modal.Header>
 					<Modal.Title>Review agreement</Modal.Title>
-					<Modal.Description
-						>Lease details are filled in. Make any changes for this lease, then send it for
-						signature.</Modal.Description
-					>
+					<Modal.Description>
+						Lease details are filled in. Make any changes for this lease, then send it for
+						signature.
+					</Modal.Description>
 				</Modal.Header>
 				<Field.Field>
 					<Field.Label for="ag-title">Title</Field.Label>
@@ -246,8 +252,10 @@
 								return fail(err, 'Could not save');
 							}
 							await send(id);
-						}}><Send /> Send for signature</Button
+						}}
 					>
+						<Send /> Send for signature
+					</Button>
 				</Modal.Footer>
 			</form>
 		{/if}

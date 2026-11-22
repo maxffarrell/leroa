@@ -106,25 +106,27 @@
 
 <PageHeader title={p.name} crumbs={[{ label: 'Properties', href: '/properties' }]}>
 	{#snippet actions()}
-		<Button size="sm" variant="outline" href="/maintenance?new=1&property={id}"
-			><Wrench /> <span class="hidden sm:inline">Request</span></Button
-		>
-		<Button size="sm" href="/leases?new=1&property={id}"
-			><FileSignature /> <span class="hidden sm:inline">New lease</span></Button
-		>
+		<Button size="sm" variant="outline" href="/maintenance?new=1&property={id}">
+			<Wrench /> <span class="hidden sm:inline">Request</span>
+		</Button>
+		<Button size="sm" href="/leases?new=1&property={id}">
+			<FileSignature /> <span class="hidden sm:inline">New lease</span>
+		</Button>
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}<Button
 						size="icon-sm"
 						variant="ghost"
 						aria-label="More"
-						{...props}><Ellipsis /></Button
-					>{/snippet}
+						{...props}
+					>
+						<Ellipsis />
+					</Button>{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="end">
-				<DropdownMenu.Item variant="destructive" onclick={archive}
-					>Archive property</DropdownMenu.Item
-				>
+				<DropdownMenu.Item variant="destructive" onclick={archive}>
+					Archive property
+				</DropdownMenu.Item>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	{/snippet}
@@ -140,40 +142,46 @@
 			{#if owners.length}
 				Owned by {#each owners as o, i (o.id)}{i ? ', ' : ''}<a
 						href="/owners/{o.id}"
-						class="text-foreground hover:underline">{o.name}</a
-					>{/each}
+						class="text-foreground hover:underline"
+					>
+						{o.name}
+					</a>{/each}
 			{:else}
-				No owner set · <a href="/owners?new=1&property={id}" class="text-foreground hover:underline"
-					>Add owner</a
+				No owner set · <a
+					href="/owners?new=1&property={id}"
+					class="text-foreground hover:underline"
 				>
+					Add owner
+				</a>
 			{/if}
 		</p>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-3">
-		<Card.Root size="sm"
-			><Card.Header
-				><Card.Description>Units</Card.Description><Card.Title class="text-xl tabular-nums"
-					>{p.units.length}</Card.Title
-				></Card.Header
-			></Card.Root
-		>
-		<Card.Root size="sm"
-			><Card.Header
-				><Card.Description>Occupied</Card.Description><Card.Title class="text-xl tabular-nums"
-					>{occupied}
-					<span class="text-sm font-normal text-muted-foreground">/ {p.units.length}</span
-					></Card.Title
-				></Card.Header
-			></Card.Root
-		>
-		<Card.Root size="sm"
-			><Card.Header
-				><Card.Description>Scheduled rent / mo</Card.Description><Card.Title
-					class="text-xl tabular-nums">{formatMoney(scheduled)}</Card.Title
-				></Card.Header
-			></Card.Root
-		>
+		<Card.Root size="sm">
+			<Card.Header>
+				<Card.Description>Units</Card.Description><Card.Title class="text-xl tabular-nums">
+					{p.units.length}
+				</Card.Title>
+			</Card.Header>
+		</Card.Root>
+		<Card.Root size="sm">
+			<Card.Header>
+				<Card.Description>Occupied</Card.Description><Card.Title class="text-xl tabular-nums">
+					{occupied}
+					<span class="text-sm font-normal text-muted-foreground">/ {p.units.length}</span>
+				</Card.Title>
+			</Card.Header>
+		</Card.Root>
+		<Card.Root size="sm">
+			<Card.Header>
+				<Card.Description>Scheduled rent / mo</Card.Description><Card.Title
+					class="text-xl tabular-nums"
+				>
+					{formatMoney(scheduled)}
+				</Card.Title>
+			</Card.Header>
+		</Card.Root>
 	</div>
 
 	<div class="flex items-center justify-between gap-2">
@@ -212,18 +220,18 @@
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content align="start">
 										{#each unitStatuses as s (s)}
-											<DropdownMenu.Item onclick={() => setStatus(u.id, s)}
-												><StatusBadge status={s} /></DropdownMenu.Item
-											>
+											<DropdownMenu.Item onclick={() => setStatus(u.id, s)}>
+												<StatusBadge status={s} />
+											</DropdownMenu.Item>
 										{/each}
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
 							</Table.Cell>
 							<Table.Cell class="text-right">
 								<Popover.Root>
-									<Popover.Trigger class="rounded px-1 tabular-nums hover:bg-muted"
-										>{u.marketRent != null ? formatMoney(u.marketRent) : '—'}</Popover.Trigger
-									>
+									<Popover.Trigger class="rounded px-1 tabular-nums hover:bg-muted">
+										{u.marketRent != null ? formatMoney(u.marketRent) : '—'}
+									</Popover.Trigger>
 									<Popover.Content class="w-48" align="end">
 										<form onsubmit={(e) => e.preventDefault()}>
 											<MoneyInput bind:value={() => u.marketRent, (v) => setRent(u.id, v)} />
@@ -232,17 +240,13 @@
 								</Popover.Root>
 							</Table.Cell>
 							<Table.Cell class="hidden text-right tabular-nums sm:table-cell">
-								{#if u.leaseId}<a class="hover:underline" href="/leases/{u.leaseId}"
-										>{formatMoney(u.leaseRent)}</a
-									>{:else}—{/if}
+								{#if u.leaseId}<a class="hover:underline" href="/leases/{u.leaseId}">
+										{formatMoney(u.leaseRent)}
+									</a>{:else}—{/if}
 							</Table.Cell>
-							<Table.Cell class="hidden text-muted-foreground md:table-cell"
-								>{u.leaseId
-									? u.leaseEnd
-										? formatDate(u.leaseEnd)
-										: 'Month-to-month'
-									: ''}</Table.Cell
-							>
+							<Table.Cell class="hidden text-muted-foreground md:table-cell">
+								{u.leaseId ? (u.leaseEnd ? formatDate(u.leaseEnd) : 'Month-to-month') : ''}
+							</Table.Cell>
 							<Table.Cell>
 								<DropdownMenu.Root>
 									<DropdownMenu.Trigger>
@@ -250,24 +254,27 @@
 												size="icon-sm"
 												variant="ghost"
 												aria-label="Unit actions"
-												{...props}><Ellipsis /></Button
-											>{/snippet}
+												{...props}
+											>
+												<Ellipsis />
+											</Button>{/snippet}
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content align="end">
-										<DropdownMenu.Item onclick={() => goto(`/leases?new=1&unit=${u.id}`)}
-											>New lease</DropdownMenu.Item
-										>
+										<DropdownMenu.Item onclick={() => goto(`/leases?new=1&unit=${u.id}`)}>
+											New lease
+										</DropdownMenu.Item>
 										<DropdownMenu.Item
 											onclick={() => goto(`/maintenance?new=1&property=${id}&unit=${u.id}`)}
-											>New request</DropdownMenu.Item
 										>
-										<DropdownMenu.Item onclick={() => listUnit(u.id)}
-											>List for rent</DropdownMenu.Item
-										>
+											New request
+										</DropdownMenu.Item>
+										<DropdownMenu.Item onclick={() => listUnit(u.id)}>
+											List for rent
+										</DropdownMenu.Item>
 										<DropdownMenu.Separator />
-										<DropdownMenu.Item variant="destructive" onclick={() => removeUnit(u.id)}
-											>Remove unit</DropdownMenu.Item
-										>
+										<DropdownMenu.Item variant="destructive" onclick={() => removeUnit(u.id)}>
+											Remove unit
+										</DropdownMenu.Item>
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
 							</Table.Cell>
@@ -277,9 +284,14 @@
 						<Table.Cell colspan={6}>
 							<form class="flex items-center gap-2" onsubmit={addUnit}>
 								<Input class="h-8 max-w-48" placeholder="Add unit, e.g. 204" bind:value={newUnit} />
-								<Button type="submit" size="sm" variant="ghost" disabled={adding || !newUnit.trim()}
-									><Plus /> Add</Button
+								<Button
+									type="submit"
+									size="sm"
+									variant="ghost"
+									disabled={adding || !newUnit.trim()}
 								>
+									<Plus /> Add
+								</Button>
 							</form>
 						</Table.Cell>
 					</Table.Row>

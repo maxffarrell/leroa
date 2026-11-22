@@ -75,8 +75,10 @@
 				size="sm"
 				disabled={uploading}
 				onclick={() => document.getElementById('doc-upload')?.click()}
-				><Upload /> {uploading ? 'Uploading…' : 'Upload'}</Button
 			>
+				<Upload />
+				{uploading ? 'Uploading…' : 'Upload'}
+			</Button>
 		{/snippet}
 	</PageHeader>
 
@@ -88,54 +90,56 @@
 				>
 					<Upload class="size-6 text-muted-foreground" />
 					<span class="font-medium">Drop leases, inspection photos or IDs here</span>
-					<span class="text-sm text-muted-foreground"
-						>or click to browse. Up to 10 MB per file.</span
-					>
+					<span class="text-sm text-muted-foreground">
+						or click to browse. Up to 10 MB per file.
+					</span>
 				</div>
 			</FileDropZone.Trigger>
 		{:else}
 			<Input placeholder="Filter files…" class="mb-4 max-w-xs" bind:value={filter} />
 			<div class="overflow-x-auto rounded-lg border">
 				<Table.Root>
-					<Table.Header
-						><Table.Row
-							><Table.Head>Name</Table.Head><Table.Head class="hidden sm:table-cell"
-								>Size</Table.Head
-							><Table.Head class="hidden md:table-cell">Uploaded</Table.Head><Table.Head
+					<Table.Header>
+						<Table.Row>
+							<Table.Head>Name</Table.Head><Table.Head class="hidden sm:table-cell">
+								Size
+							</Table.Head><Table.Head class="hidden md:table-cell">Uploaded</Table.Head><Table.Head
 								class="w-10"
-							></Table.Head></Table.Row
-						></Table.Header
-					>
+							></Table.Head>
+						</Table.Row>
+					</Table.Header>
 					<Table.Body>
 						{#each rows as d (d.id)}
 							{@const Icon = icon(d.contentType)}
 							<Table.Row>
-								<Table.Cell
-									><a
+								<Table.Cell>
+									<a
 										class="flex items-center gap-2 font-medium hover:underline"
 										href="/api/documents/{d.id}"
 										target="_blank"
-										rel="noopener"><Icon class="size-4 text-muted-foreground" />{d.name}</a
-									>{#if d.category}<Badge variant="secondary" class="ml-2 capitalize"
-											>{d.category}</Badge
-										>{/if}</Table.Cell
-								>
-								<Table.Cell class="hidden text-muted-foreground tabular-nums sm:table-cell"
-									>{size(d.size)}</Table.Cell
-								>
-								<Table.Cell class="hidden text-muted-foreground md:table-cell"
-									>{formatRelative(d.createdAt)}{d.uploadedBy
-										? ` by ${d.uploadedBy}`
-										: ''}</Table.Cell
-								>
-								<Table.Cell
-									><Button
+										rel="noopener"
+									>
+										<Icon class="size-4 text-muted-foreground" />{d.name}
+									</a>{#if d.category}<Badge variant="secondary" class="ml-2 capitalize">
+											{d.category}
+										</Badge>{/if}
+								</Table.Cell>
+								<Table.Cell class="hidden text-muted-foreground tabular-nums sm:table-cell">
+									{size(d.size)}
+								</Table.Cell>
+								<Table.Cell class="hidden text-muted-foreground md:table-cell">
+									{formatRelative(d.createdAt)}{d.uploadedBy ? ` by ${d.uploadedBy}` : ''}
+								</Table.Cell>
+								<Table.Cell>
+									<Button
 										size="icon-sm"
 										variant="ghost"
 										aria-label="Delete {d.name}"
-										onclick={() => remove(d.id, d.name)}><Trash /></Button
-									></Table.Cell
-								>
+										onclick={() => remove(d.id, d.name)}
+									>
+										<Trash />
+									</Button>
+								</Table.Cell>
 							</Table.Row>
 						{/each}
 					</Table.Body>

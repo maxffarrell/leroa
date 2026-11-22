@@ -86,9 +86,9 @@
 
 <PageHeader title="Leases">
 	{#snippet actions()}
-		<Button size="sm" onclick={() => (creating = true)}
-			><Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd></Button
-		>
+		<Button size="sm" onclick={() => (creating = true)}>
+			<Plus /> New <Kbd class="hidden sm:inline-flex">C</Kbd>
+		</Button>
 	{/snippet}
 </PageHeader>
 
@@ -100,9 +100,9 @@
 				<Empty.Title>No leases yet</Empty.Title>
 				<Empty.Description>Create a lease to start tracking rent.</Empty.Description>
 			</Empty.Header>
-			<Empty.Content
-				><Button onclick={() => (creating = true)}><Plus /> New lease</Button></Empty.Content
-			>
+			<Empty.Content>
+				<Button onclick={() => (creating = true)}><Plus /> New lease</Button>
+			</Empty.Content>
 		</Empty.Root>
 	{:else}
 		{#if upcoming.length}
@@ -115,9 +115,10 @@
 					<a
 						href="/leases/{d.leaseId}"
 						class="rounded-full border bg-background px-2.5 py-0.5 text-xs hover:bg-muted"
-						><span class="tabular-nums">{formatDate(d.date, true)}</span> · {d.label}
-						<span class="text-muted-foreground">{d.unitName}</span></a
 					>
+						<span class="tabular-nums">{formatDate(d.date, true)}</span> · {d.label}
+						<span class="text-muted-foreground">{d.unitName}</span>
+					</a>
 				{/each}
 			</div>
 		{/if}
@@ -126,11 +127,10 @@
 				<Tabs.Root bind:value={tab}>
 					<Tabs.List>
 						{#each ['active', 'draft', 'past', 'all'] as const as t (t)}
-							<Tabs.Trigger value={t} class="capitalize"
-								>{t}
-								<span class="ml-1 text-xs text-muted-foreground tabular-nums">{counts[t]}</span
-								></Tabs.Trigger
-							>
+							<Tabs.Trigger value={t} class="capitalize">
+								{t}
+								<span class="ml-1 text-xs text-muted-foreground tabular-nums">{counts[t]}</span>
+							</Tabs.Trigger>
 						{/each}
 					</Tabs.List>
 				</Tabs.Root>
@@ -149,15 +149,16 @@
 						class="block rounded-md border bg-card p-2.5 text-sm shadow-xs hover:bg-accent"
 					>
 						<span class="block truncate font-medium">{l.tenants || '—'}</span>
-						<span class="block truncate text-xs text-muted-foreground"
-							>{l.propertyName} · {l.unitName}</span
-						>
-						<span class="mt-1 flex items-center justify-between text-xs"
-							><span class="tabular-nums">{formatMoney(l.rentAmount, l.currency)}/mo</span
-							>{#if l.balance > 0}<span class="text-red-600 dark:text-red-400"
-									>owes {formatMoney(l.balance, l.currency)}</span
-								>{/if}</span
-						>
+						<span class="block truncate text-xs text-muted-foreground">
+							{l.propertyName} · {l.unitName}
+						</span>
+						<span class="mt-1 flex items-center justify-between text-xs">
+							<span class="tabular-nums">
+								{formatMoney(l.rentAmount, l.currency)}/mo
+							</span>{#if l.balance > 0}<span class="text-red-600 dark:text-red-400">
+									owes {formatMoney(l.balance, l.currency)}
+								</span>{/if}
+						</span>
 					</a>
 				{/snippet}
 			</KanbanBoard>
@@ -185,34 +186,37 @@
 								onclick={() => openHref(`/leases/${l.id}`)}
 								onmouseenter={() => (nav.index = i)}
 							>
-								<Table.Cell class="max-w-56 truncate font-medium"
-									><a href="/leases/{l.id}" class="outline-none">{l.tenants || '—'}</a></Table.Cell
-								>
-								<Table.Cell class="text-muted-foreground"
-									>{l.propertyName} · {l.unitName}</Table.Cell
-								>
-								<Table.Cell class="hidden md:table-cell">
-									<span class="text-muted-foreground"
-										>{formatDate(l.startDate, true)} – {l.endDate
-											? formatDate(l.endDate, true)
-											: 'Month-to-month'}</span
-									>
-									{#if l.status === 'active' && l.endDate && l.endDate <= soon}<span
-											class="ml-2 text-xs text-amber-600">ending soon</span
-										>{/if}
+								<Table.Cell class="max-w-56 truncate font-medium">
+									<a href="/leases/{l.id}" class="outline-none">{l.tenants || '—'}</a>
 								</Table.Cell>
-								<Table.Cell class="text-right tabular-nums"
-									>{formatMoney(l.rentAmount, l.currency)}</Table.Cell
-								>
+								<Table.Cell class="text-muted-foreground">
+									{l.propertyName} · {l.unitName}
+								</Table.Cell>
+								<Table.Cell class="hidden md:table-cell">
+									<span class="text-muted-foreground">
+										{formatDate(l.startDate, true)} – {l.endDate
+											? formatDate(l.endDate, true)
+											: 'Month-to-month'}
+									</span>
+									{#if l.status === 'active' && l.endDate && l.endDate <= soon}<span
+											class="ml-2 text-xs text-amber-600"
+										>
+											ending soon
+										</span>{/if}
+								</Table.Cell>
+								<Table.Cell class="text-right tabular-nums">
+									{formatMoney(l.rentAmount, l.currency)}
+								</Table.Cell>
 								<Table.Cell
 									class="text-right tabular-nums {l.balance > 0
 										? 'font-medium text-red-600 dark:text-red-400'
 										: 'text-muted-foreground'}"
-									>{l.balance ? formatMoney(l.balance, l.currency) : '—'}</Table.Cell
 								>
-								<Table.Cell class="hidden sm:table-cell"
-									><StatusBadge status={l.status} /></Table.Cell
-								>
+									{l.balance ? formatMoney(l.balance, l.currency) : '—'}
+								</Table.Cell>
+								<Table.Cell class="hidden sm:table-cell">
+									<StatusBadge status={l.status} />
+								</Table.Cell>
 							</Table.Row>
 						{/each}
 					</Table.Body>

@@ -40,8 +40,9 @@
 				{#if inbox.unread}
 					<span
 						class="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
-						>{inbox.unread > 9 ? '9+' : inbox.unread}</span
 					>
+						{inbox.unread > 9 ? '9+' : inbox.unread}
+					</span>
 				{/if}
 			</Sidebar.MenuButton>
 		{/snippet}
@@ -74,16 +75,18 @@
 								<span
 									class="block truncate text-sm {n.readAt
 										? 'text-muted-foreground'
-										: 'font-medium'}">{n.title}</span
+										: 'font-medium'}"
 								>
+									{n.title}
+								</span>
 								{#if n.body}
-									<span class="mt-0.5 line-clamp-2 block text-xs text-muted-foreground"
-										>{n.body}</span
-									>
+									<span class="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
+										{n.body}
+									</span>
 								{/if}
-								<span class="mt-1 block text-[11px] text-muted-foreground/70"
-									>{formatRelative(n.createdAt)}</span
-								>
+								<span class="mt-1 block text-[11px] text-muted-foreground/70">
+									{formatRelative(n.createdAt)}
+								</span>
 							</span>
 						</button>
 					</li>

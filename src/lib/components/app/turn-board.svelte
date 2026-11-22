@@ -120,9 +120,9 @@
 </script>
 
 <div class="flex flex-wrap items-center gap-3">
-	<Button size="sm" onclick={() => (starting = true)} disabled={!startable.length}
-		><Plus /> Start a turn</Button
-	>
+	<Button size="sm" onclick={() => (starting = true)} disabled={!startable.length}>
+		<Plus /> Start a turn
+	</Button>
 	<p class="ml-auto hidden text-xs text-muted-foreground md:block">
 		Drag cards between stages. A lease starting on the unit finishes the turn.
 	</p>
@@ -163,9 +163,9 @@
 								? 'opacity-50'
 								: ''}"
 						>
-							<span class="block text-sm leading-snug font-medium"
-								>{t.propertyName} · {t.unitName}</span
-							>
+							<span class="block text-sm leading-snug font-medium">
+								{t.propertyName} · {t.unitName}
+							</span>
 							<div
 								class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"
 							>
@@ -174,8 +174,10 @@
 									<span
 										class={t.targetReadyOn < todayISO() && t.stage !== 'done'
 											? 'font-medium text-red-600 dark:text-red-400'
-											: ''}>ready by {formatDate(t.targetReadyOn, true)}</span
+											: ''}
 									>
+										ready by {formatDate(t.targetReadyOn, true)}
+									</span>
 								{/if}
 								<span class="ml-auto shrink-0">{formatRelative(t.createdAt)}</span>
 							</div>
@@ -208,10 +210,9 @@
 						onValueChange={(v) => patch(selected!.id, { stage: v as Turn['stage'] })}
 					>
 						<Select.Trigger class="w-full">{labels[selected.stage]}</Select.Trigger>
-						<Select.Content
-							>{#each turnStages as s (s)}<Select.Item value={s}>{labels[s]}</Select.Item
-								>{/each}</Select.Content
-						>
+						<Select.Content>
+							{#each turnStages as s (s)}<Select.Item value={s}>{labels[s]}</Select.Item>{/each}
+						</Select.Content>
 					</Select.Root>
 				</Field.Field>
 				<div class="grid grid-cols-2 gap-3">
@@ -241,17 +242,18 @@
 					</p>
 				{/if}
 				<div class="flex flex-wrap gap-2">
-					<Button size="sm" variant="outline" onclick={() => (addingWork = true)}
-						><Wrench /> New work order</Button
-					>
+					<Button size="sm" variant="outline" onclick={() => (addingWork = true)}>
+						<Wrench /> New work order
+					</Button>
 					{#if !selected.listed}
 						<Button
 							size="sm"
 							variant="outline"
 							disabled={listingPending}
 							onclick={() => makeListing(selected!)}
-							><Megaphone />{listingPending ? 'Creating…' : 'List this unit'}</Button
 						>
+							<Megaphone />{listingPending ? 'Creating…' : 'List this unit'}
+						</Button>
 					{/if}
 				</div>
 				{#if selected.listed}
@@ -297,15 +299,13 @@
 				<Field.Field>
 					<Field.Label>Unit</Field.Label>
 					<Select.Root type="single" bind:value={newUnit}>
-						<Select.Trigger class="w-full"
-							>{newUnit
-								? (allUnits.find((u) => u.id === newUnit)?.name ?? 'Select')
-								: 'Select'}</Select.Trigger
-						>
+						<Select.Trigger class="w-full">
+							{newUnit ? (allUnits.find((u) => u.id === newUnit)?.name ?? 'Select') : 'Select'}
+						</Select.Trigger>
 						<Select.Content class="max-h-72">
-							{#each startable as u (u.id)}<Select.Item value={u.id}
-									>{u.propertyName} · {u.name}</Select.Item
-								>{/each}
+							{#each startable as u (u.id)}<Select.Item value={u.id}>
+									{u.propertyName} · {u.name}
+								</Select.Item>{/each}
 						</Select.Content>
 					</Select.Root>
 					{#if !startable.length}
@@ -331,9 +331,9 @@
 			</Field.Group>
 			<Modal.Footer>
 				<Button type="button" variant="ghost" onclick={() => (starting = false)}>Cancel</Button>
-				<Button type="submit" disabled={pending || !newUnit}
-					>{pending ? 'Starting…' : 'Start turn'}</Button
-				>
+				<Button type="submit" disabled={pending || !newUnit}>
+					{pending ? 'Starting…' : 'Start turn'}
+				</Button>
 			</Modal.Footer>
 		</form>
 	</Modal.Content>

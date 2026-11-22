@@ -43,18 +43,16 @@
 		<form onsubmit={submit} class="space-y-5">
 			<Modal.Header>
 				<Modal.Title>New listing</Modal.Title>
-				<Modal.Description
-					>Starts as a draft with the unit's details. Publish it when it looks right.</Modal.Description
-				>
+				<Modal.Description>
+					Starts as a draft with the unit's details. Publish it when it looks right.
+				</Modal.Description>
 			</Modal.Header>
 			<Field.Field>
 				<Field.Label>Unit</Field.Label>
 				<Select.Root type="single" bind:value={unitId}>
-					<Select.Trigger class="w-full"
-						>{selected
-							? `${selected.propertyName} · ${selected.name}`
-							: 'Select a unit'}</Select.Trigger
-					>
+					<Select.Trigger class="w-full">
+						{selected ? `${selected.propertyName} · ${selected.name}` : 'Select a unit'}
+					</Select.Trigger>
 					<Select.Content class="max-h-72">
 						{#each sorted as u (u.id)}
 							<Select.Item value={u.id} label={`${u.propertyName} · ${u.name}`}>
