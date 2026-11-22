@@ -1,5 +1,11 @@
 # leroa
 
+## 0.4.5
+
+### Patch Changes
+
+- c9237be: Update dependencies to latest versions and patch security vulnerabilities.
+
 ## 0.4.4
 
 ### Patch Changes
