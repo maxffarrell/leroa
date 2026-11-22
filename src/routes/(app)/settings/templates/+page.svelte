@@ -12,6 +12,7 @@
 	import { toast } from 'svelte-sonner';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import Plus from '@lucide/svelte/icons/plus';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const templates = $derived(await getTemplates());
 	const canEdit = $derived(page.data.role !== 'member');
@@ -51,9 +52,12 @@
 		}
 	}
 
-	async function remove(id: string, name: string) {
-		if (!confirm(`Delete “${name}”? Agreements already created from it are kept.`)) return;
-		await deleteTemplate(id).catch((err) => fail(err, 'Could not delete'));
+	function remove(id: string, name: string) {
+		confirmDelete({
+			title: `Delete “${name}”?`,
+			description: 'Agreements already created from it are kept.',
+			onConfirm: () => deleteTemplate(id).catch((err) => fail(err, 'Could not delete'))
+		});
 	}
 </script>
 

@@ -24,6 +24,7 @@
 	import Mail from '@lucide/svelte/icons/mail';
 	import Phone from '@lucide/svelte/icons/phone';
 	import Check from '@lucide/svelte/icons/check';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const id = $derived(page.params.id!);
 	const a = $derived(await getApplication(id));
@@ -45,7 +46,19 @@
 		toast.error((err as { body?: { message?: string } })?.body?.message ?? fallback);
 
 	async function setStatus(status: 'new' | 'reviewing' | 'declined' | 'withdrawn') {
-		if (status === 'declined' && !confirm(`Decline ${name}'s application?`)) return;
+		if (status === 'declined') {
+			confirmDelete({
+				title: `Decline ${name}'s application?`,
+				description: 'They will be notified their application was declined.',
+				confirm: { text: 'Decline' },
+				onConfirm: () => setStatusNow(status)
+			});
+			return;
+		}
+		await setStatusNow(status);
+	}
+
+	async function setStatusNow(status: 'new' | 'reviewing' | 'declined' | 'withdrawn') {
 		try {
 			await updateApplication({ id, status });
 			toast.success(status === 'declined' ? 'Application declined' : `Marked ${status}`);

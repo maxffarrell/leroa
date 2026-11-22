@@ -13,6 +13,7 @@
 	import { toast } from 'svelte-sonner';
 	import { CopyButton } from '#lib/components/ui/copy-button/index.js';
 	import Trash from '@lucide/svelte/icons/trash-2';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const hooks = $derived(await getWebhooks());
 	let url = $state('');
@@ -57,7 +58,12 @@
 								size="icon-sm"
 								variant="ghost"
 								aria-label="Delete"
-								onclick={() => confirm('Delete webhook?') && deleteWebhook(h.id)}><Trash /></Button
+								onclick={() =>
+									confirmDelete({
+										title: 'Delete webhook?',
+										description: h.url,
+										onConfirm: () => deleteWebhook(h.id)
+									})}><Trash /></Button
 							>
 						</div>
 						<div

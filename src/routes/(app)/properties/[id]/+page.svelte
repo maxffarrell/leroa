@@ -30,6 +30,7 @@
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import Wrench from '@lucide/svelte/icons/wrench';
 	import FileSignature from '@lucide/svelte/icons/file-signature';
+	import { confirmDelete } from '#lib/components/ui/confirm-delete-dialog/index.js';
 
 	const id = $derived(page.params.id!);
 	const p = $derived(await getProperty(id));
@@ -89,11 +90,17 @@
 		}
 	}
 
-	async function archive() {
-		if (!confirm(`Archive ${p.name}? It will be hidden from lists.`)) return;
-		await archiveProperty(id);
-		toast.success('Property archived');
-		await goto('/properties');
+	function archive() {
+		confirmDelete({
+			title: `Archive ${p.name}?`,
+			description: 'It will be hidden from lists.',
+			confirm: { text: 'Archive' },
+			onConfirm: async () => {
+				await archiveProperty(id);
+				toast.success('Property archived');
+				await goto('/properties');
+			}
+		});
 	}
 </script>
 
