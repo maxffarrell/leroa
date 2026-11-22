@@ -1,5 +1,11 @@
 # leroa
 
+## 0.4.2
+
+### Patch Changes
+
+- 9041f29: Restore the full-width sticky demo banner and replace native browser controls (confirm dialogs, details/summary) with shadcn-svelte AlertDialog and Collapsible components.
+
 ## 0.4.1
 
 ### Patch Changes
