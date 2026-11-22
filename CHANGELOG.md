@@ -1,5 +1,11 @@
 # leroa
 
+## 0.4.3
+
+### Patch Changes
+
+- 5ebaf2f: Fix deploy verify: check the login page for the current "Explore a seeded demo" copy instead of the removed "Try the live demo" text.
+
 ## 0.4.2
 
 ### Patch Changes
