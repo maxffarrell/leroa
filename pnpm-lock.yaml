@@ -95,7 +95,7 @@ importers:
         specifier: 4.3.5
         version: 4.3.5(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
       '@tanstack/table-core':
-        specifier: ^8.21.3
+        specifier: 8.21.3
         version: 8.21.3
       '@types/node':
         specifier: 26.6.6
@@ -176,7 +176,7 @@ importers:
         specifier: 1.4.0
         version: 1.4.0
       typescript:
-        specifier: ^6.0.3
+        specifier: 6.0.3
         version: 6.0.3
       typescript-eslint:
         specifier: 8.73.0
